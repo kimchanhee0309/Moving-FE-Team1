@@ -1,36 +1,37 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 각 담당 폴더 
+### 1. 이승재 - Auth/랜딩
+ - src/app/(public)/ (랜딩 페이지 작업이니 page.tsx 만 만들어서 관리하기, mover-search 폴더 부분은 영주님 파트) 
+ - src/app/(auth)/ 
+ - src/features/auth/
 
-## Getting Started
+### 2. 김지훈 - 프로필/기사님 마이페이지
+ - src/app/(customer)/customer-profile/ 
+ - src/app/(mover)/mover-profile/ 
+ - src/app/(mover)/mover-mypage/
+ - src/features/customer-profile/
+ - src/features/mover-profile/
+ - src/features/mover-mypage/
 
-First, run the development server:
+### 3. 노진우 - 견적 요청/GNB
+ - src/app/(customer)/mover-request/
+ - src/features/move-request/
+ - src/features/notification/
+ - src/common/components/Header/
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 4. 이영주 - 기사님 찾기/상세
+ - src/app/(public)/mover-search/[moverId]/
+ - src/features/mover-search/
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 5. 조민성 - 찜한 기사님/리뷰
+ - src/app/(customer)/
+ - src/features/
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 6. 권태현 - 일반유저 내 견적 관리
+ - src/app/(customer)/customer-quote/
+ - src/features/customer-quote/
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 7. 김찬희 - 기사님 받은 요청 / 내 견적 관리
+ - src/app/(mover)/requests/
+ - src/app/(mover)/mover-quote/
+ - src/features/mover-requests/
+ - src/features/mover-quote/
