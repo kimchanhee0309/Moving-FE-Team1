@@ -1,5 +1,8 @@
 import localFont from "next/font/local";
+import type { PropsWithChildren } from "react";
 import "./globals.css";
+
+import { Providers } from "@/providers";
 
 const pretendard = localFont({
   src: "../fonts/PretendardVariable.woff2",
@@ -8,14 +11,12 @@ const pretendard = localFont({
   weight: "100 900",
 });
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="ko" className={pretendard.variable}>
-      <body>{children}</body>
+      <body>
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }
