@@ -1,0 +1,9 @@
+@import "../styles/reset.css";
+@import "../styles/colors.css";
+@import "../styles/typography.css";
+
+body {
+  color: var(--black-500);
+  background-color: var(--background-100);
+  font-family: var(--font-pretendard), sans-serif;
+}
