@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="18.2" viewBox="0 0 16 18.2" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 3578">
+<circle id="Ellipse 530" cx="8" cy="8" r="8" fill="#F9502E"/>
+<g id="Mask group">
+<mask id="mask0_0_88" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="8" y="-1" width="9" height="20">
+<rect id="Rectangle 4133" width="8" height="18.2" transform="matrix(1 0 0 -1 8.00014 18.1999)" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_88)">
+<path id="Ellipse 531" d="M3.98159e-05 8C3.98159e-05 14.6 8.00004 18.2 8.00004 18.2C8.00004 18.2 16 14.6 16 8C16 3.58172 12.4183 0 8.00004 0C3.58176 0 3.98159e-05 3.58172 3.98159e-05 8Z" fill="#F9502E"/>
+</g>
+</g>
+</g>
+</svg>
