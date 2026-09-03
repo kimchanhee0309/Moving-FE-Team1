@@ -25,7 +25,7 @@ export const ROUTES = {
       EDIT: "/customer-profile/edit",
     },
 
-    MOVER_REQUEST: "move-request",
+    MOVE_REQUEST: "/move-request",
 
     QUOTE: {
       PENDING: "/customer-quote/pending",
@@ -58,7 +58,7 @@ export const ROUTES = {
     QUOTE: {
       LIST: "/mover-quote",
 
-      DETAIL: (quoteId: string) => `/mover-auote/${quoteId}`,
+      DETAIL: (quoteId: string) => `/mover-quote/${quoteId}`,
 
       REJECTED_REQUESTS: "/mover-quote/rejected",
     },
