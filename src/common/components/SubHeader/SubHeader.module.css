@@ -1,0 +1,161 @@
+.container {
+  width: 100%;
+  padding: 24px;
+  background-color: var(--gray-50);
+  box-shadow: 0 8px 10px rgba(39, 39, 75, 0.02);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.title {
+  color: var(--black-500);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.requestedAt {
+  color: var(--gray-500);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.metaLabel {
+  color: var(--gray-500);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.metaValue {
+  color: var(--black-500);
+  white-space: nowrap;
+}
+
+/* Tablet / PC only: stacked label-above-value fields */
+.field {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.fieldValue {
+  color: var(--black-500);
+  white-space: nowrap;
+}
+
+.route {
+  display: none;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.arrow {
+  position: relative;
+  flex-shrink: 0;
+  width: 8px;
+  height: 23px;
+  overflow: hidden;
+}
+
+.arrowImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.desktopMeta {
+  display: none;
+}
+
+@media (min-width: 744px) {
+  .container {
+    padding: 32px 72px;
+  }
+
+  .content {
+    gap: 28px;
+  }
+
+  .titleGroup {
+    gap: 4px;
+  }
+
+  .title {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .requestedAt {
+    font-size: 14px;
+    line-height: 24px;
+  }
+
+  .meta {
+    display: none;
+  }
+
+  .desktopMeta {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    width: 100%;
+  }
+
+  .route {
+    display: flex;
+  }
+
+  .field {
+    display: flex;
+  }
+}
+
+@media (min-width: 1200px) {
+  .container {
+    /* Full-bleed bar; horizontal inset mirrors Figma PC content margin ratio */
+    padding: 32px clamp(72px, 18.75vw, 360px);
+  }
+
+  .content {
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 20px;
+  }
+
+  .titleGroup {
+    flex: 1 0 0;
+    min-width: 0;
+  }
+
+  .desktopMeta {
+    width: auto;
+    flex-shrink: 0;
+  }
+}
