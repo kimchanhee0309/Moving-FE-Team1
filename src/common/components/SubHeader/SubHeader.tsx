@@ -3,8 +3,6 @@ import Image from "next/image";
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
-import styles from "./SubHeader.module.css";
-
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
   [SERVICE_TYPE.HOME]: "가정이사",
@@ -31,62 +29,122 @@ export function SubHeader({
   className,
 }: SubHeaderProps) {
   const serviceTypeLabel = SERVICE_TYPE_LABEL[serviceType];
-  const rootClassName = className
-    ? `${styles.container} ${className}`
-    : styles.container;
 
   return (
-    <section className={rootClassName} aria-label="이사 정보">
-      <div className={styles.content}>
-        <div className={styles.titleGroup}>
-          <h2 className={styles.title}>{serviceTypeLabel}</h2>
-          <p className={styles.requestedAt}>견적 신청일: {requestedAt}</p>
+    <section
+      className={[
+        "w-full bg-[var(--gray-50)] p-6 shadow-[0_8px_10px_rgba(39,39,75,0.02)]",
+        "min-[744px]:px-[72px] min-[744px]:py-8",
+        "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label="이사 정보"
+    >
+      <div
+        className={[
+          "flex w-full flex-col gap-5",
+          "min-[744px]:gap-7",
+          "min-[1200px]:flex-row min-[1200px]:items-end min-[1200px]:gap-5",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "flex w-full flex-col",
+            "min-[744px]:gap-1",
+            "min-[1200px]:min-w-0 min-[1200px]:flex-1",
+          ].join(" ")}
+        >
+          <h2
+            className={[
+              "text-[20px] font-bold leading-[32px] text-[var(--black-500)]",
+              "min-[744px]:text-[24px]",
+            ].join(" ")}
+          >
+            {serviceTypeLabel}
+          </h2>
+          <p
+            className={[
+              "text-[12px] font-normal leading-[18px] text-[var(--gray-500)]",
+              "min-[744px]:text-[14px] min-[744px]:leading-6",
+            ].join(" ")}
+          >
+            견적 신청일: {requestedAt}
+          </p>
         </div>
 
-        <dl className={styles.meta}>
-          <div className={styles.metaRow}>
-            <dt className={`${styles.metaLabel} text-md-regular`}>출발지</dt>
-            <dd className={`${styles.metaValue} text-md-semibold`}>{from}</dd>
+        <dl className="flex w-full flex-col gap-1 min-[744px]:hidden">
+          <div className="flex w-full items-center justify-between">
+            <dt className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+              출발지
+            </dt>
+            <dd className="text-md-semibold whitespace-nowrap text-[var(--black-500)]">
+              {from}
+            </dd>
           </div>
-          <div className={styles.metaRow}>
-            <dt className={`${styles.metaLabel} text-md-regular`}>도착지</dt>
-            <dd className={`${styles.metaValue} text-md-semibold`}>{to}</dd>
+          <div className="flex w-full items-center justify-between">
+            <dt className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+              도착지
+            </dt>
+            <dd className="text-md-semibold whitespace-nowrap text-[var(--black-500)]">
+              {to}
+            </dd>
           </div>
-          <div className={styles.metaRow}>
-            <dt className={`${styles.metaLabel} text-md-regular`}>이사일</dt>
-            <dd className={`${styles.metaValue} text-md-semibold`}>{moveDate}</dd>
+          <div className="flex w-full items-center justify-between">
+            <dt className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+              이사일
+            </dt>
+            <dd className="text-md-semibold whitespace-nowrap text-[var(--black-500)]">
+              {moveDate}
+            </dd>
           </div>
         </dl>
 
-        <div className={styles.desktopMeta}>
-          <div className={styles.route}>
-            <div className={styles.field}>
-              <span className={`${styles.metaLabel} text-md-regular`}>출발지</span>
-              <span className={`${styles.fieldValue} text-2lg-semibold`}>
+        <div
+          className={[
+            "hidden w-full items-start gap-10",
+            "min-[744px]:flex",
+            "min-[1200px]:w-auto min-[1200px]:shrink-0",
+          ].join(" ")}
+        >
+          <div className="flex items-end gap-3">
+            <div className="flex flex-col items-start">
+              <span className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+                출발지
+              </span>
+              <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
                 {from}
               </span>
             </div>
-            <div className={styles.arrow} aria-hidden="true">
+            <div
+              className="relative h-[23px] w-2 shrink-0 overflow-hidden"
+              aria-hidden="true"
+            >
               <Image
                 src="/icons/arrow-right.svg"
                 alt=""
                 width={8}
                 height={23}
-                className={styles.arrowImg}
+                className="block size-full object-contain"
                 unoptimized
               />
             </div>
-            <div className={styles.field}>
-              <span className={`${styles.metaLabel} text-md-regular`}>도착지</span>
-              <span className={`${styles.fieldValue} text-2lg-semibold`}>
+            <div className="flex flex-col items-start">
+              <span className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+                도착지
+              </span>
+              <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
                 {to}
               </span>
             </div>
           </div>
 
-          <div className={styles.field}>
-            <span className={`${styles.metaLabel} text-md-regular`}>이사일</span>
-            <span className={`${styles.fieldValue} text-2lg-semibold`}>
+          <div className="flex flex-col items-start">
+            <span className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+              이사일
+            </span>
+            <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
               {moveDate}
             </span>
           </div>
