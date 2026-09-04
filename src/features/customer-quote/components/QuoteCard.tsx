@@ -80,7 +80,7 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
 
   return (
     <div className="flex shrink-0 items-center justify-center rounded-md px-2 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
-      <span className="text-lg-semibold whitespace-nowrap text-[#ababab]">
+      <span className="text-lg-semibold whitespace-nowrap text-[var(--gray-400)]">
         견적대기
       </span>
     </div>
@@ -143,14 +143,13 @@ export function QuoteCard({
                   className="size-5 shrink-0 object-contain"
                   unoptimized
                 />
-                <span
-                  className={[
-                    "whitespace-nowrap text-[var(--primary-400)]",
-                    "text-sm-semibold",
-                    "min-[558px]:text-md-semibold",
-                  ].join(" ")}
-                >
-                  {serviceTypeLabel}
+                <span className="whitespace-nowrap text-[var(--primary-400)]">
+                  <span className="text-sm-semibold min-[558px]:hidden">
+                    {serviceTypeLabel}
+                  </span>
+                  <span className="hidden text-md-semibold min-[558px]:inline">
+                    {serviceTypeLabel}
+                  </span>
                 </span>
               </div>
 
@@ -170,14 +169,13 @@ export function QuoteCard({
                     className="size-5 shrink-0 object-contain"
                     unoptimized
                   />
-                  <span
-                    className={[
-                      "whitespace-nowrap text-[#ff4f64]",
-                      "text-sm-semibold",
-                      "min-[558px]:text-md-semibold",
-                    ].join(" ")}
-                  >
-                    지정 견적 요청
+                  <span className="whitespace-nowrap text-[#ff4f64]">
+                    <span className="text-sm-semibold min-[558px]:hidden">
+                      지정 견적 요청
+                    </span>
+                    <span className="hidden text-md-semibold min-[558px]:inline">
+                      지정 견적 요청
+                    </span>
                   </span>
                 </div>
               )}
@@ -187,14 +185,11 @@ export function QuoteCard({
           </div>
 
           <div className="flex w-full flex-col gap-1">
-            <p
-              className={[
-                "w-full text-[var(--black-300)]",
-                "text-lg-semibold",
-                "min-[558px]:text-2lg-semibold",
-              ].join(" ")}
-            >
-              {message}
+            <p className="w-full text-[var(--black-300)]">
+              <span className="text-lg-semibold min-[558px]:hidden">{message}</span>
+              <span className="hidden text-2lg-semibold min-[558px]:inline">
+                {message}
+              </span>
             </p>
 
             <div className="flex w-full items-center gap-2 border-b border-[var(--line-200)] pb-5 pt-3">
@@ -265,7 +260,9 @@ export function QuoteCard({
                     />
                     <div className="text-sm-medium flex items-center gap-0.5 whitespace-nowrap">
                       <span className="text-[var(--black-300)]">{ratingLabel}</span>
-                      <span className="text-[#ababab]">({reviewCount})</span>
+                      <span className="text-[var(--gray-400)]">
+                        ({reviewCount})
+                      </span>
                     </div>
                   </div>
 
@@ -275,7 +272,7 @@ export function QuoteCard({
                   />
 
                   <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
-                    <span className="text-[#ababab]">경력</span>
+                    <span className="text-[var(--gray-400)]">경력</span>
                     <span className="text-[var(--black-300)]">
                       {careerYears}년
                     </span>
@@ -290,7 +287,7 @@ export function QuoteCard({
                     <span className="text-[var(--black-300)]">
                       {confirmedCount.toLocaleString("ko-KR")}건
                     </span>
-                    <span className="text-[#ababab]">확정</span>
+                    <span className="text-[var(--gray-400)]">확정</span>
                   </div>
                 </div>
               </div>
@@ -300,22 +297,19 @@ export function QuoteCard({
 
         <div className="flex w-full items-end justify-end">
           <div className="flex w-full flex-1 items-center justify-between min-[558px]:items-end">
-            <p
-              className={[
-                "text-md-medium text-[#ababab]",
-                "min-[558px]:text-lg-medium min-[558px]:text-[var(--black-400)]",
-              ].join(" ")}
-            >
-              견적 금액
+            <p>
+              <span className="text-md-medium text-[var(--gray-400)] min-[558px]:hidden">
+                견적 금액
+              </span>
+              <span className="text-lg-medium hidden text-[var(--black-400)] min-[558px]:inline">
+                견적 금액
+              </span>
             </p>
-            <p
-              className={[
-                "shrink-0 whitespace-nowrap text-[var(--black-400)]",
-                "text-[20px] font-bold leading-8",
-                "min-[558px]:text-[24px]",
-              ].join(" ")}
-            >
-              {priceLabel}
+            <p className="shrink-0 whitespace-nowrap text-[var(--black-400)]">
+              <span className="text-xl-bold min-[558px]:hidden">{priceLabel}</span>
+              <span className="hidden text-2xl-bold min-[558px]:inline">
+                {priceLabel}
+              </span>
             </p>
           </div>
         </div>
