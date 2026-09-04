@@ -1,0 +1,411 @@
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 7px 4px 5px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  white-space: nowrap;
+  box-shadow: 4px 4px 4px rgb(217 217 217 / 10%);
+}
+
+.moveTypeBadge {
+  color: var(--primary-400);
+  background-color: var(--primary-100);
+}
+
+.designatedBadge {
+  color: var(--secondary-red-200);
+  background-color: var(--secondary-red-100);
+}
+
+.requestCard {
+  box-sizing: border-box;
+  display: flex;
+  width: 100%;
+  max-width: 588px;
+  flex-direction: column;
+  gap: 32px;
+  padding: 32px 40px;
+  border: 0.5px solid var(--line-100);
+  border-radius: 20px;
+  background-color: var(--gray-50);
+  box-shadow:
+    -2px -2px 10px rgb(220 220 220 / 20%),
+    2px 2px 10px rgb(220 220 220 / 20%);
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cardHeader {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.requestTime {
+  flex-shrink: 0;
+  color: var(--content-muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.customerSection {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.customerName,
+.modalCustomerName {
+  color: var(--black-300);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 32px;
+}
+
+.requestSummary {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+}
+
+.cardSummary {
+  justify-content: space-between;
+}
+
+.modalSummary {
+  gap: 48px;
+}
+
+.routeGroup {
+  display: flex;
+  width: 201px;
+  flex-shrink: 0;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.routeArrow {
+  width: 18px;
+  height: 23px;
+  flex-shrink: 0;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.infoLabel {
+  color: var(--content-muted);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
+.infoValue {
+  color: var(--black-500);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 26px;
+  white-space: nowrap;
+}
+
+.modalSummary .infoValue {
+  font-weight: 500;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.cardButton {
+  display: inline-flex;
+  height: 54px;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 26px;
+}
+
+.cardButton:focus-visible,
+.submitButton:focus-visible {
+  outline: 2px solid var(--primary-400);
+  outline-offset: 2px;
+}
+
+.cardButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.rejectButton {
+  border: 1px solid var(--primary-400);
+  color: var(--primary-400);
+  background-color: var(--gray-50);
+}
+
+.quoteButton {
+  color: var(--gray-50);
+  background-color: var(--primary-400);
+}
+
+.modalForm {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.modalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.modalRequestHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line-100);
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldLabel {
+  color: var(--black-300);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+}
+
+.rejectFieldLabel {
+  font-size: 20px;
+  line-height: 32px;
+}
+
+.inputContainer {
+  position: relative;
+}
+
+.priceInput {
+  width: 100%;
+  height: 64px;
+  padding: 14px 54px 14px 14px;
+  border: 1px solid var(--line-200);
+  border-radius: 16px;
+  color: var(--content-strong);
+  background-color: var(--gray-50);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 26px;
+  outline: none;
+}
+
+.priceInput::placeholder,
+.textarea::placeholder {
+  color: var(--content-placeholder);
+}
+
+.priceInput:focus,
+.textarea:focus {
+  border-color: var(--primary-400);
+}
+
+.priceInput:disabled,
+.textarea:disabled {
+  cursor: not-allowed;
+  background-color: var(--background-200);
+}
+
+.inputIcon {
+  position: absolute;
+  top: 50%;
+  right: 24px;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.textarea {
+  width: 100%;
+  height: 160px;
+  padding: 14px 24px;
+  resize: none;
+  overflow-y: auto;
+  border: 1px solid var(--line-200);
+  border-radius: 16px;
+  color: var(--content-strong);
+  background-color: var(--gray-50);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 32px;
+  outline: none;
+}
+
+.formError {
+  color: var(--primary-400);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.submitButton {
+  display: flex;
+  width: 100%;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 16px;
+  color: var(--gray-50);
+  background-color: var(--primary-400);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 26px;
+}
+
+.submitButton:disabled {
+  cursor: not-allowed;
+  background-color: var(--gray-300);
+}
+
+@media (max-width: 767px) {
+  .badge {
+    gap: 2px;
+    padding: 2px 7px 2px 4px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 22px;
+  }
+
+  .requestCard {
+    max-width: 328px;
+    gap: 24px;
+    padding: 24px 20px;
+  }
+
+  .cardContent {
+    gap: 16px;
+  }
+
+  .cardHeader {
+    min-height: 34px;
+  }
+
+  .cardSummary {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cardActions {
+    flex-direction: column;
+  }
+
+  .cardButton {
+    width: 100%;
+    flex: none;
+  }
+
+  .quoteButton {
+    order: -1;
+  }
+
+  .modalForm {
+    gap: 26px;
+  }
+
+  .modalBody {
+    gap: 20px;
+  }
+
+  .modalRequestHeader {
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .hideMobileDivider {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .modalSummary {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modalSummary .routeGroup {
+    width: 271px;
+    align-items: center;
+  }
+
+  .modalSummary .infoItem {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .modalSummary .infoValue {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 24px;
+  }
+
+  .fieldLabel,
+  .rejectFieldLabel {
+    font-size: 16px;
+    line-height: 26px;
+  }
+
+  .priceInput {
+    height: 54px;
+    padding: 14px 48px 14px 14px;
+    font-size: 16px;
+  }
+
+  .inputIcon {
+    right: 14px;
+  }
+
+  .textarea {
+    padding: 14px 16px;
+    font-size: 16px;
+    line-height: 26px;
+  }
+
+  .submitButton {
+    height: 54px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+}
