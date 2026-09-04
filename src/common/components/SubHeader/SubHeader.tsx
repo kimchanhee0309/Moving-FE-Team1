@@ -56,21 +56,21 @@ export function SubHeader({
             "min-[1200px]:min-w-0 min-[1200px]:flex-1",
           ].join(" ")}
         >
-          <h2
-            className={[
-              "text-[20px] font-bold leading-[32px] text-[var(--black-500)]",
-              "min-[744px]:text-[24px]",
-            ].join(" ")}
-          >
-            {serviceTypeLabel}
+          <h2 className="text-[var(--black-500)]">
+            <span className="text-xl-bold min-[744px]:hidden">
+              {serviceTypeLabel}
+            </span>
+            <span className="hidden text-2xl-bold min-[744px]:inline">
+              {serviceTypeLabel}
+            </span>
           </h2>
-          <p
-            className={[
-              "text-[12px] font-normal leading-[18px] text-[var(--gray-500)]",
-              "min-[744px]:text-[14px] min-[744px]:leading-6",
-            ].join(" ")}
-          >
-            견적 신청일: {requestedAt}
+          <p className="text-[var(--gray-500)]">
+            <span className="text-xs-regular min-[744px]:hidden">
+              견적 신청일: {requestedAt}
+            </span>
+            <span className="hidden text-md-regular min-[744px]:inline">
+              견적 신청일: {requestedAt}
+            </span>
           </p>
         </div>
 
