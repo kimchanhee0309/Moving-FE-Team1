@@ -178,7 +178,7 @@ export function Gnb(props: GnbProps) {
           : "relative w-full border-b border-(--line-100) bg-(--gray-50)"
       }
     >
-      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 md:px-10 lg:h-22 lg:gap-8 lg:px-40">
+      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 md:px-18 lg:h-22 lg:gap-8 lg:px-40">
         <div className="flex items-center lg:gap-20">
           <Link
             href={ROUTES.HOME}
@@ -225,7 +225,7 @@ export function Gnb(props: GnbProps) {
         <div className="flex shrink-0 items-center gap-6 lg:gap-8">
           {authenticatedUser && (
             <>
-              <div className="relative">
+              <div className="relative flex items-center">
                 <button
                   ref={notificationButtonRef}
                   type="button"
@@ -267,7 +267,7 @@ export function Gnb(props: GnbProps) {
                 )}
               </div>
 
-              <div className="relative">
+              <div className="relative flex items-center">
                 <button
                   ref={profileButtonRef}
                   type="button"
