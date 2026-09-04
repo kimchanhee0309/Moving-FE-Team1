@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ROUTES } from "@/common/constants/routes";
 
 import { GnbMobileMenu } from "./GnbMobileMenu";
+import { GnbNotificationMenu } from "./GnbNotificationMenu";
 import { GnbProfileMenu } from "./GnbProfileMenu";
 import {
   GNB_DEFAULT_LOGIN_HREF,
@@ -20,17 +21,27 @@ const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
 
 export function Gnb(props: GnbProps) {
-  const { hasUnreadNotification = false, onNotificationClick, className } = props;
+  const {
+    hasUnreadNotification = false,
+    notificationItems = [],
+    onNotificationClick,
+    onNotificationsRead,
+    className,
+  } = props;
   const loginHref = props.loginHref ?? GNB_DEFAULT_LOGIN_HREF;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
   const menuId = useId();
   const profileMenuId = useId();
+  const notificationMenuId = useId();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
   const firstMobileNavLinkRef = useRef<HTMLAnchorElement>(null);
   const firstProfileMenuItemRef = useRef<HTMLAnchorElement>(null);
+  const notificationCloseButtonRef = useRef<HTMLButtonElement>(null);
 
   // 로그인 여부에 따라 좁혀진 값을 미리 뽑아 두면, 아래 JSX/handler에서 `props.isAuthenticated`
   // discriminated union을 매번 다시 좁히지 않고도 안전하게 재사용할 수 있다.
@@ -52,6 +63,7 @@ export function Gnb(props: GnbProps) {
   const handleToggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
     setIsProfileMenuOpen(false);
+    setIsNotificationMenuOpen(false);
   };
 
   const handleCloseProfileMenu = () => setIsProfileMenuOpen(false);
@@ -62,10 +74,28 @@ export function Gnb(props: GnbProps) {
   const handleToggleProfileMenu = () => {
     setIsProfileMenuOpen((prev) => !prev);
     setIsMenuOpen(false);
+    setIsNotificationMenuOpen(false);
   };
   const handleLogoutClick = () => {
     handleDismissProfileMenu();
     onLogout?.();
+  };
+
+  const handleCloseNotificationMenu = () => setIsNotificationMenuOpen(false);
+  const handleDismissNotificationMenu = () => {
+    setIsNotificationMenuOpen(false);
+    notificationButtonRef.current?.focus();
+  };
+  const handleToggleNotificationMenu = () => {
+    setIsNotificationMenuOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        onNotificationClick?.();
+      }
+      return next;
+    });
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
   };
 
   useEffect(() => {
@@ -79,6 +109,24 @@ export function Gnb(props: GnbProps) {
       firstProfileMenuItemRef.current?.focus();
     }
   }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (isNotificationMenuOpen) {
+      notificationCloseButtonRef.current?.focus();
+    }
+  }, [isNotificationMenuOpen]);
+
+  // 알림 드롭다운이 "열림 -> 닫힘"으로 바뀌는 시점에만 onNotificationsRead를 호출한다. Esc/바깥클릭/X버튼/
+  // 벨 재클릭/항목 클릭 이동 등 닫히는 경로가 여러 곳이라, 각 핸들러에 흩어 놓지 않고 이전 값을 ref로 들고
+  // 있다가 "직전엔 열려 있었는데 지금은 닫힘"인 전환만 감지한다(effect cleanup은 open->true 전환에서도
+  // 실행되어 버려서 이 용도로는 쓸 수 없다).
+  const wasNotificationMenuOpenRef = useRef(false);
+  useEffect(() => {
+    if (wasNotificationMenuOpenRef.current && !isNotificationMenuOpen) {
+      onNotificationsRead?.();
+    }
+    wasNotificationMenuOpenRef.current = isNotificationMenuOpen;
+  }, [isNotificationMenuOpen, onNotificationsRead]);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -107,6 +155,20 @@ export function Gnb(props: GnbProps) {
 
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!isNotificationMenuOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleDismissNotificationMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isNotificationMenuOpen]);
 
   return (
     <header
@@ -163,26 +225,47 @@ export function Gnb(props: GnbProps) {
         <div className="flex shrink-0 items-center gap-6 lg:gap-8">
           {authenticatedUser && (
             <>
-              <button
-                type="button"
-                onClick={onNotificationClick}
-                aria-label={hasUnreadNotification ? "새 알림이 있습니다" : "알림"}
-                className={`relative inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 lg:size-9 ${FOCUS_RING} focus-visible:rounded-full`}
-              >
-                <Image
-                  src="/images/gnb/icon-alarm.svg"
-                  alt=""
-                  width={36}
-                  height={36}
-                  className="size-6 lg:size-9"
-                />
-                {hasUnreadNotification && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute -top-px -right-px size-2 rounded-full border-[1.5px] border-(--gray-50) bg-(--primary-400)"
+              <div className="relative">
+                <button
+                  ref={notificationButtonRef}
+                  type="button"
+                  onClick={handleToggleNotificationMenu}
+                  aria-haspopup="menu"
+                  aria-expanded={isNotificationMenuOpen}
+                  aria-controls={notificationMenuId}
+                  aria-label={
+                    hasUnreadNotification
+                      ? `새 알림이 있습니다. 알림 ${isNotificationMenuOpen ? "닫기" : "열기"}`
+                      : `알림 ${isNotificationMenuOpen ? "닫기" : "열기"}`
+                  }
+                  className={`relative inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 lg:size-9 ${FOCUS_RING} focus-visible:rounded-full`}
+                >
+                  <Image
+                    src="/images/gnb/icon-alarm.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="size-6 lg:size-9"
+                  />
+                  {hasUnreadNotification && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-px -right-px size-2 rounded-full border-[1.5px] border-(--gray-50) bg-(--primary-400)"
+                    />
+                  )}
+                </button>
+
+                {isNotificationMenuOpen && (
+                  <GnbNotificationMenu
+                    menuId={notificationMenuId}
+                    items={notificationItems}
+                    closeButtonRef={notificationCloseButtonRef}
+                    triggerRef={notificationButtonRef}
+                    onNavigate={handleCloseNotificationMenu}
+                    onClose={handleDismissNotificationMenu}
                   />
                 )}
-              </button>
+              </div>
 
               <div className="relative">
                 <button

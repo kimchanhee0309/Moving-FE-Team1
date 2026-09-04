@@ -1,2 +1,8 @@
 export { Gnb } from "./Gnb";
-export type { GnbAuthenticatedUser, GnbNavItem, GnbProps } from "./gnb.types";
+export type {
+  GnbAuthenticatedUser,
+  GnbNavItem,
+  GnbNotificationItem,
+  GnbNotificationSegment,
+  GnbProps,
+} from "./gnb.types";
