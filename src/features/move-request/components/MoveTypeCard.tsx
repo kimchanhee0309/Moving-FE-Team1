@@ -1,30 +1,47 @@
 "use client";
 
-import type { ReactNode } from "react";
+import Image from "next/image";
+
+import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+
+/**
+ * 이사 유형(`ServiceType`)별 고정 표시 내용. 서비스가 다루는 이사 유형은
+ * `SERVICE_TYPE` 3종으로 고정돼 있어(도메인 상수 자체가 확장 시에만 바뀜),
+ * 호출부마다 title/description/icon을 반복 전달하지 않고 이 컴포넌트가 직접 소유한다.
+ */
+const MOVE_TYPE_CONTENT: Record<
+  ServiceType,
+  { title: string; description: string; imageSrc: string }
+> = {
+  [SERVICE_TYPE.SMALL]: {
+    title: "소형이사",
+    description: "원룸, 투룸, 20평대 미만",
+    imageSrc: "/images/move-type-small.png",
+  },
+  [SERVICE_TYPE.HOME]: {
+    title: "가정이사",
+    description: "쓰리룸, 20평대 이상",
+    imageSrc: "/images/move-type-home.png",
+  },
+  [SERVICE_TYPE.OFFICE]: {
+    title: "사무실이사",
+    description: "사무실, 상업공간",
+    imageSrc: "/images/move-type-office.png",
+  },
+};
 
 export interface MoveTypeCardProps {
   /**
-   * 같은 선택지 묶음(예: 이사 유형 3종) 안에서 공유해야 하는 radio input의 name.
+   * 같은 선택지 묶음(이사 유형 3종) 안에서 공유해야 하는 radio input의 name.
    * 브라우저 네이티브 radio 동작을 사용해 한 번에 하나만 선택되도록 한다.
    */
   name: string;
-  /** 이 카드가 선택됐을 때 상위로 전달되는 값 (예: SERVICE_TYPE.SMALL 등). */
-  value: string;
-  /** 카드 제목 (예: "소형이사"). */
-  title: string;
-  /** 카드 설명 (예: "원룸, 투룸, 20평대 미만"). */
-  description: string;
-  /**
-   * 카드 우측(모바일) 또는 하단(태블릿/데스크톱)에 표시할 일러스트.
-   * 이 컴포넌트는 이미지 소스를 소유하지 않으므로 호출부가 `next/image` 등으로 주입한다.
-   */
-  icon: ReactNode;
+  /** 이 카드가 나타내는 이사 유형. 제목/설명/이미지는 이 값으로 고정 결정된다. */
+  value: ServiceType;
   /** 현재 선택 여부 (controlled). */
   checked: boolean;
   /** 선택이 바뀔 때 호출된다. 실제 상태 관리는 호출부가 소유한다. */
-  onChange: (value: string) => void;
-  /** 비활성화 여부. Figma에는 정의되어 있지 않은 확장 상태다. */
-  disabled?: boolean;
+  onChange: (value: ServiceType) => void;
   className?: string;
 }
 
@@ -44,14 +61,12 @@ export interface MoveTypeCardProps {
 export function MoveTypeCard({
   name,
   value,
-  title,
-  description,
-  icon,
   checked,
   onChange,
-  disabled = false,
   className,
 }: MoveTypeCardProps) {
+  const { title, description, imageSrc } = MOVE_TYPE_CONTENT[value];
+
   return (
     <label
       className={[
@@ -63,7 +78,6 @@ export function MoveTypeCard({
               "border border-transparent bg-[var(--background-200)]",
               "md:hover:border-[var(--gray-300)] md:hover:bg-[var(--background-300)]",
             ].join(" "),
-        disabled ? "cursor-not-allowed opacity-50" : "",
         className ?? "",
       ]
         .filter(Boolean)
@@ -74,7 +88,6 @@ export function MoveTypeCard({
         name={name}
         value={value}
         checked={checked}
-        disabled={disabled}
         onChange={() => onChange(value)}
         className="peer sr-only"
       />
@@ -113,7 +126,15 @@ export function MoveTypeCard({
         </div>
       </div>
 
-      <div className="size-[120px] shrink-0">{icon}</div>
+      <div className="size-[120px] shrink-0">
+        <Image
+          src={imageSrc}
+          alt=""
+          width={120}
+          height={120}
+          className="size-full object-contain"
+        />
+      </div>
     </label>
   );
 }

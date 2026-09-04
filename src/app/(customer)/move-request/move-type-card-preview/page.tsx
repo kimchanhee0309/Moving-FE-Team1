@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
@@ -15,31 +14,11 @@ import { MoveTypeCard } from "@/features/move-request/components/MoveTypeCard";
  * 눈으로 확인하기 위한 QA용 페이지이며, 실제 이사 유형 선택 단계가
  * 구현되면 삭제하거나 그 화면으로 대체해도 된다.
  */
-const MOVE_TYPE_OPTIONS: {
-  value: ServiceType;
-  title: string;
-  description: string;
-  src: string;
-}[] = [
-  {
-    value: SERVICE_TYPE.SMALL,
-    title: "소형이사",
-    description: "원룸, 투룸, 20평대 미만",
-    src: "/images/move-type-small.png",
-  },
-  {
-    value: SERVICE_TYPE.HOME,
-    title: "가정이사",
-    description: "쓰리룸, 20평대 이상",
-    src: "/images/move-type-home.png",
-  },
-  {
-    value: SERVICE_TYPE.OFFICE,
-    title: "사무실이사",
-    description: "사무실, 상업공간",
-    src: "/images/move-type-office.png",
-  },
-];
+const MOVE_TYPE_LABEL: Record<ServiceType, string> = {
+  [SERVICE_TYPE.SMALL]: "소형이사",
+  [SERVICE_TYPE.HOME]: "가정이사",
+  [SERVICE_TYPE.OFFICE]: "사무실이사",
+};
 
 export default function MoveTypeCardPreviewPage() {
   const [selected, setSelected] = useState<ServiceType>(SERVICE_TYPE.SMALL);
@@ -59,57 +38,20 @@ export default function MoveTypeCardPreviewPage() {
 
       <fieldset className="flex flex-col gap-4 md:flex-row">
         <legend className="sr-only">이사 유형 선택</legend>
-        {MOVE_TYPE_OPTIONS.map((option) => (
+        {Object.values(SERVICE_TYPE).map((serviceType) => (
           <MoveTypeCard
-            key={option.value}
+            key={serviceType}
             name="move-type-preview"
-            value={option.value}
-            title={option.title}
-            description={option.description}
-            checked={selected === option.value}
-            onChange={(value) => setSelected(value as ServiceType)}
-            icon={
-              <Image
-                src={option.src}
-                alt=""
-                width={120}
-                height={120}
-                className="size-full object-contain"
-              />
-            }
+            value={serviceType}
+            checked={selected === serviceType}
+            onChange={setSelected}
           />
         ))}
       </fieldset>
 
       <p className="text-md-medium text-[var(--black-500)]">
-        현재 선택: {MOVE_TYPE_OPTIONS.find((o) => o.value === selected)?.title}
+        현재 선택: {MOVE_TYPE_LABEL[selected]}
       </p>
-
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg-semibold text-[var(--black-500)]">
-          disabled 상태 예시
-        </h2>
-        <div className="flex flex-col gap-4 md:flex-row">
-          <MoveTypeCard
-            name="move-type-preview-disabled"
-            value={SERVICE_TYPE.OFFICE}
-            title="사무실이사"
-            description="사무실, 상업공간"
-            checked={false}
-            disabled
-            onChange={() => {}}
-            icon={
-              <Image
-                src="/images/move-type-office.png"
-                alt=""
-                width={120}
-                height={120}
-                className="size-full object-contain"
-              />
-            }
-          />
-        </div>
-      </section>
     </main>
   );
 }
