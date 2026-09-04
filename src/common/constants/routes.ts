@@ -17,6 +17,9 @@ export const ROUTES = {
     MOVER_SEARCH: "/mover-search",
 
     MOVER_DETAIL: (moverId: string) => `/mover-search/${moverId}`,
+
+    // 공통 Input의 상태와 크기를 팀원이 로컬에서 확인하는 예시 페이지입니다.
+    INPUT_COMPONENT_EXAMPLE: "/component-example/input",
   },
 
   CUSTOMER: {

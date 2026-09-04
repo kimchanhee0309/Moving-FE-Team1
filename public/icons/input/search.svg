@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Figma ic/search 원본 path입니다. sm은 24px, md는 36px 프레임 중앙에 배치합니다. -->
+  <circle cx="10.585" cy="10.5859" r="6.25" transform="rotate(-45 10.585 10.5859)" stroke="#ABABAB" stroke-width="1.5" />
+  <path d="M15.5352 15.5356L18.3636 18.3641" stroke="#ABABAB" stroke-width="1.5" stroke-linecap="round" />
+</svg>
