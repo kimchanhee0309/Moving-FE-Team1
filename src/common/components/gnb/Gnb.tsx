@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 
 import { ROUTES } from "@/common/constants/routes";
 
+import { GnbMobileMenu } from "./GnbMobileMenu";
 import {
   GNB_DEFAULT_LOGIN_HREF,
   GNB_GUEST_NAV_ITEMS,
@@ -30,6 +31,10 @@ export function Gnb(props: GnbProps) {
     : GNB_GUEST_NAV_ITEMS;
 
   const handleCloseMenu = () => setIsMenuOpen(false);
+  const handleDismissMenu = () => {
+    setIsMenuOpen(false);
+    menuButtonRef.current?.focus();
+  };
   const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   useEffect(() => {
@@ -43,8 +48,7 @@ export function Gnb(props: GnbProps) {
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setIsMenuOpen(false);
-        menuButtonRef.current?.focus();
+        handleDismissMenu();
       }
     }
 
@@ -177,36 +181,15 @@ export function Gnb(props: GnbProps) {
       </div>
 
       {isMenuOpen && (
-        <nav
-          id={menuId}
-          aria-label="전체 메뉴"
-          className="flex flex-col gap-4 border-t border-(--line-100) bg-(--gray-50) px-6 py-4 md:px-10 lg:hidden"
-        >
-          <ul className="m-0 flex list-none flex-col gap-1 p-0">
-            {navItems.map((item, index) => (
-              <li key={item.href}>
-                <Link
-                  ref={index === 0 ? firstMobileNavLinkRef : undefined}
-                  href={item.href}
-                  onClick={handleCloseMenu}
-                  className={`text-lg-bold block rounded-lg px-2 py-3 text-(--black-500) no-underline hover:bg-(--background-200) ${FOCUS_RING}`}
-                >
-                  {item.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-
-          {!props.isAuthenticated && (
-            <Link
-              href={loginHref}
-              onClick={handleCloseMenu}
-              className={`text-lg-semibold block rounded-xl bg-(--primary-400) px-4 py-3.5 text-center text-(--gray-50) no-underline hover:bg-(--primary-500) ${FOCUS_RING}`}
-            >
-              로그인
-            </Link>
-          )}
-        </nav>
+        <GnbMobileMenu
+          menuId={menuId}
+          navItems={navItems}
+          isAuthenticated={!!props.isAuthenticated}
+          loginHref={loginHref}
+          firstNavLinkRef={firstMobileNavLinkRef}
+          onNavigate={handleCloseMenu}
+          onClose={handleDismissMenu}
+        />
       )}
     </header>
   );
