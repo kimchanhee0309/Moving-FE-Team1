@@ -7,10 +7,12 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ROUTES } from "@/common/constants/routes";
 
 import { GnbMobileMenu } from "./GnbMobileMenu";
+import { GnbProfileMenu } from "./GnbProfileMenu";
 import {
   GNB_DEFAULT_LOGIN_HREF,
   GNB_GUEST_NAV_ITEMS,
   GNB_NAV_ITEMS_BY_ROLE,
+  GNB_PROFILE_MENU_ITEMS_BY_ROLE,
 } from "./gnb.constants";
 import type { GnbProps } from "./gnb.types";
 
@@ -22,26 +24,61 @@ export function Gnb(props: GnbProps) {
   const loginHref = props.loginHref ?? GNB_DEFAULT_LOGIN_HREF;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuId = useId();
+  const profileMenuId = useId();
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
   const firstMobileNavLinkRef = useRef<HTMLAnchorElement>(null);
+  const firstProfileMenuItemRef = useRef<HTMLAnchorElement>(null);
 
-  const navItems = props.isAuthenticated
-    ? GNB_NAV_ITEMS_BY_ROLE[props.user.role]
+  // 로그인 여부에 따라 좁혀진 값을 미리 뽑아 두면, 아래 JSX/handler에서 `props.isAuthenticated`
+  // discriminated union을 매번 다시 좁히지 않고도 안전하게 재사용할 수 있다.
+  const authenticatedUser = props.isAuthenticated ? props.user : null;
+  const onLogout = props.isAuthenticated ? props.onLogout : undefined;
+
+  const navItems = authenticatedUser
+    ? GNB_NAV_ITEMS_BY_ROLE[authenticatedUser.role]
     : GNB_GUEST_NAV_ITEMS;
+  const profileMenuItems = authenticatedUser
+    ? GNB_PROFILE_MENU_ITEMS_BY_ROLE[authenticatedUser.role]
+    : [];
 
   const handleCloseMenu = () => setIsMenuOpen(false);
   const handleDismissMenu = () => {
     setIsMenuOpen(false);
     menuButtonRef.current?.focus();
   };
-  const handleToggleMenu = () => setIsMenuOpen((prev) => !prev);
+  const handleToggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+    setIsProfileMenuOpen(false);
+  };
+
+  const handleCloseProfileMenu = () => setIsProfileMenuOpen(false);
+  const handleDismissProfileMenu = () => {
+    setIsProfileMenuOpen(false);
+    profileButtonRef.current?.focus();
+  };
+  const handleToggleProfileMenu = () => {
+    setIsProfileMenuOpen((prev) => !prev);
+    setIsMenuOpen(false);
+  };
+  const handleLogoutClick = () => {
+    handleDismissProfileMenu();
+    onLogout?.();
+  };
 
   useEffect(() => {
     if (isMenuOpen) {
       firstMobileNavLinkRef.current?.focus();
     }
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (isProfileMenuOpen) {
+      firstProfileMenuItemRef.current?.focus();
+    }
+  }, [isProfileMenuOpen]);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -56,6 +93,20 @@ export function Gnb(props: GnbProps) {
 
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleDismissProfileMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isProfileMenuOpen]);
 
   return (
     <header
@@ -110,7 +161,7 @@ export function Gnb(props: GnbProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-6 lg:gap-8">
-          {props.isAuthenticated && (
+          {authenticatedUser && (
             <>
               <button
                 type="button"
@@ -133,21 +184,43 @@ export function Gnb(props: GnbProps) {
                 )}
               </button>
 
-              <Link
-                href={props.user.profileHref}
-                className={`inline-flex items-center gap-4 rounded-lg text-(--black-500) no-underline ${FOCUS_RING}`}
-              >
-                <Image
-                  src="/images/gnb/icon-profile-default.svg"
-                  alt=""
-                  width={36}
-                  height={36}
-                  className="size-6 rounded-full lg:size-9"
-                />
-                <span className="text-2lg-medium hidden whitespace-nowrap lg:inline">
-                  {props.user.name}
-                </span>
-              </Link>
+              <div className="relative">
+                <button
+                  ref={profileButtonRef}
+                  type="button"
+                  onClick={handleToggleProfileMenu}
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileMenuOpen}
+                  aria-controls={profileMenuId}
+                  aria-label={`${authenticatedUser.name} 계정 메뉴 ${isProfileMenuOpen ? "닫기" : "열기"}`}
+                  className={`inline-flex cursor-pointer items-center gap-4 rounded-lg border-0 bg-transparent p-0 text-(--black-500) ${FOCUS_RING}`}
+                >
+                  <Image
+                    src="/images/gnb/icon-profile-default.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="size-6 rounded-full lg:size-9"
+                  />
+                  <span className="text-2lg-medium hidden whitespace-nowrap lg:inline">
+                    {authenticatedUser.name}
+                  </span>
+                </button>
+
+                {isProfileMenuOpen && (
+                  <GnbProfileMenu
+                    menuId={profileMenuId}
+                    role={authenticatedUser.role}
+                    userName={authenticatedUser.name}
+                    items={profileMenuItems}
+                    firstItemRef={firstProfileMenuItemRef}
+                    triggerRef={profileButtonRef}
+                    onNavigate={handleCloseProfileMenu}
+                    onLogout={handleLogoutClick}
+                    onClose={handleDismissProfileMenu}
+                  />
+                )}
+              </div>
             </>
           )}
 
