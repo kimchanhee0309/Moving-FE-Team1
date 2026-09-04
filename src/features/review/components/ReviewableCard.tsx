@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { ButtonHTMLAttributes } from "react";
 
 import { SERVICE_TYPE } from "@/common/constants/domain";
@@ -41,7 +42,10 @@ function formatMoveDate(date: string): string {
 
 type ChipVariant = "service" | "designated";
 
-const CHIP_VARIANT: Record<ChipVariant, { className: string; iconSrc: string }> = {
+const CHIP_VARIANT: Record<
+  ChipVariant,
+  { className: string; iconSrc: string }
+> = {
   service: {
     className: "bg-(--primary-100) text-(--primary-400)",
     iconSrc: "/icons/ic-solid-box.svg",
@@ -70,7 +74,14 @@ function Chip({ variant, children }: ChipProps) {
         className,
       )}
     >
-      <img src={iconSrc} alt="" className="size-5 shrink-0" />
+      <Image
+        src={iconSrc}
+        alt=""
+        width={20}
+        height={20}
+        className="size-5 shrink-0 object-contain"
+        unoptimized
+      />
       {children}
     </span>
   );
@@ -84,19 +95,23 @@ interface AvatarProps {
 
 function Avatar({ src, moverName, className }: AvatarProps) {
   const isDefaultImage = !src;
+  const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
 
   return (
     <div
       className={cn(
-        "shrink-0 overflow-hidden rounded-xl bg-(--black-300)",
+        "relative shrink-0 overflow-hidden rounded-xl bg-(--black-300)",
         className,
       )}
     >
-      <img
-        src={src ?? DEFAULT_PROFILE_IMAGE}
-        alt={`${moverName} 기사님 프로필 이미지`}
+      <Image
+        src={profileSrc}
+        alt={`${moverName} 기사님 프로필`}
+        fill
+        sizes="(min-width: 1280px) 150px, (min-width: 768px) 120px, 96px"
+        quality={isDefaultImage ? 100 : 75}
         className={cn(
-          "size-full object-cover",
+          "object-cover",
           isDefaultImage && "translate-y-[11%] scale-150",
         )}
       />
@@ -104,8 +119,7 @@ function Avatar({ src, moverName, className }: AvatarProps) {
   );
 }
 
-interface WriteReviewButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface WriteReviewButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   isReviewWritten: boolean;
 }
 
@@ -140,17 +154,23 @@ function MovingBadge() {
       aria-hidden="true"
     >
       <span className="relative h-[18.2px] w-4">
-        <img
+        <Image
           src="/icons/ic-moving-badge.svg"
           alt=""
+          width={16}
+          height={18}
           className="size-full object-contain"
+          unoptimized
         />
       </span>
       <span className="absolute left-1/2 top-1/2 flex h-[7.2px] w-[12.8px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-        <img
+        <Image
           src="/icons/ic-moving-badge-m.svg"
           alt=""
+          width={12}
+          height={6}
           className="h-[6.1px] w-[11.6px] object-contain"
+          unoptimized
         />
       </span>
     </span>
