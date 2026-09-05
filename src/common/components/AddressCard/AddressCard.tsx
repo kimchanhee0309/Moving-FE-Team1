@@ -1,3 +1,5 @@
+"use client";
+
 import type { AddressCardProps } from "./AddressCard.types";
 
 const FOCUS_RING =
@@ -36,7 +38,8 @@ function AddressLine({ type, value }: AddressLineProps) {
  *   사이즈임을 실제 모바일 화면 목업으로 확인했다(별도 tablet 전용 사이즈는 없음) — 그래서 640px 미만(모바일)만
  *   sm 스타일을 쓰고, 640px 이상(태블릿+데스크톱)은 전부 md 스타일을 쓴다.
  * - 너비는 항상 `w-full`이며 실제 픽셀 폭은 이 카드를 담는 컨테이너(AddressSearchModal 등)가 결정합니다.
- * - 선택 상태는 배경/테두리 색상뿐 아니라 테두리 두께로도 구분해 색상만으로 상태를 전달하지 않습니다.
+ * - 선택 상태는 배경/테두리 색상 변화와 함께 `aria-pressed`로도 전달되어, 색상을 인지하지 못해도
+ *   스크린 리더 등 보조 기술로 선택 여부를 확인할 수 있습니다.
  */
 export function AddressCard({
   address,

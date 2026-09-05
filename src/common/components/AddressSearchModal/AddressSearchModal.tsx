@@ -165,7 +165,7 @@ export function AddressSearchModal({
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder={searchPlaceholder}
               aria-label={title}
-              className="text-2lg-regular min-w-0 flex-1 appearance-none bg-transparent text-(--black-400)! outline-none placeholder:text-(--gray-300) [&::-webkit-search-cancel-button]:appearance-none"
+              className="text-2lg-regular min-w-0 flex-1 appearance-none bg-transparent text-(--black-400)! outline-none focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-(--black-400)! placeholder:text-(--gray-300) [&::-webkit-search-cancel-button]:appearance-none"
             />
             {searchValue.length > 0 ? (
               <button
