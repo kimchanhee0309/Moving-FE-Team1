@@ -212,7 +212,7 @@ export function Gnb(props: GnbProps) {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className={`text-2lg-bold inline-flex h-22 items-center justify-center whitespace-nowrap py-4 text-(--black-500) no-underline hover:text-(--primary-400) ${FOCUS_RING}`}
+                    className={`text-2lg-bold inline-flex h-22 items-center justify-center whitespace-nowrap py-4 text-(--black-500)! no-underline hover:text-(--primary-400)! ${FOCUS_RING}`}
                   >
                     {item.label}
                   </Link>
@@ -276,7 +276,7 @@ export function Gnb(props: GnbProps) {
                   aria-expanded={isProfileMenuOpen}
                   aria-controls={profileMenuId}
                   aria-label={`${authenticatedUser.name} 계정 메뉴 ${isProfileMenuOpen ? "닫기" : "열기"}`}
-                  className={`inline-flex cursor-pointer items-center gap-4 rounded-lg border-0 bg-transparent p-0 text-(--black-500) ${FOCUS_RING}`}
+                  className={`inline-flex cursor-pointer items-center gap-4 rounded-lg border-0 bg-transparent p-0 text-(--black-500)! ${FOCUS_RING}`}
                 >
                   <Image
                     src="/images/gnb/icon-profile-default.svg"
@@ -310,7 +310,7 @@ export function Gnb(props: GnbProps) {
           {!props.isAuthenticated && (
             <Link
               href={loginHref}
-              className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50) no-underline hover:bg-(--primary-500) lg:inline-flex ${FOCUS_RING}`}
+              className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50)! no-underline hover:bg-(--primary-500) lg:inline-flex ${FOCUS_RING}`}
             >
               로그인
             </Link>

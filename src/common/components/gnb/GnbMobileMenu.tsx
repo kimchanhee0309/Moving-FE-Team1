@@ -89,7 +89,7 @@ export function GnbMobileMenu({
                   ref={index === 0 ? firstNavLinkRef : undefined}
                   href={item.href}
                   onClick={onNavigate}
-                  className={`text-lg-medium block px-5 py-6 text-(--black-500) no-underline hover:bg-(--background-200) ${FOCUS_RING}`}
+                  className={`text-lg-medium block px-5 py-6 text-(--black-500)! no-underline hover:bg-(--background-200) ${FOCUS_RING}`}
                 >
                   {item.label}
                 </Link>
@@ -102,7 +102,7 @@ export function GnbMobileMenu({
               <Link
                 href={loginHref}
                 onClick={onNavigate}
-                className={`text-lg-semibold block rounded-xl bg-(--primary-400) px-4 py-3.5 text-center text-(--gray-50) no-underline hover:bg-(--primary-500) ${FOCUS_RING}`}
+                className={`text-lg-semibold block rounded-xl bg-(--primary-400) px-4 py-3.5 text-center text-(--gray-50)! no-underline hover:bg-(--primary-500) ${FOCUS_RING}`}
               >
                 로그인
               </Link>

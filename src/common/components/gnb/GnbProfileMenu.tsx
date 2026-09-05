@@ -36,10 +36,15 @@ const PROFILE_MENU_SIZE = {
   logoutPadding: "px-3 pt-3 pb-2 lg:pt-3.5",
   /** 상단 인사말 타이포그래피/색상. */
   headerText: "text-lg-bold text-(--black-400) lg:text-2lg-bold lg:text-(--black-300)",
-  /** 이동형 항목 타이포그래피/색상. */
-  itemText: "text-md-medium text-(--black-400) lg:text-lg-medium",
-  /** 로그아웃 타이포그래피/색상. */
-  logoutText: "text-xs-regular text-(--gray-500) lg:text-md-medium",
+  /**
+   * 이동형 항목 타이포그래피/색상. `Link`(`<a>`)에 직접 거는 색상이라, 이 프로젝트의 언레이어드
+   * reset(`a { color: inherit }`)에 항상 밀리는 걸 막기 위해 `!`를 붙인다.
+   */
+  itemText: "text-md-medium text-(--black-400)! lg:text-lg-medium",
+  /**
+   * 로그아웃 타이포그래피/색상. `<button>`에 직접 거는 색상이라 위와 같은 이유로 `!`를 붙인다.
+   */
+  logoutText: "text-xs-regular text-(--gray-500)! lg:text-md-medium",
 };
 
 /**
