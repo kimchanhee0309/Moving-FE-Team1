@@ -247,9 +247,11 @@ function StarRating({
               width={36}
               height={36}
               className={cn(
-                "size-full object-contain",
+                "pointer-events-none size-full select-none object-contain [-webkit-user-drag:none]",
                 !isActive && "opacity-25 grayscale",
               )}
+              draggable={false}
+              onDragStart={(event) => event.preventDefault()}
               unoptimized
             />
           </button>
