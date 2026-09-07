@@ -1,9 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useId, useRef } from "react";
 import type { MouseEvent, PropsWithChildren } from "react";
-import styles from "./Modal.module.css";
-import Image from "next/image";
 
 interface ModalProps extends PropsWithChildren {
   isOpen: boolean;
@@ -110,28 +109,34 @@ export function Modal({
   };
 
   return (
-    <div className={styles.backdrop} onMouseDown={handleBackdropMouseDown}>
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgb(17_17_17/72%)] p-6 max-md:items-end max-md:p-0"
+      onMouseDown={handleBackdropMouseDown}
+    >
       <div
         ref={dialogRef}
-        className={styles.dialog}
+        className="box-border flex max-h-[calc(100dvh-48px)] w-full max-w-[608px] flex-col gap-10 overflow-y-auto rounded-[32px] bg-[var(--gray-50)] px-6 pt-8 pb-10 shadow-[4px_4px_5px_rgb(169_169_169/20%)] outline-none max-md:max-h-dvh max-md:max-w-[375px] max-md:gap-[26px] max-md:rounded-t-[32px] max-md:rounded-b-none"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <header className={styles.header}>
-          <h2 id={titleId} className={`${styles.title} text-xl-semibold`}>
+        <header className="flex items-center justify-between">
+          <h2
+            id={titleId}
+            className="text-[24px] font-semibold leading-8 text-[var(--content-strong)] max-md:text-[18px] max-md:font-bold max-md:leading-[26px]"
+          >
             {title}
           </h2>
 
           <button
             type="button"
-            className={styles.closeButton}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg hover:bg-[var(--gray-100)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] max-md:size-6"
             aria-label={`${title} 닫기`}
             onClick={onClose}
           >
             <Image
-              className={styles.closeIcon}
+              className="size-full"
               src="/icons/mover-request/close.svg"
               alt=""
               width={36}
