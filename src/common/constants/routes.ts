@@ -66,4 +66,8 @@ export const ROUTES = {
       REJECTED_REQUESTS: "/mover-quote/rejected",
     },
   },
+
+  COMPONENT_EXAMPLE: {
+    DROPDOWN: "/component-example/dropdown",
+  },
 } as const;
