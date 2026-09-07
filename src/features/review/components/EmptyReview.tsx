@@ -30,7 +30,6 @@ export function EmptyReview({
       )}
     >
       <div className="relative h-[196px] w-[240px] shrink-0 overflow-hidden bg-transparent">
-        {/* Figma: 클립 + opacity 50% (배경은 투명 PNG) */}
         <div className="absolute left-[-11.04px] top-[-16.29px] size-[260.633px] opacity-50">
           <Image
             src={CHARACTER_IMAGE}
@@ -57,7 +56,6 @@ export function EmptyReview({
         <Link
           href={href}
           className={cn(
-            /* reset.css a 초기화보다 우선 */
             "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! p-4",
             "text-lg-semibold text-[var(--gray-50)]!",
             "min-[558px]:h-16 min-[558px]:rounded-2xl min-[558px]:text-2lg-semibold",
