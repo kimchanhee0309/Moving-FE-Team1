@@ -1,6 +1,6 @@
 import localFont from "next/font/local";
 import type { Metadata } from "next";
-import type { PropsWithChildren } from "react";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 import { Providers } from "@/providers";
@@ -17,7 +17,11 @@ export const metadata: Metadata = {
   description: "믿을 수 있는 이사 견적 매칭 서비스",
 };
 
-export default function RootLayout({ children }: PropsWithChildren) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ko" className={pretendard.variable}>
       <body>
