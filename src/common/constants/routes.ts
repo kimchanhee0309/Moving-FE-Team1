@@ -20,8 +20,6 @@ export const ROUTES = {
 
     // 공통 Input의 상태와 크기를 팀원이 로컬에서 확인하는 예시 페이지입니다.
     INPUT_COMPONENT_EXAMPLE: "/component-example/input",
-    // 공통 Button/Etc의 Figma variant와 상호작용을 검수하는 예시 페이지입니다.
-    BUTTON_COMPONENT_EXAMPLE: "/component-example/button",
   },
 
   CUSTOMER: {
