@@ -20,6 +20,12 @@ export const ROUTES = {
 
     // 공통 Input의 상태와 크기를 팀원이 로컬에서 확인하는 예시 페이지입니다.
     INPUT_COMPONENT_EXAMPLE: "/component-example/input",
+
+    // 프로필 등록·수정 화면에서 사용하는 선택 Chip의 상태 예시입니다.
+    PROFILE_SELECTION_CHIP_EXAMPLE: "/component-example/profile-selection-chip",
+
+    // 기사님 마이페이지의 리뷰 진행 바·카드·페이지네이션 예시입니다.
+    MOVER_MYPAGE_COMPONENTS_EXAMPLE: "/component-example/mover-mypage-components",
   },
 
   CUSTOMER: {
