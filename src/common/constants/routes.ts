@@ -68,6 +68,8 @@ export const ROUTES = {
   },
 
   COMPONENT_EXAMPLE: {
+    // 실제 API 호출 없이 공통 Button의 상태와 크기를 확인하는 검수 경로입니다.
+    BUTTON: "/component-example/button",
     DROPDOWN: "/component-example/dropdown",
   },
 } as const;
