@@ -18,14 +18,21 @@
 
   /* Primary Orange */
 
-  --primary-100: #feeeee;
+  --primary-100: #feeeea;
   --primary-200: #fed8d0;
   --primary-300: #fd947f;
   --primary-400: #f9502e;
   --primary-500: #f9502e;
 
-  /* Background */
+  --secondary-red-100: #ffeef0;
+  --secondary-red-200: #ff4f64;
 
+  --content-strong: #262524;
+  --content-muted: #808080;
+  --input-placeholder: #999999;
+  --content-placeholder: #ababab;
+
+  /* Background */
   --background-100: #fcfcfc;
   --background-200: #f7f7f7;
   --background-300: #efefef;
