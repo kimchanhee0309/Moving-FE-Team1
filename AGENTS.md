@@ -1,3 +1,5 @@
+# Moving FE Team 1 - AI 작업 규칙
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know
@@ -7,6 +9,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+이 파일은 저장소 전체에 적용된다. Codex, Claude, Cursor, Copilot 등 어떤 AI 도구를 사용하더라도 아래 규칙을 동일하게 따른다. 하위 폴더에 별도의 `AGENTS.md`가 있다면 그 폴더에서는 더 가까운 문서의 추가 규칙을 함께 적용한다.
 
 ## 0. AGENTS.md 보호 규칙
 
@@ -84,29 +88,78 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 5. 폴더와 책임 경계
 
-```
-src/
-├─ app/                         # App Router 라우트와 얇은 페이지 조합
-│  ├─ (public)/
-│  ├─ (auth)/
-│  ├─ (customer)/
-│  └─ (mover)/
-├─ common/
-│  ├─ api/                     # apiClient, 공통 응답/오류 타입
-│  ├─ auth/                    # 인증 공통 타입과 로직
-│  ├─ components/              # 도메인에 종속되지 않는 공통 UI
-│  ├─ constants/               # 라우트, 환경변수, 공통 enum 상수
-│  ├─ hooks/                   # 두 개 이상 도메인에서 재사용하는 훅
-│  └─ utils/                   # 순수 공통 함수
-├─ features/
-│  └─ {feature-name}/
-│     ├─ components/           # 해당 도메인에서 재사용하는 UI
-│     ├─ hooks/                # 해당 도메인의 Query/Mutation/UI 훅
-│     ├─ {feature-name}.api.ts
-│     ├─ {feature-name}.types.ts
-│     └─ {feature-name}.utils.ts
-├─ providers/                  # 앱 전역 Provider
-└─ styles/                     # reset, color, typography 등 전역 토큰
+```text
+
+
+moving-fe-team1/
+├─ public/                         # 정적 이미지, 폰트, 아이콘 파일
+├─ src/
+│  ├─ app/                          # Next.js App Router 페이지
+│  │  ├─ (public)/
+│  │  │     └─ mover-search/         # 기사님 찾기 페이지
+│  │  │          └─ [moverId]/
+│  │  │
+│  │  ├─ (auth)/                    # 인증 관련 페이지 그룹
+│  │  │  ├─ login/                  # 로그인 페이지
+│  │  │  │    ├─ customer/
+│  │  │  │    └─ mover/
+│  │  │  └─ signup/                 # 회원가입 페이지
+│  │  │       ├─ customer/
+│  │  │       └─ mover/
+│  │  │
+│  │  └─ (customer)/                 # 일반유저 관련
+│  │  │   ├─ customer-profile/        # 일반유저 프로필
+│  │  │   │    ├─ register/
+│  │  │   │    └─ edit/
+│  │  │   ├─ move-request/            # 견적 요청
+│  │  │   ├─ customer-quote/          # 내 견적 관리(일반유저)
+│  │  │   │    ├─ pending/
+│  │  │   │    ├─ history/
+│  │  │   │    │   └─ [quoteId]/
+│  │  │   │    └─ [quoteId]/
+│  │  │   ├─ favorite/               # 찜한 기사님
+│  │  │   └─ review/                 # 리뷰
+│  │  │        ├─ create/
+│  │  │        └─ written/
+│  │  │
+│  │  └─ (mover)/                    # 기사님 관련
+│  │     ├─ mover-profile/            # 기사님 프로필
+│  │     │    ├─ register/
+│  │     │    └─ edit/
+│  │     ├─ mover-mypage/             # 기사님 마이페이지
+│  │     ├─ requests/                # 받은 요청
+│  │     └─ mover-quote/              # 내 견적 관리(기사님)
+│  │          ├─ rejected/
+│  │          └─ [quoteId]/
+│  │
+│  ├─ common/                       # 전역 공통 코드
+│  │  ├─ api/                       # 공통 API client, 외부 API 유틸
+│  │  ├─ components/                # 버튼, 모달, 인풋, GNB 등 공통 UI 컴포넌트
+│  │  ├─ hooks/
+│  │  └─ utils/                     # 공통 유틸 함수
+│  │
+│  ├─ features/                     # 기능 단위 FE 모듈
+│  │  ├─ auth/                      # 로그인/회원가입 API, 컴포넌트
+│  │  ├─ customer-profile/          # 일반유저 관련 기능
+│  │  ├─ mover-profile/             # 기사님 관련 기능
+│  │  ├─ move-request/              # 견적 요청 관련 기능
+│  │  ├─ mover-search/              # 기사님 찾기 관련 기능
+│  │  ├─ favorite/                  # 찜한 기사님 관련 기능
+│  │  ├─ customer-quote/            # 일반유저 견적 관리 관련 기능
+│  │  ├─ mover-quote/               # 기사님 견적 관리 관련 기능
+│  │  ├─ mover-requests/            # 기사님 받은 요청 관련 기능
+│  │  ├─ review/                    # 리뷰 관련 기능
+│  │  ├─ mover-mypage/              # 기사님 마이페이지 관련 기능
+│  │  └─ notification/              # 알림 관련 기능
+│  │
+│  ├─ providers/                    # 전역 Provider 모음
+│  │
+│  ├─ styles/                       # 전역 스타일 관련 파일
+│  └─ proxy.js                      # Next.js proxy/middleware 설정
+│
+├─ next.config.mjs                  # Next.js 설정, 이미지 도메인, API rewrite
+├─ package.json
+└─ README.md
 ```
 
 - `page.tsx`는 데이터·레이아웃 조합만 담당하고 큰 UI와 비즈니스 로직을 담지 않는다.
@@ -231,7 +284,22 @@ src/
 - hook 파일: `useSomething.ts`
 - API/type 파일: `feature-name.api.ts`, `feature-name.types.ts`
 
-기존 코드 스타일에 맞춰 double quote, semicolon, trailing comma를 사용한다. import는 외부 모듈, `@/` 절대 경로, 상대 경로 순으로 정리한다. 긴 상대 경로 대신 `@/*` alias를 사용한다. 설명 없는 주석, 코드를 그대로 읽은 주석, 디버그 로그, 사용하지 않는 코드와 import를 남기지 않는다.
+기존 코드 스타일에 맞춰 double quote, semicolon, trailing comma를 사용한다. import는 외부 모듈, `@/` 절대 경로, 상대 경로 순으로 정리한다. 긴 상대 경로 대신 `@/*` alias를 사용한다. 의미 없이 코드를 그대로 읽은 주석, 디버그 로그, 사용하지 않는 코드와 import를 남기지 않는다. 다만 아래 주석 작성 규칙에서 요구하는 의도·계약·예외 설명은 생략하지 않는다.
+
+### 주석 작성 규칙
+
+팀원이 AI가 작성한 코드를 빠르게 검수하고 이후 작업자가 안전하게 수정할 수 있도록, AI는 현재 작업에서 새로 만들거나 실질적으로 변경한 코드에 구현 의도를 설명하는 주석을 작성한다.
+
+- 재사용 컴포넌트, hook, API 함수, mapper, validator에는 무엇을 책임지고 무엇을 책임지지 않는지 JSDoc 또는 블록 주석으로 설명한다.
+- 공통 컴포넌트의 public props에는 controlled/uncontrolled 여부, 상태 우선순위, 단위, 기본값, 접근성 요구처럼 호출자가 알아야 하는 계약을 설명한다.
+- Figma의 고정 수치, breakpoint, 디자인 토큰 매핑, API 필드 변환, 권한·수량·날짜 제한처럼 코드만 보고 이유를 알기 어려운 값에는 출처와 선택 이유를 적는다.
+- 로딩·오류·빈 값 처리, 캐시 갱신, race condition 방지, focus 처리, `aria-*` 연결처럼 누락 시 오류가 생기기 쉬운 로직에는 동작 순서와 예외를 설명한다.
+- 여러 상태가 동시에 전달될 수 있다면 어떤 상태가 우선하는지 해당 분기 가까이에 주석으로 남긴다.
+- 페이지 조합 코드에는 큰 화면 구역이나 역할별 흐름이 명확하지 않을 때만 구역 주석을 사용한다. JSX 태그 이름을 그대로 한국어로 반복하는 주석은 쓰지 않는다.
+- 변수명·함수명만으로 충분히 드러나는 대입, 단순 조건문, import/export에는 주석을 반복해서 달지 않는다.
+- `TODO`를 남겨야 한다면 담당 작업, 필요한 확인 자료, 제거 조건을 함께 적고 막연한 메모를 남기지 않는다.
+- 코드 변경으로 설명이 달라지면 같은 작업에서 주석도 함께 갱신한다. 현재 동작과 어긋난 주석은 없는 주석보다 위험하므로 제거하거나 수정한다.
+- 주석에는 토큰, cookie, 개인정보, 내부 URL 등 민감 정보를 포함하지 않는다.
 
 ## 9. 스타일과 반응형
 
@@ -359,7 +427,7 @@ UI에서 비즈니스 제한을 안내하되 프론트만으로 권한과 수량
 
 커밋과 PR 제목은 다음 형식을 사용한다.
 
-```
+```text
 feat: 로그인 페이지 구현
 fix: 기사님 목록 정렬 오류 수정
 refactor: 견적 query hook 분리
@@ -378,7 +446,7 @@ chore: 개발 설정 정리
 
 - `git push --force`와 `git reset --hard`는 금지한다.
 - `main`, `dev`, 다른 사람의 브랜치에 force push하지 않는다.
-- 이미 PR에 올린 자신의 feature 브랜치를 rebase한 경우에만, 원격의 다른 커밋이 없는지 확인하고 팀 동의를 얻은 뒤 `-force-with-lease`를 사용할 수 있다.
+- 이미 PR에 올린 자신의 feature 브랜치를 rebase한 경우에만, 원격의 다른 커밋이 없는지 확인하고 팀 동의를 얻은 뒤 `--force-with-lease`를 사용할 수 있다.
 - 사용자 변경 삭제, 브랜치 삭제, 대량 파일 이동은 명시적 요청 없이 수행하지 않는다.
 
 ## 14. 검증과 완료 기준
