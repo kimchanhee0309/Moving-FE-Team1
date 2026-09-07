@@ -32,10 +32,6 @@ export function CalendarIcon({ className }: IconProps) {
   return <MaskIcon className={className} src="/icons/dropdown/ic-calendar.svg" />;
 }
 
-export function CloseIcon({ className }: IconProps) {
-  return <MaskIcon className={className} src="/icons/dropdown/ic-close.svg" />;
-}
-
 export function LoadingSpinner({ className }: IconProps) {
   return (
     <span

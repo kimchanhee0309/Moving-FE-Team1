@@ -4,11 +4,8 @@ import { useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 
 import {
-  CustomerProfileDropdown,
   DateDropdown,
   FilterDropdown,
-  MoverProfileDropdown,
-  NotificationDropdown,
   SortDropdown,
 } from "@/common/components/Dropdown";
 
@@ -34,28 +31,6 @@ const SORT_OPTIONS = [
   { value: "rating", label: "평점 높은순" },
   { value: "career", label: "경력 높은순" },
   { value: "confirmed", label: "확정 많은순" },
-] as const;
-
-const NOTIFICATIONS = [
-  {
-    id: "quote-arrived",
-    title: "김사과 기사님의 소형이사 견적이 도착했어요",
-    highlightedTexts: ["소형이사 견적"],
-    createdAt: "2시간 전",
-  },
-  {
-    id: "quote-confirmed",
-    title: "선택하신 견적의 예약이 확정되었어요",
-    highlightedTexts: ["확정"],
-    createdAt: "어제",
-  },
-  {
-    id: "move-day",
-    title: "경기(일산) → 서울 이사 예정일이에요",
-    highlightedTexts: ["경기(일산) → 서울", "이사 예정일"],
-    createdAt: "2일 전",
-    isRead: true,
-  },
 ] as const;
 
 export default function DropdownExamplePage() {
@@ -92,7 +67,8 @@ export default function DropdownExamplePage() {
         <header>
           <h1 className="text-2xl-bold">Dropdown 공통 컴포넌트</h1>
           <p className="text-md-regular mt-2 text-[var(--gray-500)]">
-            Figma의 필터, Dropdown2, 프로필, 알림, Sort 상태를 확인하는 예시입니다.
+            Figma의 필터, Dropdown2, Sort 상태를 확인하는 예시입니다. GNB의
+            프로필·알림 메뉴는 GNB 컴포넌트에서 관리합니다.
           </p>
         </header>
 
@@ -167,49 +143,6 @@ export default function DropdownExamplePage() {
         </ExampleSection>
 
         <ExampleSection
-          description="고객용과 기사님용 전체 메뉴를 분리하고, 이름과 각 메뉴 동작만 전달합니다."
-          title="프로필 Dropdown"
-        >
-          <CustomerProfileDropdown
-            align="left"
-            customerName="김가나"
-            favoriteMoversAction={{ href: "/favorite" }}
-            isOpen={openDropdown === "customer-profile"}
-            logoutAction={{ onSelect: () => undefined }}
-            movingReviewsAction={{ href: "/review/written" }}
-            onOpenChange={controlOpenState("customer-profile")}
-            profileEditAction={{ href: "/customer-profile/edit" }}
-            size="md"
-            trigger={<AvatarLabel label="고객" />}
-            triggerAriaLabel="일반 유저 프로필 메뉴 열기"
-          />
-          <MoverProfileDropdown
-            align="left"
-            isOpen={openDropdown === "mover-profile"}
-            logoutAction={{ onSelect: () => undefined }}
-            moverName="김코드"
-            myPageAction={{ href: "/mover-mypage" }}
-            onOpenChange={controlOpenState("mover-profile")}
-            size="sm"
-            trigger={<AvatarLabel label="기사" />}
-            triggerAriaLabel="기사님 프로필 메뉴 열기"
-          />
-        </ExampleSection>
-
-        <ExampleSection
-          description="알림 패널은 sm/md 반응형 폭, 로딩·오류·빈 상태를 지원합니다."
-          title="알림 Dropdown"
-        >
-          <NotificationDropdown
-            align="left"
-            isOpen={openDropdown === "notification"}
-            items={NOTIFICATIONS}
-            onOpenChange={controlOpenState("notification")}
-            trigger={<BellLabel />}
-          />
-        </ExampleSection>
-
-        <ExampleSection
           description="목록 페이지에서 사용할 sm/md 정렬 선택 상태입니다."
           title="Sort"
         >
@@ -247,21 +180,5 @@ function ExampleSection({ title, description, children }: ExampleSectionProps) {
       <p className="text-md-regular mt-1 text-[var(--gray-500)]">{description}</p>
       <div className="mt-6 flex flex-wrap items-start gap-6">{children}</div>
     </section>
-  );
-}
-
-function AvatarLabel({ label }: { label: string }) {
-  return (
-    <span className="text-xs-semibold flex size-12 items-center justify-center rounded-full bg-[var(--primary-100)] text-[var(--primary-400)]">
-      {label}
-    </span>
-  );
-}
-
-function BellLabel() {
-  return (
-    <span className="text-lg-semibold flex size-12 items-center justify-center rounded-full border border-[var(--line-200)] bg-white">
-      알림
-    </span>
   );
 }
