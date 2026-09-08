@@ -1,0 +1,115 @@
+import {
+  MOVE_REQUEST_STATUS,
+  QUOTE_STATUS,
+  SERVICE_TYPE,
+} from "@/common/constants/domain";
+
+import type {
+  MoverQuoteCardData,
+  MoverQuoteDetailData,
+  RejectedRequestCardData,
+} from "./mover-quote.types";
+
+export const MOCK_MOVER_QUOTES: MoverQuoteCardData[] = [
+  {
+    id: "quote-1",
+    customerName: "김인서",
+    serviceType: SERVICE_TYPE.SMALL,
+    isDesignated: true,
+    fromAddress: "서울시 중구",
+    toAddress: "경기도 수원시",
+    moveDate: "2024년 07월 01일 (월)",
+    price: 180000,
+    quoteStatus: QUOTE_STATUS.CONFIRMED,
+    moveRequestStatus: MOVE_REQUEST_STATUS.CONFIRMED,
+  },
+  {
+    id: "quote-2",
+    customerName: "박무빙",
+    serviceType: SERVICE_TYPE.HOME,
+    isDesignated: false,
+    fromAddress: "서울시 마포구",
+    toAddress: "인천시 연수구",
+    moveDate: "2024년 07월 08일 (월)",
+    price: 320000,
+    quoteStatus: QUOTE_STATUS.PENDING,
+    moveRequestStatus: MOVE_REQUEST_STATUS.WAITING,
+  },
+  {
+    id: "quote-3",
+    customerName: "이코드",
+    serviceType: SERVICE_TYPE.OFFICE,
+    isDesignated: true,
+    fromAddress: "서울시 강남구",
+    toAddress: "경기도 성남시",
+    moveDate: "2024년 07월 15일 (월)",
+    price: 450000,
+    quoteStatus: QUOTE_STATUS.PENDING,
+    moveRequestStatus: MOVE_REQUEST_STATUS.COMPLETED,
+  },
+  {
+    id: "quote-4",
+    customerName: "최이사",
+    serviceType: SERVICE_TYPE.SMALL,
+    isDesignated: true,
+    fromAddress: "서울시 종로구",
+    toAddress: "경기도 고양시",
+    moveDate: "2024년 07월 20일 (토)",
+    price: 210000,
+    quoteStatus: QUOTE_STATUS.CONFIRMED,
+    moveRequestStatus: MOVE_REQUEST_STATUS.COMPLETED,
+  },
+];
+
+export const MOCK_REJECTED_REQUESTS: RejectedRequestCardData[] = [
+  {
+    id: "rejected-request-1",
+    customerName: "김인서",
+    serviceType: SERVICE_TYPE.SMALL,
+    isDesignated: true,
+    fromAddress: "서울시 중구",
+    toAddress: "경기도 수원시",
+    moveDate: "2024년 07월 01일 (월)",
+  },
+  {
+    id: "rejected-request-2",
+    customerName: "박무빙",
+    serviceType: SERVICE_TYPE.HOME,
+    isDesignated: false,
+    fromAddress: "서울시 마포구",
+    toAddress: "인천시 연수구",
+    moveDate: "2024년 07월 08일 (월)",
+  },
+  {
+    id: "rejected-request-3",
+    customerName: "이코드",
+    serviceType: SERVICE_TYPE.OFFICE,
+    isDesignated: true,
+    fromAddress: "서울시 강남구",
+    toAddress: "경기도 성남시",
+    moveDate: "2024년 07월 15일 (월)",
+  },
+  {
+    id: "rejected-request-4",
+    customerName: "최이사",
+    serviceType: SERVICE_TYPE.SMALL,
+    isDesignated: false,
+    fromAddress: "서울시 종로구",
+    toAddress: "경기도 고양시",
+    moveDate: "2024년 07월 20일 (토)",
+  },
+];
+
+export const MOCK_MOVER_QUOTE_DETAIL: MoverQuoteDetailData = {
+  id: "quote-1",
+  customerName: "김인서",
+  serviceType: SERVICE_TYPE.OFFICE,
+  isDesignated: true,
+  fromAddress: "서울 중구 삼일대로 343",
+  toAddress: "서울 강남구 선릉로 428",
+  requestedAt: "24.08.26",
+  moveDate: "2024. 08. 26(월) 오전 10:00",
+  price: 180000,
+  quoteStatus: QUOTE_STATUS.CONFIRMED,
+  moveRequestStatus: MOVE_REQUEST_STATUS.CONFIRMED,
+};

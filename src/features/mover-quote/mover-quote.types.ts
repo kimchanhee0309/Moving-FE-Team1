@@ -16,3 +16,17 @@ export interface MoverQuoteCardData {
   quoteStatus: QuoteStatus;
   moveRequestStatus: MoveRequestStatus;
 }
+
+export interface RejectedRequestCardData {
+  id: string;
+  customerName: string;
+  serviceType: ServiceType;
+  isDesignated: boolean;
+  fromAddress: string;
+  toAddress: string;
+  moveDate: string;
+}
+
+export interface MoverQuoteDetailData extends MoverQuoteCardData {
+  requestedAt: string;
+}
