@@ -1,10 +1,11 @@
+import { SERVICE_TYPE } from "@/common/constants/domain";
 import type { ReceivedRequestViewModel } from "./mover-requests.types";
 
 export const MOCK_RECEIVED_REQUESTS: ReceivedRequestViewModel[] = [
   {
     requestId: "request-1",
     customerName: "김인서",
-    moveTypeLabel: "소형이사",
+    serviceType: SERVICE_TYPE.SMALL,
     isDesignated: true,
     requestedAt: "2024-06-30T09:00:00+09:00",
     requestedAtLabel: "1시간 전",
@@ -16,7 +17,7 @@ export const MOCK_RECEIVED_REQUESTS: ReceivedRequestViewModel[] = [
   {
     requestId: "request-2",
     customerName: "박무빙",
-    moveTypeLabel: "가정이사",
+    serviceType: SERVICE_TYPE.HOME,
     isDesignated: true,
     requestedAt: "2024-06-30T08:00:00+09:00",
     requestedAtLabel: "2시간 전",
@@ -28,7 +29,7 @@ export const MOCK_RECEIVED_REQUESTS: ReceivedRequestViewModel[] = [
   {
     requestId: "request-3",
     customerName: "이코드",
-    moveTypeLabel: "사무실이사",
+    serviceType: SERVICE_TYPE.OFFICE,
     isDesignated: false,
     requestedAt: "2024-06-29T15:00:00+09:00",
     requestedAtLabel: "1일 전",
@@ -40,7 +41,7 @@ export const MOCK_RECEIVED_REQUESTS: ReceivedRequestViewModel[] = [
   {
     requestId: "request-4",
     customerName: "최이사",
-    moveTypeLabel: "소형이사",
+    serviceType: SERVICE_TYPE.SMALL,
     isDesignated: false,
     requestedAt: "2024-06-29T12:00:00+09:00",
     requestedAtLabel: "1일 전",

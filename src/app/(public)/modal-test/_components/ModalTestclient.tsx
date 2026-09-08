@@ -7,7 +7,7 @@ import {
   QUOTE_STATUS,
   SERVICE_TYPE,
 } from "@/common/constants/domain";
-import MoverQuoteCard from "@/features/mover-quote/components/MoverQuoteCard";
+import { MoverQuoteCard } from "@/features/mover-quote/components/MoverQuoteCard";
 import type { MoverQuoteCardData } from "@/features/mover-quote/mover-quote.types";
 import { ReceivedRequestCard } from "@/features/mover-requests/components/ReceivedRequestCard";
 import { RejectRequestModal } from "@/features/mover-requests/components/RejectRequestModal";

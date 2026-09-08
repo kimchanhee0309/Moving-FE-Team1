@@ -24,7 +24,7 @@ export function ReceivedRequestCard({
       <div className="flex flex-col gap-6 max-md:gap-4">
         <header className="flex min-h-[34px] items-center justify-between gap-4">
           <RequestBadges
-            moveTypeLabel={request.moveTypeLabel}
+            serviceType={request.serviceType}
             isDesignated={request.isDesignated}
           />
 
