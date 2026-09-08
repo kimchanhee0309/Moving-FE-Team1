@@ -9,6 +9,7 @@ interface ModalProps extends PropsWithChildren {
   title: string;
   onClose: () => void;
   closeOnBackdrop?: boolean;
+  mobileLayout?: "bottom-sheet" | "centered";
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -25,8 +26,10 @@ export function Modal({
   title,
   onClose,
   closeOnBackdrop = true,
+  mobileLayout = "bottom-sheet",
   children,
 }: ModalProps) {
+  const isBottomSheet = mobileLayout === "bottom-sheet";
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -110,12 +113,24 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgb(17_17_17/72%)] p-6 max-md:items-end max-md:p-0"
+      className={[
+        "fixed inset-0 z-[1000] flex items-center justify-center bg-[rgb(17_17_17/72%)] p-6",
+        isBottomSheet && "max-md:items-end max-md:p-0",
+      ]
+        .filter(Boolean)
+        .join(" ")}
       onMouseDown={handleBackdropMouseDown}
     >
       <div
         ref={dialogRef}
-        className="box-border flex max-h-[calc(100dvh-48px)] w-full max-w-[608px] flex-col gap-10 overflow-y-auto rounded-[32px] bg-[var(--gray-50)] px-6 pt-8 pb-10 shadow-[4px_4px_5px_rgb(169_169_169/20%)] outline-none max-md:max-h-dvh max-md:max-w-[375px] max-md:gap-[26px] max-md:rounded-t-[32px] max-md:rounded-b-none"
+        className={[
+          "box-border flex max-h-[calc(100dvh-48px)] w-full max-w-[608px] flex-col gap-10 overflow-y-auto rounded-[32px] bg-[var(--gray-50)] px-6 pt-8 pb-10 shadow-[4px_4px_5px_rgb(169_169_169/20%)] outline-none",
+          "max-md:max-w-[375px] max-md:gap-[26px]",
+          isBottomSheet &&
+            "max-md:max-h-dvh max-md:rounded-t-[32px] max-md:rounded-b-none",
+        ]
+          .filter(Boolean)
+          .join(" ")}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
