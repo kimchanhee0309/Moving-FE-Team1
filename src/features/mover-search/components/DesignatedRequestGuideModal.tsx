@@ -27,7 +27,7 @@ export function DesignatedRequestGuideModal({
       <button
         type="button"
         onClick={onRequestNormalQuote}
-        className="h-16 w-full rounded-2xl bg-[var(--primary-400)] p-4 text-center text-[18px] leading-[26px] font-semibold text-[var(--gray-50)] max-md:h-13.5 max-md:rounded-xl max-md:text-[16px]"
+        className="h-16 w-full rounded-2xl bg-[var(--primary-400)] p-4 text-center text-[18px] leading-[26px] font-semibold text-[var(--gray-50)] max-[743px]:h-13.5 max-[743px]:rounded-xl max-[743px]:text-[16px]"
       >
         일반 견적 요청 하기
       </button>
