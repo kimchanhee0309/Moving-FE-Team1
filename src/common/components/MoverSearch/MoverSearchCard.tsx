@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
@@ -21,6 +24,8 @@ const SERVICE_TYPE_CHIP_BG: Record<ServiceType, string> = {
   [SERVICE_TYPE.OFFICE]: "bg-[#ffeef0]",
 };
 
+export type MoverSearchCardSize = "sm";
+
 export interface MoverSearchCardProps {
   serviceType: ServiceType;
   moverName: string;
@@ -37,10 +42,17 @@ export interface MoverSearchCardProps {
   isSelected?: boolean;
   onSelectChange?: (isSelected: boolean) => void;
   selectLabel?: string;
+  size?: MoverSearchCardSize;
   className?: string;
 }
 
-function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
+function ServiceTypeChip({
+  serviceType,
+  isSm,
+}: {
+  serviceType: ServiceType;
+  isSm: boolean;
+}) {
   const label = SERVICE_TYPE_LABEL[serviceType];
   const icon = SERVICE_TYPE_ICON[serviceType];
   const bg = SERVICE_TYPE_CHIP_BG[serviceType];
@@ -49,10 +61,13 @@ function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
     <div
       className={[
         bg,
-        "flex shrink-0 items-center justify-center gap-0.5 rounded py-0.5 pl-1 pr-[7px]",
+        "flex h-[26px] shrink-0 items-center justify-center gap-0.5 rounded py-0.5 pl-1 pr-[7px]",
         "shadow-[4px_4px_4px_rgba(217,217,217,0.1)]",
-        "min-[1200px]:gap-1 min-[1200px]:rounded-md min-[1200px]:py-1 min-[1200px]:pl-[5px]",
-      ].join(" ")}
+        !isSm &&
+          "min-[744px]:h-8 min-[744px]:gap-1 min-[744px]:rounded-md min-[744px]:py-1 min-[744px]:pl-[5px]",
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <Image
         src={icon}
@@ -65,8 +80,11 @@ function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
       <span
         className={[
           "text-sm-semibold whitespace-nowrap text-[var(--primary-400)]",
-          "min-[1200px]:text-md-semibold",
-        ].join(" ")}
+          !isSm &&
+            "min-[744px]:text-[14px] min-[744px]:leading-6 min-[744px]:font-semibold",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         {label}
       </span>
@@ -85,6 +103,8 @@ function SelectCheckbox({
   label: string;
   className?: string;
 }) {
+  const isChecked = isSelected ?? false;
+
   return (
     <label
       className={[
@@ -97,13 +117,33 @@ function SelectCheckbox({
       <span className="sr-only">{label}</span>
       <input
         type="checkbox"
-        checked={isSelected ?? false}
+        checked={isChecked}
         onChange={(event) => onSelectChange?.(event.target.checked)}
-        className={[
-          "size-5 shrink-0 rounded border border-[var(--line-200)] accent-[var(--primary-400)]",
-          "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
-        ].join(" ")}
+        className="peer sr-only"
       />
+      <span
+        aria-hidden="true"
+        className={[
+          "flex size-5 shrink-0 items-center justify-center rounded-[4px] border bg-[var(--gray-50)]",
+          "border-[var(--line-200)]",
+          "peer-checked:border-[var(--primary-400)] peer-checked:bg-[var(--primary-400)]",
+          "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--black-400)]",
+        ].join(" ")}
+      >
+        {isChecked && (
+          <svg
+            viewBox="0 0 12 12"
+            className="size-3"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10.2 3.2 4.8 8.6 1.8 5.6l.9-.9 2.1 2.1 4.5-4.5.9.9Z"
+              fill="var(--gray-50)"
+            />
+          </svg>
+        )}
+      </span>
     </label>
   );
 }
@@ -127,7 +167,7 @@ function MoverAvatar({
         .join(" ")}
     >
       <Image
-        src={src ?? "/images/mover-profile-placeholder.png"}
+        src={src ?? "/images/mover-search/profile-placeholder.png"}
         alt={alt}
         fill
         sizes="140px"
@@ -137,16 +177,13 @@ function MoverAvatar({
   );
 }
 
-function MovingBadge({ className }: { className?: string }) {
+function MovingBadge({ compact }: { compact?: boolean }) {
   return (
     <span
       className={[
-        "relative flex h-[14.56px] w-[12.8px] shrink-0 items-center justify-center",
-        "min-[744px]:h-[18.2px] min-[744px]:w-4",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+        "relative flex shrink-0 items-center justify-center",
+        compact ? "h-[14.56px] w-[12.8px]" : "h-[18.2px] w-4",
+      ].join(" ")}
       aria-hidden="true"
     >
       <Image
@@ -159,8 +196,8 @@ function MovingBadge({ className }: { className?: string }) {
       />
       <span
         className={[
-          "absolute left-1/2 top-1/2 flex h-[5.76px] w-[10.24px] -translate-x-1/2 -translate-y-1/2 items-center justify-center",
-          "min-[744px]:h-[7.2px] min-[744px]:w-[12.8px]",
+          "absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center",
+          compact ? "h-[5.76px] w-[10.24px]" : "h-[7.2px] w-[12.8px]",
         ].join(" ")}
       >
         <Image
@@ -238,28 +275,72 @@ function formatCappedCount(count: number, cap = 999): string {
   return count > cap ? `${cap}+` : count.toLocaleString("ko-KR");
 }
 
+function useIsSingleLine(text: string) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [isOneLine, setIsOneLine] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const update = () => {
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight);
+      const height = el.getBoundingClientRect().height;
+      if (!Number.isFinite(lineHeight) || lineHeight <= 0 || height === 0) {
+        return;
+      }
+      setIsOneLine(Math.round(height / lineHeight) <= 1);
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [text]);
+
+  return { ref, isOneLine };
+}
+
+function CardDescription({
+  description,
+  className,
+  addOneLineBottomPadding = false,
+}: {
+  description: string;
+  className: string;
+  addOneLineBottomPadding?: boolean;
+}) {
+  const { ref, isOneLine } = useIsSingleLine(description);
+
+  return (
+    <div className={addOneLineBottomPadding && isOneLine ? "pb-5" : undefined}>
+      <p ref={ref} className={className}>
+        {description}
+      </p>
+    </div>
+  );
+}
+
 function MoverStatsRow({
   rating,
   reviewCount,
   careerYears,
   confirmedCount,
-  className,
+  dividerInset,
 }: {
   rating: number;
   reviewCount: number;
   careerYears: number;
   confirmedCount: number;
-  className?: string;
+  dividerInset: 6 | 8;
 }) {
+  const dividerClass = [
+    "h-3.5 w-px shrink-0 bg-[var(--line-200)]",
+    dividerInset === 6 ? "mx-1.5" : "mx-2",
+  ].join(" ");
+
   return (
-    <div
-      className={[
-        "flex items-center gap-1.5 min-[744px]:w-full min-[744px]:justify-between min-[744px]:gap-0",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-    >
+    <div className="flex items-center">
       <div className="flex items-center gap-0.5">
         <span className="relative block size-5 shrink-0">
           <Image
@@ -279,28 +360,20 @@ function MoverStatsRow({
         </span>
       </div>
 
-      <div className="flex items-center gap-1.5 min-[744px]:gap-2">
-        <span
-          className="h-3.5 w-px shrink-0 bg-[var(--line-200)]"
-          aria-hidden="true"
-        />
-        <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
-          <span className="text-[#ababab]">경력</span>
-          <span className="text-[var(--black-300)]">{careerYears}년</span>
-        </div>
+      <span className={dividerClass} aria-hidden="true" />
+
+      <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
+        <span className="text-[#ababab]">경력</span>
+        <span className="text-[var(--black-300)]">{careerYears}년</span>
       </div>
 
-      <div className="flex items-center gap-1.5 min-[744px]:gap-2">
-        <span
-          className="h-3.5 w-px shrink-0 bg-[var(--line-200)]"
-          aria-hidden="true"
-        />
-        <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
-          <span className="text-[var(--black-300)]">
-            {formatCappedCount(confirmedCount)}건
-          </span>
-          <span className="text-[#ababab]">확정</span>
-        </div>
+      <span className={dividerClass} aria-hidden="true" />
+
+      <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
+        <span className="text-[var(--black-300)]">
+          {formatCappedCount(confirmedCount)}건
+        </span>
+        <span className="text-[#ababab]">확정</span>
       </div>
     </div>
   );
@@ -322,135 +395,177 @@ export function MoverSearchCard({
   isSelected,
   onSelectChange,
   selectLabel,
+  size,
   className,
 }: MoverSearchCardProps) {
+  const isSm = size === "sm";
   const avatarAlt = `${moverName} 기사님 프로필`;
+  const checkboxLabel = selectLabel ?? `${moverName} 기사님 선택`;
 
   return (
     <article
       className={[
-        "relative flex w-[327px] max-w-full flex-col gap-3 rounded-2xl border-[0.5px] border-[var(--line-100)] bg-[var(--gray-50)] p-5",
+        "relative flex flex-col border-[0.5px] border-[var(--line-100)] bg-[var(--gray-50)]",
         "shadow-[-2px_-2px_10px_rgba(220,220,220,0.2),2px_2px_10px_rgba(220,220,220,0.2)]",
-        "min-[1200px]:w-full min-[1200px]:gap-5 min-[1200px]:rounded-[20px] min-[1200px]:px-7 min-[1200px]:py-6",
+        isSm
+          ? "w-[327px] max-w-full items-end gap-3 rounded-2xl p-5"
+          : [
+              "box-border w-[327px] min-w-[327px] max-w-[327px] shrink-0 gap-2 rounded-2xl p-5",
+              "min-[744px]:w-full min-[744px]:min-w-0 min-[744px]:max-w-full min-[744px]:gap-5 min-[744px]:rounded-[20px] min-[744px]:px-7 min-[744px]:py-6",
+            ].join(" "),
         className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <div className="flex items-center gap-2 min-[1200px]:h-[34px] min-[1200px]:justify-between">
-        <ServiceTypeChip serviceType={serviceType} />
+      <div
+        className={[
+          "flex w-full items-center justify-between",
+          !isSm && "min-[744px]:h-[34px]",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <ServiceTypeChip serviceType={serviceType} isSm={isSm} />
         {selectable && (
           <SelectCheckbox
             isSelected={isSelected}
             onSelectChange={onSelectChange}
-            label={selectLabel ?? `${moverName} 기사님 선택`}
-            className="hidden min-[1200px]:flex"
+            label={checkboxLabel}
           />
         )}
       </div>
 
-      <div className="flex w-full flex-col min-[1200px]:hidden">
-        <p className="w-full text-lg-semibold text-[var(--black-300)]">
-          {introduction}
-        </p>
-        <p
-          className={[
-            "hidden w-full overflow-hidden truncate text-[var(--gray-500)]",
-            "min-[744px]:block min-[744px]:text-sm-medium",
-          ].join(" ")}
-        >
-          {description}
-        </p>
-      </div>
-
-      <div
-        className="hidden h-px w-full bg-[var(--line-100)] min-[744px]:block min-[1200px]:hidden"
-        aria-hidden="true"
-      />
-
-      <div className="flex items-stretch gap-2 min-[1200px]:hidden">
-        <MoverAvatar
-          src={profileImageUrl}
-          alt={avatarAlt}
-          className="size-[50px]"
-        />
-
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
-          <div className="flex w-full items-center gap-1 min-[744px]:justify-between">
-            <div className="flex items-center gap-1">
-              <MovingBadge />
-              <p className="text-md-semibold whitespace-nowrap text-[var(--black-300)]">
-                {moverName} 기사님
-              </p>
-            </div>
-
-            <FavoriteButton
-              favoriteCount={favoriteCount}
-              onFavoriteClick={onFavoriteClick}
-              showCount={false}
-              size={20}
-              className="min-[744px]:hidden"
+      {isSm ? (
+        <div className="flex w-full flex-col gap-4">
+          <p className="text-lg-semibold line-clamp-1 w-full min-w-0 text-[var(--black-300)]">
+            {introduction}
+          </p>
+          <div className="flex items-center gap-2">
+            <MoverAvatar
+              src={profileImageUrl}
+              alt={avatarAlt}
+              className="size-[50px]"
             />
-            <FavoriteButton
-              favoriteCount={favoriteCount}
-              onFavoriteClick={onFavoriteClick}
-              showCount
-              size={24}
-              className="hidden min-[744px]:flex"
-            />
-          </div>
-
-          <MoverStatsRow
-            rating={rating}
-            reviewCount={reviewCount}
-            careerYears={careerYears}
-            confirmedCount={confirmedCount}
-          />
-        </div>
-      </div>
-
-      <div className="hidden w-full items-start gap-5 min-[1200px]:flex">
-        <MoverAvatar
-          src={profileImageUrl}
-          alt={avatarAlt}
-          className="size-[134px]"
-        />
-
-        <div className="flex min-w-0 flex-1 flex-col gap-5 self-stretch py-1">
-          <div className="flex w-full flex-col">
-            <p className="w-full text-xl-semibold text-[var(--black-300)]">
-              {introduction}
-            </p>
-            <p className="text-md-regular w-full overflow-hidden truncate text-[var(--gray-500)]">
-              {description}
-            </p>
-          </div>
-
-          <div className="flex w-full items-end justify-between">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-1">
-                <MovingBadge />
-                <p className="text-lg-semibold whitespace-nowrap text-[var(--black-300)]">
-                  {moverName} 기사님
-                </p>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex w-full items-center gap-1">
+                <div className="flex items-center gap-1">
+                  <MovingBadge compact />
+                  <p className="text-md-semibold whitespace-nowrap text-[var(--black-300)]">
+                    {moverName} 기사님
+                  </p>
+                </div>
+                <FavoriteButton
+                  favoriteCount={favoriteCount}
+                  onFavoriteClick={onFavoriteClick}
+                  showCount={false}
+                  size={20}
+                />
               </div>
               <MoverStatsRow
                 rating={rating}
                 reviewCount={reviewCount}
                 careerYears={careerYears}
                 confirmedCount={confirmedCount}
+                dividerInset={6}
               />
             </div>
-
-            <FavoriteButton
-              favoriteCount={favoriteCount}
-              onFavoriteClick={onFavoriteClick}
-              showCount
-              size={24}
-            />
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex w-full flex-col gap-4 min-[744px]:hidden">
+            <div className="flex w-full flex-col">
+              <p className="text-lg-semibold line-clamp-1 w-full min-w-0 text-[var(--black-300)]">
+                {introduction}
+              </p>
+              <p className="text-sm-medium line-clamp-2 w-full min-w-0 text-[var(--gray-500)]">
+                {description}
+              </p>
+            </div>
+
+            <div
+              className="h-px w-full bg-[var(--line-100)]"
+              aria-hidden="true"
+            />
+
+            <div className="flex items-stretch gap-2">
+              <MoverAvatar
+                src={profileImageUrl}
+                alt={avatarAlt}
+                className="size-[50px]"
+              />
+              <div className="flex w-fit min-w-0 flex-col justify-center gap-1">
+                <div className="flex w-0 min-w-full items-center justify-between gap-1">
+                  <div className="flex min-w-0 items-center gap-1">
+                    <MovingBadge />
+                    <p className="text-md-semibold min-w-0 truncate whitespace-nowrap text-[var(--black-300)]">
+                      {moverName} 기사님
+                    </p>
+                  </div>
+                  <FavoriteButton
+                    favoriteCount={favoriteCount}
+                    onFavoriteClick={onFavoriteClick}
+                    showCount
+                    size={24}
+                    className="shrink-0"
+                  />
+                </div>
+                <MoverStatsRow
+                  rating={rating}
+                  reviewCount={reviewCount}
+                  careerYears={careerYears}
+                  confirmedCount={confirmedCount}
+                  dividerInset={8}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden w-full items-start gap-5 min-[744px]:flex">
+            <MoverAvatar
+              src={profileImageUrl}
+              alt={avatarAlt}
+              className="size-[134px]"
+            />
+            <div className="flex min-w-0 flex-1 flex-col self-stretch">
+              <div className="flex w-full flex-col">
+                <p className="text-xl-semibold line-clamp-1 w-full min-w-0 text-[var(--black-300)]">
+                  {introduction}
+                </p>
+                <CardDescription
+                  description={description}
+                  addOneLineBottomPadding
+                  className="text-md-regular line-clamp-2 w-full min-w-0 text-[var(--gray-500)]"
+                />
+              </div>
+              <div className="flex w-full items-end justify-between">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1">
+                    <MovingBadge />
+                    <p className="text-lg-semibold whitespace-nowrap text-[var(--black-300)]">
+                      {moverName} 기사님
+                    </p>
+                  </div>
+                  <MoverStatsRow
+                    rating={rating}
+                    reviewCount={reviewCount}
+                    careerYears={careerYears}
+                    confirmedCount={confirmedCount}
+                    dividerInset={8}
+                  />
+                </div>
+                <FavoriteButton
+                  favoriteCount={favoriteCount}
+                  onFavoriteClick={onFavoriteClick}
+                  showCount
+                  size={24}
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </article>
   );
 }
