@@ -7,5 +7,8 @@ export type { WrittenReviewCardProps } from "./WrittenReviewCard";
 export { ReviewWriteModal } from "./ReviewWriteModal";
 export type { ReviewWriteModalProps } from "./ReviewWriteModal";
 
-// export { EmptyReview } from "./EmptyReview";
-// export type { EmptyReviewProps } from "./EmptyReview";
+export { EmptyReview } from "./EmptyReview";
+export type { EmptyReviewProps } from "./EmptyReview";
+
+export { ReviewTabs } from "./ReviewTabs";
+export { WritableReviewPage } from "./WritableReviewPage";

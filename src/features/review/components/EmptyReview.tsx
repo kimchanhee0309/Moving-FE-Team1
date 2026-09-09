@@ -16,6 +16,11 @@ export interface EmptyReviewProps {
   className?: string;
 }
 
+/**
+ * 리뷰 empty 상태입니다.
+ * Figma Component/empty: CTA는 호출부가 label·href를 줄 때만 노출합니다.
+ * (작성 가능 empty는 CTA opacity 0 → action 미전달)
+ */
 export function EmptyReview({
   message,
   actionLabel,
@@ -25,7 +30,7 @@ export function EmptyReview({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-6 min-[558px]:gap-8",
+        "flex flex-col items-center gap-6 min-[1200px]:gap-8",
         className,
       )}
     >
@@ -45,8 +50,9 @@ export function EmptyReview({
 
       <p
         className={cn(
-          "text-lg-regular text-center whitespace-nowrap text-[var(--input-placeholder)]",
-          "min-[558px]:text-2xl-regular",
+          "text-center whitespace-nowrap text-[var(--input-placeholder)]",
+          "text-[16px] leading-[26px] font-normal",
+          "min-[1200px]:text-[24px] min-[1200px]:leading-8",
         )}
       >
         {message}
@@ -57,9 +63,9 @@ export function EmptyReview({
           href={href}
           className={cn(
             "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! p-4",
-            "text-lg-semibold text-[var(--gray-50)]!",
-            "min-[558px]:h-16 min-[558px]:rounded-2xl min-[558px]:text-2lg-semibold",
-            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+            "text-[16px] leading-[26px] font-semibold text-[var(--gray-50)]!",
+            "min-[1200px]:h-16 min-[1200px]:rounded-2xl min-[1200px]:text-[18px]",
+            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
           )}
         >
           {actionLabel}

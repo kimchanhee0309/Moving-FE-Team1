@@ -70,7 +70,7 @@ function Chip({ variant, children }: ChipProps) {
         "inline-flex items-center justify-center gap-0.5 rounded py-0.5 pl-1 pr-1.75",
         "text-[13px]/[22px] font-semibold",
         "drop-shadow-[4px_4px_4px_rgba(217,217,217,0.1)]",
-        "xl:gap-1 xl:rounded-md xl:py-1 xl:pl-1.25 xl:text-[14px]/[24px]",
+        "min-[1200px]:gap-1 min-[1200px]:rounded-md min-[1200px]:py-1 min-[1200px]:pl-1.25 min-[1200px]:text-[14px]/[24px]",
         className,
       )}
     >
@@ -133,10 +133,12 @@ function WriteReviewButton({
       type="button"
       disabled={isReviewWritten}
       className={cn(
-        "flex h-13.5 w-full items-center justify-center rounded-xl transition-colors",
+        "flex h-13.5 w-full cursor-pointer items-center justify-center rounded-xl",
         "bg-(--primary-400)! text-(--gray-50)!",
         "text-[16px]/[26px]! font-semibold!",
-        "disabled:bg-(--gray-300)!",
+        // 공통 Button solid hover(#e04829)와 맞춤
+        "transition-colors hover:bg-[#e04829]!",
+        "disabled:cursor-not-allowed disabled:bg-(--gray-300)! disabled:hover:bg-(--gray-300)!",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)",
         className,
       )}
@@ -188,7 +190,7 @@ function MoveInfoItem({ label, value }: MoveInfoItemProps) {
       <span className="text-[14px]/[24px] font-normal text-(--gray-500)">
         {label}
       </span>
-      <span className="text-[14px]/[24px] font-normal text-(--black-500) md:text-[16px]/[26px]">
+      <span className="text-[14px]/[24px] font-normal text-(--black-500) min-[744px]:text-[16px]/[26px]">
         {value}
       </span>
     </div>
@@ -267,64 +269,64 @@ export function ReviewableCard({
         "flex flex-col gap-5 rounded-[20px] px-5 py-6",
         "border-[0.5px] border-(--line-100) bg-(--gray-50)",
         "shadow-[-2px_-2px_10px_0_rgba(220,220,220,0.2),2px_2px_10px_0_rgba(220,220,220,0.2)]",
-        "md:gap-10 md:p-8 xl:gap-6 xl:px-10 xl:py-8",
+        "min-[744px]:gap-10 min-[744px]:p-8 min-[1200px]:gap-6 min-[1200px]:px-10 min-[1200px]:py-8",
         className,
       )}
     >
-      <div className="flex flex-col gap-3 md:gap-6">
-        <div className="flex flex-col gap-3 md:gap-6 xl:flex-row xl:items-end xl:gap-2">
-          <div className="flex gap-2 md:hidden">{chipGroup}</div>
+      <div className="flex flex-col gap-3 min-[744px]:gap-6">
+        <div className="flex flex-col gap-3 min-[744px]:gap-6 min-[1200px]:flex-row min-[1200px]:items-end min-[1200px]:gap-2">
+          <div className="flex gap-2 min-[744px]:hidden">{chipGroup}</div>
 
-          <div className="flex items-center gap-2 md:items-start md:gap-5 xl:min-w-0 xl:flex-1 xl:items-end xl:gap-6">
-            <div className="order-1 flex min-w-0 flex-1 flex-col md:order-2 md:gap-2">
+          <div className="flex items-center gap-2 min-[744px]:items-start min-[744px]:gap-5 min-[1200px]:min-w-0 min-[1200px]:flex-1 min-[1200px]:items-end min-[1200px]:gap-6">
+            <div className="order-1 flex min-w-0 flex-1 flex-col min-[744px]:order-2 min-[744px]:gap-2">
               <div className="flex min-w-0 flex-col">
-                <div className="flex min-w-0 flex-col items-start gap-1 md:flex-row md:items-center md:gap-1.5">
+                <div className="flex min-w-0 flex-col items-start gap-1 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-1.5">
                   <MovingBadge />
 
-                  <p className="max-w-full truncate text-[16px]/[26px] font-semibold text-(--black-300) md:text-[18px]/[26px] md:font-bold">
+                  <p className="max-w-full truncate text-[16px]/[26px] font-semibold text-(--black-300) min-[744px]:text-[18px]/[26px] min-[744px]:font-bold">
                     {moverName} 기사님
                   </p>
                 </div>
 
-                <p className="truncate text-[12px]/[18px] font-normal text-(--gray-500) md:text-[14px]/[24px]">
+                <p className="truncate text-[12px]/[18px] font-normal text-(--gray-500) min-[744px]:text-[14px]/[24px]">
                   {moverIntroduction}
                 </p>
               </div>
 
-              <div className="hidden gap-2 md:flex">{chipGroup}</div>
+              <div className="hidden gap-2 min-[744px]:flex">{chipGroup}</div>
             </div>
 
             <Avatar
               src={profileImageUrl}
               moverName={moverName}
-              className="order-2 size-16 md:order-1 md:size-20 xl:size-25"
+              className="order-2 size-16 min-[744px]:order-1 min-[744px]:size-20 min-[1200px]:size-25"
             />
           </div>
 
           <PriceBlock
             price={price}
-            className="hidden w-40 items-end xl:flex"
+            className="hidden w-40 items-end min-[1200px]:flex"
             labelClassName="text-[16px]/[26px] font-medium text-(--gray-500)"
             valueClassName="text-[24px]/[32px] font-bold text-(--black-400)"
           />
         </div>
 
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4 xl:items-start xl:justify-between">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-4 xl:gap-5">
-            <div className="flex gap-4 md:contents">
+        <div className="flex flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:items-start min-[1200px]:justify-between">
+          <div className="flex flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:gap-5">
+            <div className="flex gap-4 min-[744px]:contents">
               <MoveInfoItem label="출발지" value={departure} />
-              <MoveInfoDivider className="hidden xl:block" />
+              <MoveInfoDivider className="hidden min-[1200px]:block" />
               <MoveInfoItem label="도착지" value={arrival} />
             </div>
-            <MoveInfoDivider className="hidden md:block" />
+            <MoveInfoDivider className="hidden min-[744px]:block" />
             <MoveInfoItem label="이사일" value={formatMoveDate(movedAt)} />
           </div>
 
-          <MoveInfoDivider className="hidden md:block xl:hidden" />
+          <MoveInfoDivider className="hidden min-[744px]:block min-[1200px]:hidden" />
 
           <PriceBlock
             price={price}
-            className="hidden flex-1 items-end md:flex xl:hidden"
+            className="hidden flex-1 items-end min-[744px]:flex min-[1200px]:hidden"
             labelClassName="text-[14px]/[24px] font-normal text-(--gray-500)"
             valueClassName="text-[18px]/[26px] font-bold text-(--black-500)"
           />
@@ -332,11 +334,11 @@ export function ReviewableCard({
           <WriteReviewButton
             isReviewWritten={isReviewWritten}
             onClick={onWriteReview}
-            className="hidden xl:flex xl:w-40"
+            className="hidden min-[1200px]:flex min-[1200px]:w-40"
           />
         </div>
 
-        <div className="flex items-center justify-between border-t border-(--line-200) pt-5 md:hidden">
+        <div className="flex items-center justify-between border-t border-(--line-200) pt-5 min-[744px]:hidden">
           <span className="text-[14px]/[24px] font-medium text-(--gray-400)">
             견적 금액
           </span>
@@ -349,7 +351,7 @@ export function ReviewableCard({
       <WriteReviewButton
         isReviewWritten={isReviewWritten}
         onClick={onWriteReview}
-        className="xl:hidden"
+        className="min-[1200px]:hidden"
       />
     </article>
   );
