@@ -24,5 +24,5 @@ import { Button, IconButton } from "@/common/components/button";
 ## 디자인 토큰
 
 색상 이름 대신 실제 값으로 기존 토큰을 대응합니다. Figma 비활성 채움 `#D9D9D9`는 저장소의 `--gray-300`, 비활성 문구 `#808080`는 `--content-muted`입니다.
-기존 `--primary-500`은 기본 색상과 같으므로 hover `#E04829`, 비활성 테두리 `#C4C4C4`, 카카오 `#FAE100`은 Button.module.css에 한정된 변수로 정의했습니다.
+기존 `--primary-500`은 기본 색상과 같으므로 hover `#E04829`, outlined 테두리 `#C4C4C4`, 카카오 `#FAE100`은 Button 컴포넌트의 Tailwind arbitrary value로만 한정했습니다.
 아이콘은 MCP에서 받은 원본 SVG를 `public/icons/button`에 보관합니다. 기존 `ic-like.svg`와는 색상/모양이 달라 별도 원본을 사용합니다.
