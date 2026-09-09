@@ -116,7 +116,7 @@ export function RequestModalSummary({
     <section
       className={[
         "flex flex-col gap-5",
-        "border-b, border-[var(--line-100)] pb-5",
+        "border-b border-[var(--line-100)] pb-5",
         "max-md:gap-4",
         mobileDividerClassName,
       ]
