@@ -29,3 +29,7 @@ Google/Kakao/Naver의 코드 교환 및 콜백 처리는 구현했습니다. 202
 - 변경 범위 ESLint 통과. FE 전체 타입 검사/빌드는 기존 빈 page.tsx와 modal-test 문제로 통과하지 못합니다.
 
 디자인: Figma 1:1978, 1:2106, 1:2369, 1:2965, 1:2636, 1:3502. 원본 assets는 `public/images/auth`입니다. 모바일 필드 사이에는 오류 안내를 위해 시안 16px에 4px를 추가했습니다.
+
+## PR #22 후속 스타일 정리
+
+인증 화면은 `auth.styles.ts`의 Tailwind 클래스 조합을 사용합니다. 기존 공통 Input과 API 계약은 유지합니다. 공통 typography 및 현재 dev의 Button CSS Module과 겹치는 반응형 수치에만 Tailwind의 important modifier를 사용하며, 입력 내부 스타일 연결은 기존 label/field/message 구조에 의존합니다. 구조 변경 시 인증 화면도 함께 확인해야 합니다.
