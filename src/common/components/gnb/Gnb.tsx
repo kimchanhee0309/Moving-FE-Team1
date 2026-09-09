@@ -171,13 +171,14 @@ export function Gnb(props: GnbProps) {
   }, [isNotificationMenuOpen]);
 
   return (
-    <header
-      className={
-        className
-          ? `relative w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
-          : "relative w-full border-b border-(--line-100) bg-(--gray-50)"
-      }
-    >
+    <>
+      <header
+        className={
+          className
+            ? `fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
+            : "fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50)"
+        }
+      >
       <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 min-[744px]:px-18 min-[1200px]:h-22 min-[1200px]:gap-8 min-[1200px]:px-40">
         <div className="flex items-center min-[1200px]:gap-20">
           <Link
@@ -347,6 +348,10 @@ export function Gnb(props: GnbProps) {
           onClose={handleDismissMenu}
         />
       )}
-    </header>
+      </header>
+
+      {/* GNB가 fixed로 떠 있는 만큼, 헤더 높이만큼 자리를 대신 차지해서 본문이 가려지지 않게 한다. */}
+      <div aria-hidden="true" className="h-13.5 min-[1200px]:h-22" />
+    </>
   );
 }
