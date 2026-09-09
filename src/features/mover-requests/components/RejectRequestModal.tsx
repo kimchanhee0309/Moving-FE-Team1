@@ -2,18 +2,17 @@
 
 import { useState, type FormEvent } from "react";
 
-import { Modal } from "@/common/components/MoverModal/Modal";
-import { Button } from "@/common/components/button";
 import { Textarea } from "@/common/components/Input";
+import { Button } from "@/common/components/button";
 
 import type {
   ReceivedRequestViewModel,
   RejectRequestFormValue,
 } from "../mover-requests.types";
-import { RequestModalSummary } from "./RequestInfo";
+import { RequestInfo } from "./RequestInfo";
+import { RequestModalPanel } from "./RequestModalPanel";
 
 interface RejectRequestModalProps {
-  isOpen: boolean;
   request: ReceivedRequestViewModel;
   isSubmitting?: boolean;
   serverError?: string;
@@ -22,7 +21,6 @@ interface RejectRequestModalProps {
 }
 
 export function RejectRequestModal({
-  isOpen,
   request,
   isSubmitting = false,
   serverError,
@@ -32,7 +30,6 @@ export function RejectRequestModal({
   const [reason, setReason] = useState("");
 
   const trimmedReason = reason.trim();
-
   const canSubmit = trimmedReason.length >= 10 && !isSubmitting;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -48,19 +45,18 @@ export function RejectRequestModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      title="반려요청"
+    <RequestModalPanel
+      title="반려 요청"
+      isSubmitting={isSubmitting}
       onClose={onClose}
-      closeOnBackdrop={!isSubmitting}
     >
       <form
-        className="flex w-full flex-col gap-10 max-md:gap-[26px]"
+        className="flex w-full flex-col gap-10 max-[743px]:gap-[26px]"
         aria-busy={isSubmitting}
         onSubmit={handleSubmit}
       >
-        <div className="flex flex-col gap-8 max-md:gap-5">
-          <RequestModalSummary request={request} hideMobileDivider />
+        <div className="flex flex-col gap-8 max-[743px]:gap-5">
+          <RequestInfo request={request} hideMobileDivider />
 
           <Textarea
             label="반려 사유를 입력해 주세요"
@@ -68,6 +64,7 @@ export function RejectRequestModal({
             placeholder="최소 10자 이상 입력해주세요"
             minLength={10}
             value={reason}
+            required
             disabled={isSubmitting}
             containerClassName="!max-w-none"
             data-autofocus
@@ -94,6 +91,6 @@ export function RejectRequestModal({
           반려하기
         </Button>
       </form>
-    </Modal>
+    </RequestModalPanel>
   );
 }
