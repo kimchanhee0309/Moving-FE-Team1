@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 
 import { IconButton } from "@/common/components/button";
@@ -16,6 +18,37 @@ interface MoverQuoteDetailProps {
 
 export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
   const isConfirmed = quote.quoteStatus === QUOTE_STATUS.CONFIRMED;
+
+  const getShareUrl = () => window.location.href;
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      window.alert("견적 링크가 복사되었습니다.");
+    } catch {
+      window.alert("링크를 복사하지 못했습니다.");
+    }
+  };
+
+  const handleShareKakao = () => {
+    const encodedUrl = encodeURIComponent(getShareUrl());
+
+    window.open(
+      `https://story.kakao.com/s/share?url=${encodedUrl}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const handleShareFacebook = () => {
+    const encodedUrl = encodeURIComponent(getShareUrl());
+
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
 
   return (
     <>
@@ -119,8 +152,8 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
                 </dd>
               </div>
 
-              <div className="grid grid-cols-[100px-1fr] gap-6 max-md:grid-cols-[90px_1fr]">
-                <dt className="texxt-[var(--content-placeholder)]">도착지</dt>
+              <div className="grid grid-cols-[100px_1fr] gap-6 max-md:grid-cols-[90px_1fr]">
+                <dt className="text-[var(--content-placeholder)]">도착지</dt>
 
                 <dd className="font-medium text-[var(--black-400)]">
                   {quote.toAddress}
@@ -140,24 +173,46 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
           </h3>
 
           <div className="mt-5 hidden items-center gap-3 min-[744px]:flex">
-            <IconButton kind="clip" size="md" aria-label="견적 링크 복사" />
+            <IconButton
+              kind="clip"
+              size="md"
+              aria-label="견적 링크 복사"
+              onClick={() => void handleCopyLink()}
+            />
 
-            <IconButton kind="kakao" size="md" aria-label="카카오톡으로 공유" />
+            <IconButton
+              kind="kakao"
+              size="md"
+              aria-label="카카오톡으로 공유"
+              onClick={handleShareKakao}
+            />
 
             <IconButton
               kind="facebook"
               size="md"
               aria-label="페이스북으로 공유"
+              onClick={handleShareFacebook}
             />
           </div>
 
           <div className="mt-5 flex items-center gap-3 min-[744px]:hidden">
-            <IconButton kind="clip" size="xs" aria-label="견적 링크 복사" />
-            <IconButton kind="kakao" size="xs" aria-label="카카오톡으로 공유" />
+            <IconButton
+              kind="clip"
+              size="xs"
+              aria-label="견적 링크 복사"
+              onClick={() => void handleCopyLink()}
+            />
+            <IconButton
+              kind="kakao"
+              size="xs"
+              aria-label="카카오톡으로 공유"
+              onClick={handleShareKakao}
+            />
             <IconButton
               kind="facebook"
               size="xs"
               aria-label="페이스북으로 공유"
+              onClick={handleShareFacebook}
             />
           </div>
         </aside>

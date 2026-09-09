@@ -69,7 +69,7 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
         </div>
       </div>
 
-      <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-[rbg(4_4_4/64%)]">
+      <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-black/60">
         <p className="text-[18px] font-semibold leading-[26px] text-white">
           반려된 요청이에요
         </p>
