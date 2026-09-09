@@ -23,7 +23,8 @@ const BASE_ITEMS: Omit<WritableReviewItem, "id">[] = [
     serviceType: SERVICE_TYPE.SMALL,
     departure: "서울시 중구",
     arrival: "경기도 수원시",
-    movedAt: "2024-07-01",
+    // 날짜만 쓰면 UTC로 파싱되어 서쪽 타임존에서 하루 밀림 → 로컬 자정 명시
+    movedAt: "2024-07-01T00:00:00",
     price: 180_000,
   },
   {
@@ -33,7 +34,7 @@ const BASE_ITEMS: Omit<WritableReviewItem, "id">[] = [
     isDesignatedRequest: true,
     departure: "서울시 강남구",
     arrival: "인천시 연수구",
-    movedAt: "2024-07-03",
+    movedAt: "2024-07-03T00:00:00",
     price: 320_000,
   },
   {
@@ -42,7 +43,7 @@ const BASE_ITEMS: Omit<WritableReviewItem, "id">[] = [
     serviceType: SERVICE_TYPE.OFFICE,
     departure: "경기도 성남시",
     arrival: "서울시 마포구",
-    movedAt: "2024-07-05",
+    movedAt: "2024-07-05T00:00:00",
     price: 450_000,
   },
   {
@@ -51,7 +52,7 @@ const BASE_ITEMS: Omit<WritableReviewItem, "id">[] = [
     serviceType: SERVICE_TYPE.SMALL,
     departure: "서울시 송파구",
     arrival: "경기도 고양시",
-    movedAt: "2024-07-08",
+    movedAt: "2024-07-08T00:00:00",
     price: 210_000,
   },
 ];
