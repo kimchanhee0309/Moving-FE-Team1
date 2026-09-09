@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 
 import type { ServiceType } from "@/common/constants/domain";
@@ -20,7 +20,8 @@ const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as cons
 const FOCUS_RING =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]";
 const SECTION_TITLE =
-  "text-lg-semibold text-[var(--black-300)] min-[558px]:text-2lg-semibold";
+  // Mobile/Tablet 16 · Desktop 18 (typography 반응형 접두사 미적용)
+  "text-[16px] leading-[26px] font-semibold text-[var(--black-300)] min-[1200px]:text-[18px]";
 const FOCUSABLE_SELECTOR = [
   "button:not([disabled])",
   "a[href]",
@@ -113,7 +114,7 @@ function Chip({
       className={cn(
         "flex items-center justify-center gap-0.5 rounded py-0.5 pl-1 pr-[7px]",
         "shadow-[4px_4px_4px_rgba(217,217,217,0.1)]",
-        "min-[558px]:gap-1 min-[558px]:rounded-md min-[558px]:py-1 min-[558px]:pl-[5px]",
+        "min-[1200px]:gap-1 min-[1200px]:rounded-md min-[1200px]:py-1 min-[1200px]:pl-[5px]",
         isService ? "bg-[var(--primary-100)]" : "bg-[#ffeef0]",
       )}
     >
@@ -127,7 +128,7 @@ function Chip({
       />
       <span
         className={cn(
-          "text-sm-semibold whitespace-nowrap min-[558px]:text-md-semibold",
+          "text-sm-semibold whitespace-nowrap min-[1200px]:text-md-semibold",
           isService ? "text-[var(--primary-400)]" : "text-[#ff4f64]",
         )}
       >
@@ -140,10 +141,10 @@ function Chip({
 function MoveInfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-start">
-      <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[558px]:text-md-regular">
+      <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[1200px]:text-md-regular">
         {label}
       </span>
-      <span className="text-sm-medium whitespace-nowrap text-[var(--black-500)] min-[558px]:text-lg-regular">
+      <span className="text-sm-medium whitespace-nowrap text-[var(--black-500)] min-[1200px]:text-lg-regular">
         {value}
       </span>
     </div>
@@ -218,6 +219,10 @@ function ProfileAvatar({
   );
 }
 
+/**
+ * 평점 별점 UI입니다.
+ * 호버 중에는 hoverRating으로 미리보기하고, 마우스가 벗어나면 확정 rating만 표시합니다.
+ */
 function StarRating({
   rating,
   onChange,
@@ -225,19 +230,32 @@ function StarRating({
   rating: number;
   onChange: (rating: number) => void;
 }) {
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  // 호버 미리보기 > 확정 점수 순으로 표시
+  const displayRating = hoverRating ?? rating;
+
   return (
-    <div className="flex items-start" role="group" aria-label="평점 선택">
+    <div
+      className="flex items-start"
+      role="group"
+      aria-label="평점 선택"
+      onMouseLeave={() => setHoverRating(null)}
+    >
       {STAR_NUMBERS.map((starNumber) => {
-        const isActive = starNumber <= rating;
+        const isActive = starNumber <= displayRating;
+        const isSelected = starNumber <= rating;
         return (
           <button
             key={starNumber}
             type="button"
             onClick={() => onChange(starNumber)}
+            onMouseEnter={() => setHoverRating(starNumber)}
+            onFocus={() => setHoverRating(starNumber)}
+            onBlur={() => setHoverRating(null)}
             aria-label={`${starNumber}점`}
-            aria-pressed={isActive}
+            aria-pressed={isSelected}
             className={cn(
-              "relative size-6 shrink-0 min-[558px]:size-9",
+              "relative size-6 shrink-0 min-[1200px]:size-9",
               FOCUS_RING,
             )}
           >
@@ -247,7 +265,7 @@ function StarRating({
               width={36}
               height={36}
               className={cn(
-                "pointer-events-none size-full select-none object-contain [-webkit-user-drag:none]",
+                "pointer-events-none size-full select-none object-contain transition-[opacity,filter] duration-150 [-webkit-user-drag:none]",
                 !isActive && "opacity-25 grayscale",
               )}
               draggable={false}
@@ -318,7 +336,11 @@ export function ReviewWriteModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 min-[558px]:items-center min-[558px]:p-6"
+      className={[
+        "fixed inset-0 z-50 flex justify-center bg-black/50",
+        // Mobile: 하단 시트 · Tablet+: 중앙 (Figma 744)
+        "items-end min-[744px]:items-center min-[744px]:p-6",
+      ].join(" ")}
       onClick={handleBackdropClick}
     >
       <div
@@ -328,16 +350,24 @@ export function ReviewWriteModal({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "flex w-full max-w-[375px] flex-col gap-[26px] bg-[var(--gray-50)]",
+          // Mobile: 가로 full-bleed(좌우 바깥 여백 없음). 안쪽 콘텐츠만 px-6
+          "flex w-full flex-col gap-[26px] bg-[var(--gray-50)]",
           "rounded-t-[32px] px-6 py-8 shadow-[4px_4px_5px_rgba(169,169,169,0.2)]",
-          "min-[558px]:max-w-[600px] min-[558px]:gap-10 min-[558px]:rounded-[32px] min-[558px]:p-8",
+          // Tablet: sm 모달 375 중앙
+          "min-[744px]:w-[375px] min-[744px]:rounded-[32px]",
+          // Desktop: md 모달 600
+          "min-[1200px]:w-[600px] min-[1200px]:gap-10 min-[1200px]:p-8",
           className,
         )}
       >
         <div className="flex w-full items-center justify-between">
           <h2
             id={titleId}
-            className="text-2lg-bold text-[var(--black-400)] min-[558px]:text-2xl-semibold"
+            className={[
+              // Mobile/Tablet sm: 18 bold · Desktop md: 24 semibold
+              "text-[18px] leading-[26px] font-bold text-[var(--black-400)]",
+              "min-[1200px]:text-[24px] min-[1200px]:leading-8 min-[1200px]:font-semibold",
+            ].join(" ")}
           >
             리뷰 쓰기
           </h2>
@@ -346,24 +376,25 @@ export function ReviewWriteModal({
             onClick={onClose}
             aria-label="닫기"
             className={cn(
-              "relative flex size-6 shrink-0 items-center justify-center min-[558px]:size-9",
+              "group relative flex size-6 shrink-0 items-center justify-center rounded-lg min-[1200px]:size-9",
+              "transition-colors hover:bg-[var(--background-200)]",
               FOCUS_RING,
             )}
           >
             <span
-              className="absolute h-px w-3 rotate-45 bg-[var(--black-300)] min-[558px]:w-4"
+              className="absolute h-0.5 w-3 rotate-45 bg-[var(--black-300)] transition-colors group-hover:bg-[var(--black-500)] min-[1200px]:w-4"
               aria-hidden="true"
             />
             <span
-              className="absolute h-px w-3 -rotate-45 bg-[var(--black-300)] min-[558px]:w-4"
+              className="absolute h-0.5 w-3 -rotate-45 bg-[var(--black-300)] transition-colors group-hover:bg-[var(--black-500)] min-[1200px]:w-4"
               aria-hidden="true"
             />
           </button>
         </div>
 
-        <div className="flex w-full flex-col gap-7 min-[558px]:gap-8">
-          <div className="flex w-full flex-col gap-3.5 min-[558px]:gap-4">
-            <div className="flex items-center gap-2 min-[558px]:gap-3">
+        <div className="flex w-full flex-col gap-7 min-[1200px]:gap-8">
+          <div className="flex w-full flex-col gap-3.5 min-[1200px]:gap-4">
+            <div className="flex items-center gap-2 min-[1200px]:gap-3">
               <Chip
                 iconSrc="/icons/ic-solid-box.svg"
                 label={SERVICE_TYPE_LABEL[serviceType]}
@@ -381,7 +412,7 @@ export function ReviewWriteModal({
             <div className="flex w-full items-center justify-between">
               <div className="flex flex-col items-start gap-1">
                 <MovingBadge />
-                <p className="text-lg-semibold whitespace-nowrap text-[#373737] min-[558px]:text-2lg-semibold">
+                <p className="text-lg-semibold whitespace-nowrap text-[#373737] min-[1200px]:text-2lg-semibold">
                   {moverName} 기사님
                 </p>
               </div>
@@ -394,11 +425,11 @@ export function ReviewWriteModal({
 
             <div className="h-px w-full bg-[var(--line-100)]" aria-hidden="true" />
 
-            <div className="flex w-full items-end justify-between gap-3 min-[558px]:justify-start min-[558px]:gap-10">
+            <div className="flex w-full items-end justify-between gap-3 min-[1200px]:justify-start min-[1200px]:gap-10">
               <div className="flex items-end gap-3">
                 <MoveInfoItem label="출발지" value={departure} />
                 <div
-                  className="relative h-[23px] w-3 shrink-0 min-[558px]:w-4"
+                  className="relative h-[23px] w-3 shrink-0 min-[1200px]:w-4"
                   aria-hidden="true"
                 >
                   <Image
@@ -435,7 +466,7 @@ export function ReviewWriteModal({
               className={cn(
                 "h-40 w-full resize-none rounded-2xl border! border-[var(--line-200)]! bg-[var(--gray-50)]!",
                 "px-4! py-3.5! text-lg-regular text-[var(--black-400)] placeholder:text-[#ababab]",
-                "min-[558px]:px-6! min-[558px]:text-2lg-regular",
+                "min-[1200px]:px-6! min-[1200px]:text-2lg-regular",
                 FOCUS_RING,
               )}
             />
@@ -449,10 +480,11 @@ export function ReviewWriteModal({
           className={cn(
             "flex h-[54px] w-full items-center justify-center rounded-xl p-4",
             "text-lg-semibold text-[var(--gray-50)]!",
-            "min-[558px]:h-16 min-[558px]:rounded-2xl min-[558px]:text-2lg-semibold",
+            "min-[1200px]:h-16 min-[1200px]:rounded-2xl min-[1200px]:text-2lg-semibold",
             FOCUS_RING,
             canSubmit
-              ? "bg-[var(--primary-400)]!"
+              ? // 공통 Button solid hover(#e04829)와 맞춤
+                "bg-[var(--primary-400)]! transition-colors hover:bg-[#e04829]!"
               : "cursor-not-allowed bg-[var(--gray-300)]!",
           )}
         >
