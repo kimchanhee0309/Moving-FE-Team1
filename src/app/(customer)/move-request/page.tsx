@@ -10,6 +10,8 @@ import { MoveDateCalendar } from "@/features/move-request/components/MoveDateCal
 import { MoveTypeCard } from "@/features/move-request/components/MoveTypeCard";
 import { useAddressSearch } from "@/features/move-request/hooks/useAddressSearch";
 
+import { MoveRequestBlockedState } from "./_components/MoveRequestBlockedState";
+
 /**
  * 모바일 wizard가 지금 보여주는 단계입니다. 태블릿/데스크톱은 모든 항목을 한 화면에
  * 동시에 보여주므로(실제 Figma에 단계 표시가 없음) 이 값을 사용하지 않습니다.
@@ -397,11 +399,31 @@ function DesktopMoveRequestForm({
   );
 }
 
+// TODO(feature-implementer): 활성 견적 요청 존재 여부를 확인하는 API/쿼리 계약이 아직 없어
+// 임시로 항상 false로 고정한다("한 customer는 동시에 하나의 활성 견적 요청만 가질 수 있다",
+// AGENTS.md 12번). 실제 연동 시 이 값을 TanStack Query 결과로 교체한다 — 그 전까지 화면으로
+// 직접 확인하려면 `ROUTES.PUBLIC.MOVE_REQUEST_BLOCKED_EXAMPLE` preview 경로를 사용한다.
+const HAS_ACTIVE_MOVE_REQUEST = false;
+
 /**
- * 견적 요청 페이지입니다. 화면 상태를 전부 이 컴포넌트가 소유합니다(진우님 요청으로
- * `_components` 하위 파일로 나누지 않고 이 파일 하나에 모았습니다 — 여러 화면이 함께 쓰는
- * 조각인 MoveTypeCard, AddressCard/AddressSearchModal, DateDropdown, MoveDateCalendar만 그대로
- * import해서 재사용하며 내부 구현은 수정하지 않습니다).
+ * 견적 요청 페이지 진입점입니다. 활성 견적 요청이 이미 있으면 폼 대신
+ * `MoveRequestBlockedState`(Figma `견적요청_disabled`)만 보여주고, 없으면 실제 입력 폼
+ * (`MoveRequestForm`)을 보여준다. 두 화면은 서로 다른 상태를 다루므로 분기를 이 얇은
+ * 컴포넌트에서만 하고 폼의 로컬 state는 `MoveRequestForm`에만 두었다.
+ */
+export default function MoveRequestPage() {
+  if (HAS_ACTIVE_MOVE_REQUEST) {
+    return <MoveRequestBlockedState />;
+  }
+
+  return <MoveRequestForm />;
+}
+
+/**
+ * 실제 이사 유형/예정일/지역 입력 폼입니다. 화면 상태를 전부 이 컴포넌트가 소유합니다(진우님
+ * 요청으로 `_components` 하위 파일로 나누지 않고 이 파일 하나에 모았습니다 — 여러 화면이 함께
+ * 쓰는 조각인 MoveTypeCard, AddressCard/AddressSearchModal, DateDropdown, MoveDateCalendar만
+ * 그대로 import해서 재사용하며 내부 구현은 수정하지 않습니다).
  *
  * 반응형 전략: 744px 미만은 `MobileMoveRequestWizard`(1문항-1화면 wizard + progress bar),
  * 744px 이상은 `DesktopMoveRequestForm`(전체 항목을 한 화면에 표시)을 렌더링합니다. 실제 Figma가
@@ -419,7 +441,7 @@ function DesktopMoveRequestForm({
  * 못해 교체했다. juso.go.kr API 키는 이 프록시 안에서만 서버 환경변수로 쓰이며 클라이언트 번들에
  * 노출되지 않는다.
  */
-export default function MoveRequestPage() {
+function MoveRequestForm() {
   const [step, setStep] = useState<MoveRequestStep>(1);
   const [serviceType, setServiceType] = useState<ServiceType | null>(null);
   const [moveDate, setMoveDate] = useState<Date | null>(null);
