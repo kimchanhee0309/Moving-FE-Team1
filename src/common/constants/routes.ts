@@ -62,6 +62,8 @@ export const ROUTES = {
 
     MY_PAGE: "/mover-mypage",
 
+    BASIC_INFO_EDIT: "/mover-mypage/basic-info",
+
     REQUESTS: "/requests",
 
     QUOTE: {
