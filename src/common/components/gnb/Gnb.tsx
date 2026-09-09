@@ -171,15 +171,16 @@ export function Gnb(props: GnbProps) {
   }, [isNotificationMenuOpen]);
 
   return (
-    <header
-      className={
-        className
-          ? `relative w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
-          : "relative w-full border-b border-(--line-100) bg-(--gray-50)"
-      }
-    >
-      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 md:px-18 lg:h-22 lg:gap-8 lg:px-40">
-        <div className="flex items-center lg:gap-20">
+    <>
+      <header
+        className={
+          className
+            ? `fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
+            : "fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50)"
+        }
+      >
+      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 min-[744px]:px-18 min-[1200px]:h-22 min-[1200px]:gap-8 min-[1200px]:px-40">
+        <div className="flex items-center min-[1200px]:gap-20">
           <Link
             href={ROUTES.HOME}
             onClick={handleCloseMenu}
@@ -191,7 +192,7 @@ export function Gnb(props: GnbProps) {
               alt=""
               width={44}
               height={44}
-              className="size-8 lg:size-11"
+              className="size-8 min-[1200px]:size-11"
             />
             <Image
               src="/images/gnb/logo-wordmark.svg"
@@ -200,13 +201,13 @@ export function Gnb(props: GnbProps) {
               height={34}
               className={
                 props.isAuthenticated
-                  ? "hidden h-6.5 w-auto lg:block lg:h-8.5"
-                  : "block h-6.5 w-auto lg:h-8.5"
+                  ? "hidden h-6.5 w-auto min-[1200px]:block min-[1200px]:h-8.5"
+                  : "block h-6.5 w-auto min-[1200px]:h-8.5"
               }
             />
           </Link>
 
-          <nav aria-label="주요 메뉴" className="hidden lg:block">
+          <nav aria-label="주요 메뉴" className="hidden min-[1200px]:block">
             <ul className="flex list-none items-center gap-10 m-0 p-0">
               {navItems.map((item) => (
                 <li key={item.href}>
@@ -222,7 +223,7 @@ export function Gnb(props: GnbProps) {
           </nav>
         </div>
 
-        <div className="flex shrink-0 items-center gap-6 lg:gap-8">
+        <div className="flex shrink-0 items-center gap-6 min-[1200px]:gap-8">
           {authenticatedUser && (
             <>
               <div className="relative flex items-center">
@@ -238,14 +239,14 @@ export function Gnb(props: GnbProps) {
                       ? `새 알림이 있습니다. 알림 ${isNotificationMenuOpen ? "닫기" : "열기"}`
                       : `알림 ${isNotificationMenuOpen ? "닫기" : "열기"}`
                   }
-                  className={`relative inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 lg:size-9 ${FOCUS_RING} focus-visible:rounded-full`}
+                  className={`relative inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:size-9 ${FOCUS_RING} focus-visible:rounded-full`}
                 >
                   <Image
                     src="/images/gnb/icon-alarm.svg"
                     alt=""
                     width={36}
                     height={36}
-                    className="size-6 lg:size-9"
+                    className="size-6 min-[1200px]:size-9"
                   />
                   {hasUnreadNotification && (
                     <span
@@ -283,9 +284,9 @@ export function Gnb(props: GnbProps) {
                     alt=""
                     width={36}
                     height={36}
-                    className="size-6 rounded-full lg:size-9"
+                    className="size-6 rounded-full min-[1200px]:size-9"
                   />
-                  <span className="text-2lg-medium hidden whitespace-nowrap lg:inline">
+                  <span className="text-2lg-medium hidden whitespace-nowrap min-[1200px]:inline">
                     {authenticatedUser.name}
                   </span>
                 </button>
@@ -310,7 +311,7 @@ export function Gnb(props: GnbProps) {
           {!props.isAuthenticated && (
             <Link
               href={loginHref}
-              className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50)! no-underline hover:bg-(--primary-500) lg:inline-flex ${FOCUS_RING}`}
+              className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50)! no-underline hover:bg-(--primary-500) min-[1200px]:inline-flex ${FOCUS_RING}`}
             >
               로그인
             </Link>
@@ -323,7 +324,7 @@ export function Gnb(props: GnbProps) {
             aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
             aria-expanded={isMenuOpen}
             aria-controls={menuId}
-            className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 lg:hidden ${FOCUS_RING}`}
+            className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:hidden ${FOCUS_RING}`}
           >
             <Image
               src="/images/gnb/icon-menu.svg"
@@ -347,6 +348,10 @@ export function Gnb(props: GnbProps) {
           onClose={handleDismissMenu}
         />
       )}
-    </header>
+      </header>
+
+      {/* GNB가 fixed로 떠 있는 만큼, 헤더 높이만큼 자리를 대신 차지해서 본문이 가려지지 않게 한다. */}
+      <div aria-hidden="true" className="h-13.5 min-[1200px]:h-22" />
+    </>
   );
 }

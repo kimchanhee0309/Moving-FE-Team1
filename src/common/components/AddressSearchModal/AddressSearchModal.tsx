@@ -30,19 +30,26 @@ function addressKey(address: AddressResult) {
  * 렌더링만 담당하는 "껍데기 UI"이며, 실제 검색 로직은 항상 부모(추후 adapter/hook)가
  * `results`/`isLoading` props로 채워 넣습니다.
  *
+ * 검색은 타이핑마다 자동으로 일어나지 않는다 — `onSearchChange`는 입력 중인 텍스트 표시만
+ * 갱신하고, 실제 검색 요청은 Enter 또는 돋보기 버튼으로 `onSearchSubmit`이 호출될 때만
+ * 트리거되도록 부모가 구현해야 한다(타이핑 중에는 `results`가 이전 검색 결과를 유지).
+ *
  * 접근성: 열릴 때 검색 input으로 포커스를 이동하고 Tab 포커스를 내부로 가두며,
  * Esc와 backdrop 클릭으로 닫을 수 있고 닫힐 때 이전 포커스로 복귀합니다.
  *
- * 크기(Figma의 sm/md variant)는 AddressCard와 동일하게 Tailwind `sm:` breakpoint(640px)를
- * 기준으로 전환됩니다. `sm`은 모바일 팝업 화면(node 1:4815) 전용 사이즈이고 `md`는 태블릿/데스크톱이
- * 함께 쓰는 사이즈임을 실제 모바일 화면 목업으로 확인했다 — 640px 미만(모바일)만 sm 레이아웃을,
- * 640px 이상(태블릿+데스크톱)은 md 레이아웃을 사용합니다.
+ * 크기(Figma의 sm/md variant)는 AddressCard와 동일하게 이 모달을 쓰는 페이지의 태블릿
+ * breakpoint(744px, Figma 기준)에 맞춘 `min-[744px]:`로 전환됩니다. Tailwind 기본 `sm:`(640px)를
+ * 쓰면 640~743px 구간에서 페이지는 아직 모바일 레이아웃인데 모달만 먼저 md 스타일로 바뀌는
+ * 불일치가 생겨 이렇게 고정했다. `sm`은 모바일 팝업 화면(node 1:4815) 전용 사이즈이고 `md`는
+ * 태블릿/데스크톱이 함께 쓰는 사이즈임을 실제 모바일 화면 목업으로 확인했다 — 744px 미만(모바일)만
+ * sm 레이아웃을, 744px 이상(태블릿+데스크톱)은 md 레이아웃을 사용합니다.
  */
 export function AddressSearchModal({
   isOpen,
   title,
   searchValue,
   onSearchChange,
+  onSearchSubmit,
   onSearchClear,
   results,
   isLoading = false,
@@ -140,29 +147,35 @@ export function AddressSearchModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`flex w-full max-w-[260px] flex-col gap-[30px] rounded-[24px] bg-(--gray-50) px-4 py-6 sm:max-w-[560px] sm:gap-10 sm:rounded-[32px] sm:px-6 sm:pt-8 sm:pb-10 ${FOCUS_RING} ${className}`}
+        className={`flex w-full max-w-[260px] flex-col gap-[30px] rounded-[24px] bg-(--gray-50) px-4 py-6 min-[744px]:max-w-[560px] min-[744px]:gap-10 min-[744px]:rounded-[32px] min-[744px]:px-6 min-[744px]:pt-8 min-[744px]:pb-10 ${FOCUS_RING} ${className}`}
       >
         <div className="flex w-full items-center justify-between">
-          <h2 id={titleId} className="text-2lg-bold text-(--black-400) sm:text-2xl-semibold">
+          <h2 id={titleId} className="text-2lg-bold text-(--black-400) min-[744px]:text-2xl-semibold">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={`${title} 닫기`}
-            className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! sm:size-9 ${FOCUS_RING}`}
+            className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
           >
             <CloseIcon className="size-full" />
           </button>
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="flex w-full items-center gap-3 rounded-2xl bg-(--background-100) px-4 py-3.5 sm:h-16 sm:gap-4 sm:px-6">
+          <div className="flex w-full items-center gap-3 rounded-2xl bg-(--background-100) px-4 py-3.5 min-[744px]:h-16 min-[744px]:gap-4 min-[744px]:px-6">
             <input
               ref={searchInputRef}
               type="search"
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  onSearchSubmit();
+                }
+              }}
               placeholder={searchPlaceholder}
               aria-label={title}
               className="text-2lg-regular min-w-0 flex-1 appearance-none bg-transparent text-(--black-400)! outline-none focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-(--black-400)! placeholder:text-(--gray-300) [&::-webkit-search-cancel-button]:appearance-none"
@@ -172,17 +185,19 @@ export function AddressSearchModal({
                 type="button"
                 onClick={onSearchClear}
                 aria-label="검색어 지우기"
-                className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! sm:size-9 ${FOCUS_RING}`}
+                className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
               >
                 <ClearCircleIcon className="size-full" />
               </button>
             ) : null}
-            <span
-              aria-hidden="true"
-              className="flex size-6 shrink-0 items-center justify-center text-(--gray-400) sm:size-9"
+            <button
+              type="button"
+              onClick={onSearchSubmit}
+              aria-label="주소 검색"
+              className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
             >
               <SearchIcon className="size-full" />
-            </span>
+            </button>
           </div>
 
           <div
@@ -230,7 +245,7 @@ export function AddressSearchModal({
               onConfirm(selectedAddress);
             }
           }}
-          className={`text-lg-semibold sm:text-2lg-semibold flex h-[54px] w-full items-center justify-center rounded-xl text-center text-(--gray-50)! transition-colors sm:h-16 sm:rounded-2xl ${
+          className={`text-lg-semibold min-[744px]:text-2lg-semibold flex h-[54px] w-full items-center justify-center rounded-xl text-center text-(--gray-50)! transition-colors min-[744px]:h-16 min-[744px]:rounded-2xl ${
             selectedAddress ? "bg-(--primary-400)!" : "cursor-not-allowed bg-(--gray-300)!"
           } ${FOCUS_RING}`}
         >

@@ -56,7 +56,7 @@ export function GnbMobileMenu({
   }, []);
 
   return (
-    <div id={menuId} className="fixed inset-0 lg:hidden">
+    <div id={menuId} className="fixed inset-0 min-[1200px]:hidden">
       <div
         aria-hidden="true"
         onClick={onClose}

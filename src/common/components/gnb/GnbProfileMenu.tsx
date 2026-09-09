@@ -14,7 +14,8 @@ const FOCUSABLE_SELECTOR = "a[href], button:not([disabled])";
 /**
  * 프로필 드롭다운의 치수/타이포그래피는 role(customer/mover)이 아니라 **화면 폭**에 따라 달라진다.
  * Figma 컴포넌트의 `property2` variant는 "sm"(태블릿/모바일, 140px 폭)과 "md"(PC, 240px 폭)이며,
- * 이 저장소의 다른 GNB 반응형 기준과 맞춰 `lg`(1024px) 미만은 sm, 이상은 md 스타일을 쓴다.
+ * 이 저장소의 다른 GNB 반응형 기준과 맞춰 1200px 미만(모바일+태블릿, 드로어 유지 구간)은 sm,
+ * 1200px 이상(PC)은 md 스타일을 쓴다.
  *
  * 색상은 `src/styles/colors.css` 토큰을 사용한다. Figma 변수 값과 완전히 일치하지 않는 항목은
  * 가장 가까운 기존 토큰을 사용했다(세부 내용은 컴포넌트 작업 보고 참고):
@@ -22,29 +23,29 @@ const FOCUSABLE_SELECTOR = "a[href], button:not([disabled])";
  * - Figma `gray/gray-500`(#808080) → 저장소 `--gray-500`(#7a7a79)로 근사
  */
 const PROFILE_MENU_SIZE = {
-  /** 드롭다운 전체(카드) 안쪽 여백. sm(기본) → md(`lg:`) */
-  containerPadding: "pt-2.5 pb-1.5 px-1.5 lg:pt-4 lg:pb-1.5 lg:px-1",
-  /** 각 행(항목)의 고정 너비. sm 140px → md(`lg:`) 240px */
-  rowWidth: "w-[140px] lg:w-60",
+  /** 드롭다운 전체(카드) 안쪽 여백. sm(기본) → md(1200px 이상) */
+  containerPadding: "pt-2.5 pb-1.5 px-1.5 min-[1200px]:pt-4 min-[1200px]:pb-1.5 min-[1200px]:px-1",
+  /** 각 행(항목)의 고정 너비. sm 140px → md(1200px 이상) 240px */
+  rowWidth: "w-[140px] min-[1200px]:w-60",
   /** 상단 인사말 행의 안쪽 여백. */
-  headerPadding: "px-3 py-2 lg:pl-6 lg:pr-3 lg:py-3.5",
+  headerPadding: "px-3 py-2 min-[1200px]:pl-6 min-[1200px]:pr-3 min-[1200px]:py-3.5",
   /** 로그아웃을 제외한 이동형 항목의 기본 안쪽 여백. */
-  itemPadding: "px-3 py-2 lg:pl-6 lg:pr-3 lg:py-3.5",
+  itemPadding: "px-3 py-2 min-[1200px]:pl-6 min-[1200px]:pr-3 min-[1200px]:py-3.5",
   /** 로그아웃 바로 위, 마지막 이동형 항목의 안쪽 여백(sm 디자인은 구분선 위 여백이 더 크다). */
-  lastItemPadding: "px-3 pt-2 pb-4 lg:pl-6 lg:pr-3 lg:py-3.5",
+  lastItemPadding: "px-3 pt-2 pb-4 min-[1200px]:pl-6 min-[1200px]:pr-3 min-[1200px]:py-3.5",
   /** 로그아웃 행의 안쪽 여백. */
-  logoutPadding: "px-3 pt-3 pb-2 lg:pt-3.5",
+  logoutPadding: "px-3 pt-3 pb-2 min-[1200px]:pt-3.5",
   /** 상단 인사말 타이포그래피/색상. */
-  headerText: "text-lg-bold text-(--black-400) lg:text-2lg-bold lg:text-(--black-300)",
+  headerText: "text-lg-bold text-(--black-400) min-[1200px]:text-2lg-bold min-[1200px]:text-(--black-300)",
   /**
    * 이동형 항목 타이포그래피/색상. `Link`(`<a>`)에 직접 거는 색상이라, 이 프로젝트의 언레이어드
    * reset(`a { color: inherit }`)에 항상 밀리는 걸 막기 위해 `!`를 붙인다.
    */
-  itemText: "text-md-medium text-(--black-400)! lg:text-lg-medium",
+  itemText: "text-md-medium text-(--black-400)! min-[1200px]:text-lg-medium",
   /**
    * 로그아웃 타이포그래피/색상. `<button>`에 직접 거는 색상이라 위와 같은 이유로 `!`를 붙인다.
    */
-  logoutText: "text-xs-regular text-(--gray-500)! lg:text-md-medium",
+  logoutText: "text-xs-regular text-(--gray-500)! min-[1200px]:text-md-medium",
 };
 
 /**
