@@ -7,7 +7,7 @@ export default function CustomerLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <GnbContainer />
-      <AuthGuard role="CUSTOMER">{children}</AuthGuard>
+      <AuthGuard role="CUSTOMER">{children}</AuthGuard>      
     </>
   );
 }

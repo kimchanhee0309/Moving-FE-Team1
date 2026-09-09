@@ -12,6 +12,8 @@ import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 
 interface CustomerQuoteDetailViewProps {
   quoteId: string;
+  /** 대기 상세는 확정 CTA가 있고, 확정(이력) 상세는 공유만 보여 줍니다. */
+  variant?: "pending" | "confirmed";
 }
 
 interface QuoteDetailMock {
@@ -35,9 +37,8 @@ interface QuoteDetailMock {
 }
 
 /**
- * 대기 중인 견적 상세 UI입니다. 견적 상세 API가 아직 없어서
- * Figma(node 1:9115) 카피로 화면만 구성합니다. 조회가 연결되면
- * quoteId로 서버 데이터를 받아 이 mock을 교체합니다.
+ * 견적 상세 UI입니다. API가 아직 없어서 Figma 카피로 화면만 구성합니다.
+ * 대기 상세는 node 1:9115, 확정 상세는 node 1:11818입니다.
  */
 const MOCK_QUOTE: QuoteDetailMock = {
   serviceType: SERVICE_TYPE.SMALL,
@@ -127,13 +128,39 @@ function ShareButton({
   );
 }
 
+function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
+  if (isConfirmed) {
+    return (
+      <span className="flex shrink-0 items-center justify-center gap-1 rounded-md px-2 py-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
+        <Image
+          src="/icons/ic-check-confirmed.svg"
+          alt=""
+          width={20}
+          height={20}
+          className="size-5 object-contain"
+          unoptimized
+        />
+        <span className="text-lg-bold whitespace-nowrap text-[var(--primary-400)]">
+          확정견적
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-lg-semibold shrink-0 rounded-md px-2 text-[var(--content-placeholder)] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
+      견적대기
+    </span>
+  );
+}
+
 export function CustomerQuoteDetailView({
   quoteId,
+  variant = "pending",
 }: CustomerQuoteDetailViewProps) {
+  const isConfirmed = variant === "confirmed";
   const priceLabel = `${MOCK_QUOTE.price.toLocaleString("ko-KR")}원`;
   const ratingLabel = MOCK_QUOTE.rating.toFixed(1);
-  const statusLabel =
-    MOCK_QUOTE.status === QUOTE_STATUS.CONFIRMED ? "확정견적" : "견적대기";
 
   const getShareUrl = () => {
     return window.location.href;
@@ -212,9 +239,7 @@ export function CustomerQuoteDetailView({
                 <p className="text-2xl-semibold text-[var(--black-300)]">
                   {MOCK_QUOTE.message}
                 </p>
-                <span className="text-lg-semibold shrink-0 rounded-md px-2 text-[var(--content-placeholder)] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
-                  {statusLabel}
-                </span>
+                <StatusBadge isConfirmed={isConfirmed} />
               </div>
             </div>
 
@@ -308,24 +333,35 @@ export function CustomerQuoteDetailView({
           </section>
 
           <aside className="flex w-full shrink-0 flex-col min-[1200px]:w-[320px]">
-            <div className="flex flex-col">
-              <p className="text-2lg-semibold text-[var(--content-placeholder)]">
-                견적가
-              </p>
-              <p className="text-2xl-bold text-[var(--black-400)]">{priceLabel}</p>
-            </div>
-            <button
-              type="button"
+            {isConfirmed ? null : (
+              <>
+                <div className="flex flex-col">
+                  <p className="text-2lg-semibold text-[var(--content-placeholder)]">
+                    견적가
+                  </p>
+                  <p className="text-2xl-bold text-[var(--black-400)]">
+                    {priceLabel}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={[
+                    "mt-[87px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
+                    "text-2lg-semibold text-[var(--gray-50)]",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                  ].join(" ")}
+                >
+                  견적 확정하기
+                </button>
+                <div className="mt-10 h-px w-full bg-[var(--line-200)]" />
+              </>
+            )}
+            <div
               className={[
-                "mt-[87px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
-                "text-2lg-semibold text-[var(--gray-50)]",
-                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                "flex flex-col gap-[22px]",
+                isConfirmed ? "" : "mt-10",
               ].join(" ")}
             >
-              견적 확정하기
-            </button>
-            <div className="mt-10 h-px w-full bg-[var(--line-200)]" />
-            <div className="mt-10 flex flex-col gap-[22px]">
               <h2 className="text-xl-semibold text-[var(--black-400)]">
                 견적서 공유하기
               </h2>
