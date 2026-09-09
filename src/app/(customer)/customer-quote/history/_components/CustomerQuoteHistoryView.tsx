@@ -51,13 +51,18 @@ const QUOTE_FILTER_OPTIONS = [
 /**
  * 받았던 견적 목록 UI입니다. history API가 아직 없어서 Figma(node 1:11657)
  * 카피로 화면만 구성합니다. 목록 조회가 연결되면 이 mock을 교체합니다.
+ * 견적 id는 상세 URL(`/customer-quote/history/{quoteId}`)에 그대로 쓰이므로
+ * `1`처럼 숫자 문자열만 둡니다.
  */
 const MOCK_HISTORY_GROUPS: HistoryRequestGroup[] = [
-  createMockHistoryGroup("history-1"),
-  createMockHistoryGroup("history-2"),
+  createMockHistoryGroup("request-1", 1),
+  createMockHistoryGroup("request-2", 5),
 ];
 
-function createMockHistoryGroup(id: string): HistoryRequestGroup {
+function createMockHistoryGroup(
+  id: string,
+  firstQuoteNumber: number,
+): HistoryRequestGroup {
   const baseQuote = {
     serviceType: SERVICE_TYPE.OFFICE,
     isDesignated: true,
@@ -79,10 +84,26 @@ function createMockHistoryGroup(id: string): HistoryRequestGroup {
     to: "서울 강남구 선릉로 428",
     moveDate: "2024년 07월 01일 (월)",
     quotes: [
-      { ...baseQuote, id: `${id}-quote-1`, status: QUOTE_STATUS.CONFIRMED },
-      { ...baseQuote, id: `${id}-quote-2`, status: QUOTE_STATUS.PENDING },
-      { ...baseQuote, id: `${id}-quote-3`, status: QUOTE_STATUS.PENDING },
-      { ...baseQuote, id: `${id}-quote-4`, status: QUOTE_STATUS.PENDING },
+      {
+        ...baseQuote,
+        id: String(firstQuoteNumber),
+        status: QUOTE_STATUS.CONFIRMED,
+      },
+      {
+        ...baseQuote,
+        id: String(firstQuoteNumber + 1),
+        status: QUOTE_STATUS.PENDING,
+      },
+      {
+        ...baseQuote,
+        id: String(firstQuoteNumber + 2),
+        status: QUOTE_STATUS.PENDING,
+      },
+      {
+        ...baseQuote,
+        id: String(firstQuoteNumber + 3),
+        status: QUOTE_STATUS.PENDING,
+      },
     ],
   };
 }
