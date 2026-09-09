@@ -12,7 +12,7 @@ interface AddressLineProps {
 
 function AddressChip({ label }: { label: AddressLineProps["type"] }) {
   return (
-    <span className="flex w-[54px] shrink-0 items-center justify-center rounded-2xl bg-(--primary-100) px-1 py-0.5 text-xs-semibold text-(--primary-400) sm:text-md-semibold">
+    <span className="flex w-[54px] shrink-0 items-center justify-center rounded-2xl bg-(--primary-100) px-1 py-0.5 text-xs-semibold text-(--primary-400) min-[744px]:text-md-semibold">
       {label}
     </span>
   );
@@ -22,7 +22,7 @@ function AddressLine({ type, value }: AddressLineProps) {
   return (
     <div className="flex w-full items-start gap-2">
       <AddressChip label={type} />
-      <span className="min-w-0 flex-1 [word-break:break-word] text-md-regular text-(--black-400) sm:text-lg-regular">
+      <span className="min-w-0 flex-1 [word-break:break-word] text-md-regular text-(--black-400) min-[744px]:text-lg-regular">
         {value}
       </span>
     </div>
@@ -33,10 +33,12 @@ function AddressLine({ type, value }: AddressLineProps) {
  * Figma의 `Component/address-card` 중 카드 본문(address-card/md)을 구현한 공통 컴포넌트입니다.
  * 우편번호, 도로명 주소, 지번 주소를 보여주고 클릭/키보드로 선택할 수 있는 button입니다.
  *
- * - 크기(Figma의 sm/md variant)는 Tailwind `sm:` breakpoint(640px)를 기준으로 전환됩니다.
+ * - 크기(Figma의 sm/md variant)는 이 카드를 쓰는 페이지의 태블릿 breakpoint(744px, Figma 기준)에
+ *   맞춘 `min-[744px]:`로 전환됩니다. Tailwind 기본 `sm:`(640px)를 쓰면 640~743px 구간에서
+ *   페이지는 아직 모바일 레이아웃인데 카드만 먼저 md 스타일로 바뀌는 불일치가 생겨 이렇게 고정했다.
  *   Figma에서 `sm`은 모바일 팝업 화면(node 1:4815) 전용 사이즈이고 `md`는 태블릿/데스크톱이 함께 쓰는
- *   사이즈임을 실제 모바일 화면 목업으로 확인했다(별도 tablet 전용 사이즈는 없음) — 그래서 640px 미만(모바일)만
- *   sm 스타일을 쓰고, 640px 이상(태블릿+데스크톱)은 전부 md 스타일을 쓴다.
+ *   사이즈임을 실제 모바일 화면 목업으로 확인했다(별도 tablet 전용 사이즈는 없음) — 그래서 744px 미만(모바일)만
+ *   sm 스타일을 쓰고, 744px 이상(태블릿+데스크톱)은 전부 md 스타일을 쓴다.
  * - 너비는 항상 `w-full`이며 실제 픽셀 폭은 이 카드를 담는 컨테이너(AddressSearchModal 등)가 결정합니다.
  * - 선택 상태는 배경/테두리 색상 변화와 함께 `aria-pressed`로도 전달되어, 색상을 인지하지 못해도
  *   스크린 리더 등 보조 기술로 선택 여부를 확인할 수 있습니다.
@@ -58,7 +60,7 @@ export function AddressCard({
           : "border-(--line-100)! bg-(--gray-50)! hover:border-(--gray-300)!"
       } ${FOCUS_RING} ${className}`}
     >
-      <p className="text-md-semibold text-(--black-400) sm:text-lg-semibold">
+      <p className="text-md-semibold text-(--black-400) min-[744px]:text-lg-semibold">
         {address.zonecode}
       </p>
       <div className="flex w-full flex-col gap-4">

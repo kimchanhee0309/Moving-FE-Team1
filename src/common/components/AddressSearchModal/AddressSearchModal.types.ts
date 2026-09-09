@@ -14,9 +14,17 @@ export interface AddressSearchModalProps {
   searchValue: string;
   /**
    * 검색어가 바뀔 때 호출됩니다. 이 컴포넌트는 카카오 우편번호 API를 직접 호출하지
-   * 않으므로, 실제 검색 요청과 디바운스는 호출자(추후 adapter/hook)가 담당합니다.
+   * 않으므로, 실제 검색 요청은 호출자(추후 adapter/hook)가 담당합니다. 타이핑마다
+   * 자동으로 검색을 트리거하지 않고, 입력 중인 검색어 표시(controlled value)만 갱신합니다 —
+   * 실제 검색 요청 시점은 `onSearchSubmit` 참고.
    */
   onSearchChange: (value: string) => void;
+  /**
+   * 검색어 input에서 Enter를 누르거나 돋보기 버튼을 클릭했을 때 호출됩니다.
+   * 실제 검색 요청(디바운스/API 호출 포함)은 이 시점에만 트리거되어야 합니다 —
+   * 타이핑 중에는 `results`/`isLoading`이 이전 검색 결과를 그대로 유지합니다.
+   */
+  onSearchSubmit: () => void;
   /** 검색어 지우기 버튼을 눌렀을 때 호출됩니다. */
   onSearchClear: () => void;
   /**

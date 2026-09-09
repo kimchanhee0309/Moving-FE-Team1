@@ -26,6 +26,10 @@ export const ROUTES = {
 
     // 기사님 마이페이지의 리뷰 진행 바·카드·페이지네이션 예시입니다.
     MOVER_MYPAGE_COMPONENTS_EXAMPLE: "/component-example/mover-mypage-components",
+
+    // 이미 활성 견적 요청이 있어 새 견적 요청이 막힌 화면(MoveRequestBlockedState)을
+    // 실제 API 연동 없이 확인하는 QA 전용 경로입니다.
+    MOVE_REQUEST_BLOCKED_EXAMPLE: "/component-example/move-request-blocked",
   },
 
   CUSTOMER: {

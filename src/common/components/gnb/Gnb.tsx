@@ -20,9 +20,6 @@ import type { GnbProps } from "./gnb.types";
 const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
 
-/** Figma PC GNB는 1200px부터입니다. 미만(태블릿·모바일)은 햄버거 + 우측 사이드 메뉴입니다. */
-const GNB_DESKTOP_MEDIA = "(min-width: 1200px)";
-
 export function Gnb(props: GnbProps) {
   const {
     hasUnreadNotification = false,
@@ -173,27 +170,16 @@ export function Gnb(props: GnbProps) {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isNotificationMenuOpen]);
 
-  // PC(1200px)로 커지면 드로어가 CSS로 숨겨져도 open 상태·body lock이 남을 수 있어 닫습니다.
-  useEffect(() => {
-    const media = window.matchMedia(GNB_DESKTOP_MEDIA);
-    const closeOnDesktop = () => {
-      if (media.matches) {
-        setIsMenuOpen(false);
-      }
-    };
-    media.addEventListener("change", closeOnDesktop);
-    return () => media.removeEventListener("change", closeOnDesktop);
-  }, []);
-
   return (
-    <header
-      className={
-        className
-          ? `relative w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
-          : "relative w-full border-b border-(--line-100) bg-(--gray-50)"
-      }
-    >
-      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 min-[744px]:px-[72px] min-[1200px]:h-22 min-[1200px]:gap-8 min-[1200px]:px-40">
+    <>
+      <header
+        className={
+          className
+            ? `fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
+            : "fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50)"
+        }
+      >
+      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 min-[744px]:px-18 min-[1200px]:h-22 min-[1200px]:gap-8 min-[1200px]:px-40">
         <div className="flex items-center min-[1200px]:gap-20">
           <Link
             href={ROUTES.HOME}
@@ -215,14 +201,14 @@ export function Gnb(props: GnbProps) {
               height={34}
               className={
                 props.isAuthenticated
-                  ? "hidden h-6.5 w-auto min-[744px]:block min-[1200px]:h-8.5"
+                  ? "hidden h-6.5 w-auto min-[1200px]:block min-[1200px]:h-8.5"
                   : "block h-6.5 w-auto min-[1200px]:h-8.5"
               }
             />
           </Link>
 
           <nav aria-label="주요 메뉴" className="hidden min-[1200px]:block">
-            <ul className="m-0 flex list-none items-center gap-10 p-0">
+            <ul className="flex list-none items-center gap-10 m-0 p-0">
               {navItems.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -362,6 +348,10 @@ export function Gnb(props: GnbProps) {
           onClose={handleDismissMenu}
         />
       )}
-    </header>
+      </header>
+
+      {/* GNB가 fixed로 떠 있는 만큼, 헤더 높이만큼 자리를 대신 차지해서 본문이 가려지지 않게 한다. */}
+      <div aria-hidden="true" className="h-13.5 min-[1200px]:h-22" />
+    </>
   );
 }

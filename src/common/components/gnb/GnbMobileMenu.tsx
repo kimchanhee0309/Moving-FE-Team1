@@ -1,8 +1,5 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import type { GnbMobileMenuProps } from "./gnb.types";
@@ -22,7 +19,6 @@ export function GnbMobileMenu({
   onClose,
 }: GnbMobileMenuProps) {
   const panelRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -60,11 +56,11 @@ export function GnbMobileMenu({
   }, []);
 
   return (
-    <div id={menuId} className="fixed inset-0 z-[1000] min-[1200px]:hidden">
+    <div id={menuId} className="fixed inset-0 min-[1200px]:hidden">
       <div
         aria-hidden="true"
         onClick={onClose}
-        className="absolute inset-0 cursor-default bg-[rgb(20_20_20/50%)]"
+        className="absolute inset-0 cursor-default bg-(--black-500)/50"
       />
 
       <div
@@ -72,7 +68,7 @@ export function GnbMobileMenu({
         role="dialog"
         aria-modal="true"
         aria-label="전체 메뉴"
-        className="absolute inset-y-0 right-0 flex w-[220px] max-w-[85vw] flex-col overflow-y-auto bg-(--gray-50)"
+        className="absolute inset-y-0 right-0 flex w-55 max-w-[85vw] flex-col overflow-y-auto bg-(--gray-50)"
       >
         <div className="flex h-13.5 shrink-0 items-center justify-end border-b border-(--line-100) px-4">
           <button
@@ -81,13 +77,7 @@ export function GnbMobileMenu({
             aria-label="메뉴 닫기"
             className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 ${FOCUS_RING}`}
           >
-            <Image
-              src="/images/gnb/icon-x.svg"
-              alt=""
-              width={24}
-              height={24}
-              className="size-6"
-            />
+            <Image src="/images/gnb/icon-x.svg" alt="" width={24} height={24} className="size-6" />
           </button>
         </div>
 
@@ -99,7 +89,6 @@ export function GnbMobileMenu({
                   ref={index === 0 ? firstNavLinkRef : undefined}
                   href={item.href}
                   onClick={onNavigate}
-                  aria-current={pathname === item.href ? "page" : undefined}
                   className={`text-lg-medium block px-5 py-6 text-(--black-500)! no-underline hover:bg-(--background-200) ${FOCUS_RING}`}
                 >
                   {item.label}
