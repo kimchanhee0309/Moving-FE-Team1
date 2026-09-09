@@ -10,32 +10,12 @@ import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
 import { QuoteHistoryCard } from "@/features/customer-quote/components";
 
+import {
+  MOCK_HISTORY_GROUPS,
+  type HistoryRequestGroup,
+} from "../_data/mockHistoryGroups";
+
 type QuoteFilterValue = "all" | QuoteStatus;
-
-interface HistoryQuoteItem {
-  id: string;
-  serviceType: ServiceType;
-  isDesignated: boolean;
-  status: QuoteStatus;
-  message: string;
-  moverName: string;
-  rating: number;
-  reviewCount: number;
-  careerYears: number;
-  confirmedCount: number;
-  favoriteCount: number;
-  price: number;
-}
-
-interface HistoryRequestGroup {
-  id: string;
-  requestedAt: string;
-  serviceType: ServiceType;
-  from: string;
-  to: string;
-  moveDate: string;
-  quotes: HistoryQuoteItem[];
-}
 
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
@@ -47,66 +27,6 @@ const QUOTE_FILTER_OPTIONS = [
   { value: QUOTE_STATUS.CONFIRMED, label: "확정견적" },
   { value: QUOTE_STATUS.PENDING, label: "견적대기" },
 ] as const;
-
-/**
- * 받았던 견적 목록 UI입니다. history API가 아직 없어서 Figma(node 1:11657)
- * 카피로 화면만 구성합니다. 목록 조회가 연결되면 이 mock을 교체합니다.
- * 견적 id는 상세 URL(`/customer-quote/history/{quoteId}`)에 그대로 쓰이므로
- * `1`처럼 숫자 문자열만 둡니다.
- */
-const MOCK_HISTORY_GROUPS: HistoryRequestGroup[] = [
-  createMockHistoryGroup("request-1", 1),
-  createMockHistoryGroup("request-2", 5),
-];
-
-function createMockHistoryGroup(
-  id: string,
-  firstQuoteNumber: number,
-): HistoryRequestGroup {
-  const baseQuote = {
-    serviceType: SERVICE_TYPE.OFFICE,
-    isDesignated: true,
-    message: "고객님의 물품을 안전하게 운송해 드립니다.",
-    moverName: "김코드",
-    rating: 5,
-    reviewCount: 178,
-    careerYears: 7,
-    confirmedCount: 334,
-    favoriteCount: 136,
-    price: 180000,
-  };
-
-  return {
-    id,
-    requestedAt: "24. 06. 24.",
-    serviceType: SERVICE_TYPE.OFFICE,
-    from: "서울 중구 삼일대로 343",
-    to: "서울 강남구 선릉로 428",
-    moveDate: "2024년 07월 01일 (월)",
-    quotes: [
-      {
-        ...baseQuote,
-        id: String(firstQuoteNumber),
-        status: QUOTE_STATUS.CONFIRMED,
-      },
-      {
-        ...baseQuote,
-        id: String(firstQuoteNumber + 1),
-        status: QUOTE_STATUS.PENDING,
-      },
-      {
-        ...baseQuote,
-        id: String(firstQuoteNumber + 2),
-        status: QUOTE_STATUS.PENDING,
-      },
-      {
-        ...baseQuote,
-        id: String(firstQuoteNumber + 3),
-        status: QUOTE_STATUS.PENDING,
-      },
-    ],
-  };
-}
 
 function QuoteInfoRow({ label, value }: { label: string; value: string }) {
   return (

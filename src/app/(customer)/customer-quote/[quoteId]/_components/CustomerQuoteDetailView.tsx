@@ -12,8 +12,12 @@ import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 
 interface CustomerQuoteDetailViewProps {
   quoteId: string;
-  /** 대기 상세는 확정 CTA가 있고, 확정(이력) 상세는 공유만 보여 줍니다. */
-  variant?: "pending" | "confirmed";
+  /**
+   * `pending`은 활성 요청 상세(확정 CTA).
+   * `history`는 받았던 견적 상세(조회만). 뱃지는 `status`를 따릅니다.
+   */
+  variant?: "pending" | "history";
+  status?: QuoteStatus;
 }
 
 interface QuoteDetailMock {
@@ -157,8 +161,10 @@ function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
 export function CustomerQuoteDetailView({
   quoteId,
   variant = "pending",
+  status = QUOTE_STATUS.PENDING,
 }: CustomerQuoteDetailViewProps) {
-  const isConfirmed = variant === "confirmed";
+  const isConfirmed = status === QUOTE_STATUS.CONFIRMED;
+  const canConfirm = variant === "pending";
   const priceLabel = `${MOCK_QUOTE.price.toLocaleString("ko-KR")}원`;
   const ratingLabel = MOCK_QUOTE.rating.toFixed(1);
 
@@ -335,11 +341,11 @@ export function CustomerQuoteDetailView({
           <aside
             className={[
               "flex w-full shrink-0 flex-col min-[1200px]:w-[320px]",
-              /* 확정 상세(1:11818): 공유는 프로필이 아니라 본문 쪽. 프로필 top 281, 공유 top 485. */
-              isConfirmed ? "min-[1200px]:mt-[204px]" : "",
+              /* 이력 상세(1:11818): 공유는 프로필이 아니라 본문 쪽. 프로필 top 281, 공유 top 485. */
+              canConfirm ? "" : "min-[1200px]:mt-[204px]",
             ].join(" ")}
           >
-            {isConfirmed ? null : (
+            {canConfirm ? (
               <>
                 <div className="flex flex-col">
                   <p className="text-2lg-semibold text-[var(--content-placeholder)]">
@@ -361,11 +367,11 @@ export function CustomerQuoteDetailView({
                 </button>
                 <div className="mt-10 h-px w-full bg-[var(--line-200)]" />
               </>
-            )}
+            ) : null}
             <div
               className={[
                 "flex flex-col gap-[22px]",
-                isConfirmed ? "" : "mt-10",
+                canConfirm ? "mt-10" : "",
               ].join(" ")}
             >
               <h2 className="text-xl-semibold text-[var(--black-400)]">
