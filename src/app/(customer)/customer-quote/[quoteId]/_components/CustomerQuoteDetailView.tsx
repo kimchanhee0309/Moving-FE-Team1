@@ -341,8 +341,11 @@ export function CustomerQuoteDetailView({
           <aside
             className={[
               "flex w-full shrink-0 flex-col min-[1200px]:w-[320px]",
-              /* 이력 상세(1:11818): 공유는 프로필이 아니라 본문 쪽. 프로필 top 281, 공유 top 485. */
-              canConfirm ? "" : "min-[1200px]:mt-[204px]",
+              /* 대기 상세(1:9115): 사이드바 견적가 top 547, 프로필 top 281. */
+              /* 이력 상세(1:11818): 공유 top 485, 프로필 top 281. */
+              canConfirm
+                ? "min-[1200px]:mt-[266px]"
+                : "min-[1200px]:mt-[204px]",
             ].join(" ")}
           >
             {canConfirm ? (
@@ -358,7 +361,7 @@ export function CustomerQuoteDetailView({
                 <button
                   type="button"
                   className={[
-                    "mt-[87px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
+                    "mt-[29px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
                     "text-2lg-semibold text-[var(--gray-50)]",
                     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
                   ].join(" ")}
