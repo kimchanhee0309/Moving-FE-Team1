@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRef, type KeyboardEvent } from "react";
 
 import { ROUTES } from "@/common/constants/routes";
 
@@ -54,36 +52,13 @@ function getTabLabelClassName(isSelected: boolean) {
 }
 
 /**
- * 리뷰 전용 탭입니다.
- * 공통 Tabs는 건드리지 않고, 리뷰 Figma·GNB(lg) 타이밍만 여기서 맞춥니다.
+ * 리뷰 목록 라우트 내비게이션입니다.
+ * 경로가 다른 페이지로 이동하므로 tablist가 아니라 nav + aria-current를 사용합니다.
  */
 export function ReviewTabs({ value }: ReviewTabsProps) {
-  const router = useRouter();
-  const tabRefs = useRef<Map<ReviewTabValue, HTMLAnchorElement>>(new Map());
-
-  const selectTab = (item: ReviewTabItem) => {
-    tabRefs.current.get(item.id)?.focus();
-    router.push(item.href);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
-      return;
-    }
-
-    event.preventDefault();
-    const currentIndex = ITEMS.findIndex((item) => item.id === value);
-    const fallbackIndex = currentIndex < 0 ? 0 : currentIndex;
-    const delta = event.key === "ArrowRight" ? 1 : -1;
-    const nextItem = ITEMS[(fallbackIndex + delta + ITEMS.length) % ITEMS.length];
-
-    if (nextItem) {
-      selectTab(nextItem);
-    }
-  };
-
   return (
-    <div
+    <nav
+      aria-label="리뷰 목록"
       className={[
         "w-full border-b border-[var(--line-100)] bg-[var(--gray-50)]",
         "px-6",
@@ -93,12 +68,7 @@ export function ReviewTabs({ value }: ReviewTabsProps) {
         "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
       ].join(" ")}
     >
-      <div
-        role="tablist"
-        aria-label="리뷰 목록"
-        className="flex items-center gap-6 lg:gap-8"
-        onKeyDown={handleKeyDown}
-      >
+      <div className="flex items-center gap-6 lg:gap-8">
         {ITEMS.map((item) => {
           const isSelected = item.id === value;
 
@@ -106,16 +76,7 @@ export function ReviewTabs({ value }: ReviewTabsProps) {
             <Link
               key={item.id}
               href={item.href}
-              role="tab"
-              aria-selected={isSelected}
-              tabIndex={isSelected ? 0 : -1}
-              ref={(element) => {
-                if (element) {
-                  tabRefs.current.set(item.id, element);
-                  return;
-                }
-                tabRefs.current.delete(item.id);
-              }}
+              aria-current={isSelected ? "page" : undefined}
               className={getTabClassName(isSelected)}
             >
               <span className={getTabLabelClassName(isSelected)}>
@@ -125,6 +86,6 @@ export function ReviewTabs({ value }: ReviewTabsProps) {
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }
