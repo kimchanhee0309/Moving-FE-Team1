@@ -59,6 +59,23 @@ export const MODAL_COMPONENTS: Record<string, ComponentType<UrlModalComponentPro
 - `state 기반`과 `URL 기반`은 서로 독립적으로 열리고 닫힙니다 — 한 트리거에서 두 방식을 같이 쓰지 않습니다.
 - URL 기반 모달 내부에서 닫을 때는 항상 props로 받은 `onClose`를 호출합니다(URL의 `modal` 쿼리를 정리하면서 닫힙니다).
 
+## 3. 크기 조절 — 작게 / 화면의 50% / 꽉 차게
+
+`BareModal`은 dialog wrapper에 `w-*`/`max-w-*`를 강제하지 않습니다 — `content` 최상위 요소에 준 className이 모달 크기를 그대로 결정합니다(`max-h-[calc(100dvh-48px)]`만 항상 유지되어 뷰포트를 넘치지 않습니다).
+
+```tsx
+// 작게: 너비를 안 주면 내용 크기만큼만 좁게 나온다
+openModal(<div className="p-6">...</div>);
+
+// 화면의 50%
+openModal(<div className="w-[50vw] p-6">...</div>);
+
+// 꽉 차게 (backdrop의 p-6만큼만 여백)
+openModal(<div className="h-[calc(100dvh-48px)] w-[calc(100vw-48px)] p-6">...</div>);
+```
+
+URL 기반 모달도 동일합니다 — 등록한 컴포넌트의 최상위 요소에 원하는 너비 className을 주면 됩니다.
+
 ## 접근성 참고
 
 `BareModal`은 title을 소유하지 않아 `aria-labelledby`를 자동으로 걸어주지 않습니다. `content`(openModal에 넘기는 JSX, URL 모달 컴포넌트 모두)는 반드시 제목 역할을 하는 요소(`<h2>` 등)를 포함해야 스크린 리더 사용자가 모달 제목을 인식할 수 있습니다.

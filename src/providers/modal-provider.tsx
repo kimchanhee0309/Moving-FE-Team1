@@ -32,6 +32,12 @@ const FOCUSABLE_SELECTOR = [
  * 포커스 트랩, Esc/backdrop 닫기, 열려 있는 동안 body 스크롤 잠금만 책임집니다 — 넘겨받은
  * `children`이 모달 내용 전체(제목, 닫기 버튼 포함)를 직접 그립니다.
  *
+ * 너비/높이를 강제하지 않는다 — dialog wrapper에 `w-*`/`max-w-*`가 없어 `children`이 자기
+ * 크기를 그대로 정한다. 작은 확인창은 아무 너비도 안 주면 내용 크기만큼만 좁게 나오고, 화면을
+ * 절반만 덮는 모달은 `className="w-[50vw]"`, 꽉 차는 모달은 `className="w-[calc(100vw-48px)]"`
+ * 처럼 content 최상위 요소에 원하는 너비를 직접 주면 된다(`max-h-[calc(100dvh-48px)]`만 항상
+ * 유지되어 뷰포트를 넘치지 않는다).
+ *
  * `src/common/components/MoverModal/Modal.tsx`(다른 feature들이 쓰는 title 필수 모달)와는
  * 별개입니다 — 그 컴포넌트를 수정하거나 재사용하지 않고, 전역 모달 전용으로 여기서만 씁니다.
  */
@@ -122,7 +128,7 @@ function BareModal({
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
-        className="box-border max-h-[calc(100dvh-48px)] w-full max-w-[608px] overflow-y-auto rounded-[32px] bg-(--gray-50) outline-none"
+        className="box-border max-h-[calc(100dvh-48px)] overflow-y-auto rounded-[32px] bg-(--gray-50) outline-none"
       >
         {children}
       </div>
