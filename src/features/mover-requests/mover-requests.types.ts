@@ -1,7 +1,9 @@
+import type { ServiceType } from "@/common/constants/domain";
+
 export interface ReceivedRequestViewModel {
   requestId: string;
   customerName: string;
-  moveTypeLabel: string;
+  serviceType: ServiceType;
   isDesignated: boolean;
   requestedAt: string;
   requestedAtLabel: string;

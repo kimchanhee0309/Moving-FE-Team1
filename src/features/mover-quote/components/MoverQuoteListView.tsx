@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/common/constants/routes";
 
 import type { MoverQuoteCardData } from "../mover-quote.types";
-import MoverQuoteCard from "./MoverQuoteCard";
+import { MoverQuoteCard } from "./MoverQuoteCard";
 import { MoverQuoteTabs } from "./MoverQuoteTabs";
 
 interface MoverQuoteListViewProps {

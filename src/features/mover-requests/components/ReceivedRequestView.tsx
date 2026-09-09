@@ -2,19 +2,32 @@
 
 import { useMemo, useState } from "react";
 
+import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { SortDropdown } from "@/common/components/Dropdown/SortDropdown";
 import { SearchInput } from "@/common/components/Input/SearchInput";
 
-import type {
-  ReceivedRequestViewModel,
-  RejectRequestFormValue,
-  SendQuoteFormValue,
-} from "../mover-requests.types";
+import type { ReceivedRequestViewModel } from "../mover-requests.types";
 import { ReceivedRequestCard } from "./ReceivedRequestCard";
 import { RejectRequestModal } from "./RejectRequestModal";
 import { SendQuoteModal } from "./SendQuoteModal";
 
-const SERVICE_FILTERS = ["소형이사", "가정이사", "사무실이사"] as const;
+const SERVICE_FILTERS = [
+  {
+    value: SERVICE_TYPE.SMALL,
+    label: "소형이사",
+  },
+  {
+    value: SERVICE_TYPE.HOME,
+    label: "가정이사",
+  },
+  {
+    value: SERVICE_TYPE.OFFICE,
+    label: "사무실이사",
+  },
+] satisfies {
+  value: ServiceType;
+  label: string;
+}[];
 
 const SORT_OPTIONS = [
   {
@@ -22,8 +35,8 @@ const SORT_OPTIONS = [
     label: "이사 빠른순",
   },
   {
-    value: "REQUESTED_AT_ASC",
-    label: "요청일 빠른순",
+    value: "REQUESTED_AT_DESC",
+    label: "최근 요청 순",
   },
 ] as const;
 
@@ -35,10 +48,12 @@ type ActiveModal = "send" | "reject" | null;
 
 export function ReceivedRequestsView({ requests }: ReceivedRequestsViewProps) {
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<ServiceType | null>(
+    null,
+  );
   const [designatedOnly, setDesignatedOnly] = useState(false);
 
-  const [sortValue, setSortValue] = useState("MOVE_DATE_ASC");
+  const [sortValue, setSortValue] = useState("REQUESTED_AT_DESC");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
   const [selectedRequest, setSelectedRequest] =
@@ -55,21 +70,24 @@ export function ReceivedRequestsView({ requests }: ReceivedRequestsViewProps) {
           request.customerName.toLowerCase().includes(keyword);
 
         const matchesService =
-          selectedService === null || request.moveTypeLabel === selectedService;
+          selectedService === null || request.serviceType === selectedService;
 
         const matchesDesignated = !designatedOnly || request.isDesignated;
 
         return matchesKeyword && matchesService && matchesDesignated;
       })
-      .sort((a, b) => {
-        if (sortValue === "REQUESTED_AT_ASC") {
+      .sort((firstRequest, secondeRequest) => {
+        if (sortValue === "REQUESTED_AT_DESC") {
           return (
-            new Date(a.requestedAt).getTime() -
-            new Date(b.requestedAt).getTime()
+            new Date(secondeRequest.requestedAt).getTime() -
+            new Date(firstRequest.requestedAt).getTime()
           );
         }
 
-        return new Date(a.moveDate).getTime() - new Date(b.moveDate).getTime();
+        return (
+          new Date(firstRequest.moveDate).getTime() -
+          new Date(secondeRequest.moveDate).getTime()
+        );
       });
   }, [designatedOnly, requests, searchKeyword, selectedService, sortValue]);
 
@@ -86,23 +104,16 @@ export function ReceivedRequestsView({ requests }: ReceivedRequestsViewProps) {
 
   const closeModal = () => {
     setActiveModal(null);
+    setSelectedRequest(null);
   };
 
-  const handleSendQuote = (value: SendQuoteFormValue) => {
-    console.log("견적 보내기", {
-      requestId: selectedRequest?.requestId,
-      ...value,
-    });
-
+  const handleSendQuote = () => {
+    // API 연동 시 견적 보내기 mutation 호출
     closeModal();
   };
 
-  const handleReject = (value: RejectRequestFormValue) => {
-    console.log("요청 반려", {
-      requestId: selectedRequest?.requestId,
-      ...value,
-    });
-
+  const handleReject = () => {
+    // API 연동 시 요청 반려 mutation 호출
     closeModal();
   };
 
@@ -144,23 +155,27 @@ export function ReceivedRequestsView({ requests }: ReceivedRequestsViewProps) {
 
           <div className="flex gap-3 max-md:hidden">
             {SERVICE_FILTERS.map((service) => {
-              const isSelected = selectedService === service;
+              const isSelected = selectedService === service.value;
 
               return (
                 <button
-                  key={service}
+                  key={service.value}
                   type="button"
+                  aria-pressed={isSelected}
                   className={[
-                    "rounded-full border px-5 py-[10px] text-[18px] leading-[26px]",
+                    "rounded-full border px-5 py-[10px]",
+                    "text-[18px] leading-[26px]",
+                    "focus-visible:outline-2 focus-visible:outline-offset-2",
+                    "focus-visible:outline-[var(--primary-400)]",
                     isSelected
                       ? "border-[var(--primary-400)] bg-[var(--primary-100)] font-medium text-[var(--primary-400)]"
                       : "border-[var(--gray-300)] bg-[var(--background-100)] text-[var(--black-400)]",
                   ].join(" ")}
                   onClick={() =>
-                    setSelectedService(isSelected ? null : service)
+                    setSelectedService(isSelected ? null : service.value)
                   }
                 >
-                  {service}
+                  {service.label}
                 </button>
               );
             })}
@@ -215,22 +230,23 @@ export function ReceivedRequestsView({ requests }: ReceivedRequestsViewProps) {
         </section>
       </main>
 
-      {selectedRequest && (
-        <>
-          <SendQuoteModal
-            isOpen={activeModal === "send"}
-            request={selectedRequest}
-            onClose={closeModal}
-            onSubmit={handleSendQuote}
-          />
-
-          <RejectRequestModal
-            isOpen={activeModal === "reject"}
-            request={selectedRequest}
-            onClose={closeModal}
-            onSubmit={handleReject}
-          />
-        </>
+      {selectedRequest && activeModal === "send" && (
+        <SendQuoteModal
+          key={`send-${selectedRequest.requestId}`}
+          isOpen
+          request={selectedRequest}
+          onClose={closeModal}
+          onSubmit={handleSendQuote}
+        />
+      )}
+      {selectedRequest && activeModal === "reject" && (
+        <RejectRequestModal
+          key={`reject-${selectedRequest.requestId}`}
+          isOpen
+          request={selectedRequest}
+          onClose={closeModal}
+          onSubmit={handleReject}
+        />
       )}
     </>
   );
