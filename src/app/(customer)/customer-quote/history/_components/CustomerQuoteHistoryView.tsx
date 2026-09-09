@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { FilterDropdown } from "@/common/components/Dropdown";
@@ -192,19 +193,29 @@ function HistoryRequestCard({ group }: { group: HistoryRequestGroup }) {
             <ul className="flex w-full flex-col">
               {visibleQuotes.map((quote) => (
                 <li key={quote.id}>
-                  <QuoteHistoryCard
-                    careerYears={quote.careerYears}
-                    confirmedCount={quote.confirmedCount}
-                    favoriteCount={quote.favoriteCount}
-                    isDesignated={quote.isDesignated}
-                    message={quote.message}
-                    moverName={quote.moverName}
-                    price={quote.price}
-                    rating={quote.rating}
-                    reviewCount={quote.reviewCount}
-                    serviceType={quote.serviceType}
-                    status={quote.status}
-                  />
+                  <Link
+                    aria-label={`${quote.moverName} 기사님 견적 상세 보기`}
+                    className={[
+                      "block w-full rounded-xl text-left",
+                      "hover:bg-[var(--background-200)]",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                    ].join(" ")}
+                    href={ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id)}
+                  >
+                    <QuoteHistoryCard
+                      careerYears={quote.careerYears}
+                      confirmedCount={quote.confirmedCount}
+                      favoriteCount={quote.favoriteCount}
+                      isDesignated={quote.isDesignated}
+                      message={quote.message}
+                      moverName={quote.moverName}
+                      price={quote.price}
+                      rating={quote.rating}
+                      reviewCount={quote.reviewCount}
+                      serviceType={quote.serviceType}
+                      status={quote.status}
+                    />
+                  </Link>
                 </li>
               ))}
             </ul>
