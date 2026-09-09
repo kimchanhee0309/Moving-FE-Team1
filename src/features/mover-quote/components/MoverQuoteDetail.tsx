@@ -1,6 +1,15 @@
 import Image from "next/image";
-import { QUOTE_STATUS } from "@/common/constants/domain";
+
+import { IconButton } from "@/common/components/button";
+import {
+  DESIGNATED_REQUEST_CHIP,
+  MoveTypeChip,
+} from "@/common/components/MoveTypeChip";
+import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
+
+import { SERVICE_TYPE_LABEL } from "../mover-quote.constants";
 import type { MoverQuoteDetailData } from "../mover-quote.types";
+
 interface MoverQuoteDetailProps {
   quote: MoverQuoteDetailData;
 }
@@ -12,82 +21,117 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
     <>
       <header className="border-b border-[var(--line-100)] bg-white">
         <div className="mx-auto max-w-[1200px] px-6 py-8 max-md:py-[10px]">
-          <h1 className="text-[24px] font-semibold leading-8 max-md:text-[18px]">
+          <h1 className="text-[24px] font-semibold leading-8 text-[var(--black-500)] max-md:text-[18px]">
             견적 상세
           </h1>
         </div>
       </header>
 
-      <div className="relative h-[176px] overflow-hidden bg-[var(--primary-400)] max-md:h-[122px]">
-        {/*
-            Figma의 오렌지 배너 장식은 SVG로 export해서 
-            /public/images/quote-detail-banner.svg에 넣은 후 
-            이곳에서 Image로 렌더링하면 됨
-        */}
-      </div>
+      <div
+        aria-hidden="true"
+        className={[
+          "h-[122px] w-full bg-cover bg-center",
+          "bg-[url('/images/mover-quote/quote-detail-banner-mobile.svg')]",
+          "min-[744px]:h-[180px]",
+          "min-[744px]:bg-[url('/images/mover-quote/quote-detail-banner.svg')]",
+        ].join(" ")}
+      />
 
-      <main className="mx-auto grid w-full max-w-[1200px] grid-cols-[minmax(0,741px)_1fr] gap-[80px] px-6 py-10 max-lg:grid-cols-1 max-md:max-w-[375px] max-md:px-5 max-md:py-9">
+      <main className="mx-auto grid w-full max-w-[1200px] grid-cols-[minmax(0, 741px)_1fr] gap-20 px-6 py-10 max-lg:grid-cols-1 max-md:max-w-[375px] max-md:px-5 max-md:py-9">
         <section>
           <div className="flex items-center justify-between gap-4">
-            <div className="flex gap-2">
-              <span className="rounded-md bg-[var(--primary-100)] px-2 py-1 text-[14px] font-semibold text-[var(--primary-400)]">
-                소형이사
-              </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <MoveTypeChip variant={quote.serviceType} size="responsive" />
 
-              {quote.isDesignated && (
-                <span className="rounded-md bg-[var(--secondary-red-100)] px-2 py-1 text-[14px] font-semibold text-[var(--secondary-red-200)]">
-                  지정 견적 요청
-                </span>
-              )}
+              {quote.isDesignated ? (
+                <MoveTypeChip
+                  variant={DESIGNATED_REQUEST_CHIP}
+                  size="responsive"
+                />
+              ) : null}
             </div>
 
-            {isConfirmed && (
-              <span className="flex items-center gap-1 font-bold text-[var(--primary-400)]">
+            {isConfirmed ? (
+              <span className="inline-flex shrink-0 items-center gap-1 text-[14px] font-semibold leading-6 text-[var(--primary-400)]">
                 <Image
                   src="/icons/ic-check-confirmed.svg"
                   alt=""
                   width={20}
                   height={20}
+                  aria-hidden="true"
                 />
                 확정견적
               </span>
-            )}
+            ) : null}
           </div>
 
-          <h2 className="mt-6 border-b border-[var(--line-100)] pb-5 text-[20px] font-semibold">
+          <h2 className="mt-6 border-b border-[var(--line-100)] pb-5 text-[20px] font-semibold leading-8 text-[var(--black-400)]">
             {quote.customerName} 고객님
           </h2>
 
-          <div className="flex items-center justify-between border-b border-[var(--line-100)] py-5">
-            <span className="text-[18px] font-medium">견적가</span>
-            <strong className="text-[24px] font-bold">
+          <div className="flex items-center justify-between gap-4 border-b border-[var(--line-100)] py-5">
+            <span className="text-[18px] font-medium leading-[26px] text-[var(--black-400)]">
+              견적가
+            </span>
+
+            <strong className="text-[24px] font-bold leading-8 text-[var(--black-400)]">
               {quote.price.toLocaleString("ko-KR")}원
             </strong>
           </div>
 
           <section className="mt-6">
-            <h3 className="mb-6 text-[18px] font-semibold">견적 정보</h3>
-            <dl className="grid grid-cols-[100px_1fr] gap-x-6 gap-y-4 text-[16px] max-md:grid-cols-[90px_1fr]">
-              <dt className="text-[var(--content-placeholder)]">견적 요청일</dt>
-              <dd className="font-medium">{quote.requestedAt}</dd>
+            <h3 className="mb-6 text-[18px] font-semibold leading-[26px] text-[var(--black-400)]">
+              견적 정보
+            </h3>
 
-              <dt className="text-[var(--content-placeholder)]">서비스</dt>
-              <dd className="font-medium">사무실이사</dd>
+            <dl className="flex flex-col gap-4 text-[16px] leading-[26px]">
+              <div className="grid grid-cols-[100px_1fr] gap-6 max-md:grid-cols-[90px_1fr]">
+                <dt className="text-[var(--content-placeholder)]">
+                  견적 요청일
+                </dt>
 
-              <dt className="text-[var(--content-placeholder)]">이용일</dt>
-              <dd className="font-medium">{quote.moveDate}</dd>
+                <dd className="font-medium text-[var(--black-400)]">
+                  {quote.requestedAt}
+                </dd>
+              </div>
 
-              <dt className="text-[var(--content-placeholder)]">출발지</dt>
-              <dd className="font-medium">{quote.fromAddress}</dd>
+              <div className="grid grid-cols-[100px_1fr] gap-6 max-md:grid-cols-[90px_1fr]">
+                <dt className="text-[var(--content-placeholder)]">서비스</dt>
 
-              <dt className="text-[var(--content-placeholder)]">도착지</dt>
-              <dd className="font-medium">{quote.toAddress}</dd>
+                <dd className="font-medium text-[var(--black-400)]">
+                  {SERVICE_TYPE_LABEL[quote.serviceType]}
+                </dd>
+              </div>
+
+              <div className="grid grid-cols-[100px_1fr] gap-6 max-md:grid-cols-[90px_1fr]">
+                <dt className="text-[var(--content-placeholder)]">이용일</dt>
+
+                <dd className="font-medium text-[var(--black-400)]">
+                  {quote.moveDate}
+                </dd>
+              </div>
+
+              <div className="grid grid-cols-[100px_1fr] gap-6 max-md:grid-cols-[90px_1fr]">
+                <dt className="text-[var(--content-placeholder)]">출발지</dt>
+
+                <dd className="font-medium text-[var(--black-400)]">
+                  {quote.fromAddress}
+                </dd>
+              </div>
+
+              <div className="grid grid-cols-[100px-1fr] gap-6 max-md:grid-cols-[90px_1fr]">
+                <dt className="texxt-[var(--content-placeholder)]">도착지</dt>
+
+                <dd className="font-medium text-[var(--black-400)]">
+                  {quote.toAddress}
+                </dd>
+              </div>
             </dl>
           </section>
         </section>
 
         <aside className="max-lg:border-t max-lg:border-[var(--line-100)] max-lg:pt-8">
-          <h3 className="text-[18px] font-semibold">
+          <h3 className="text-[18px] font-semibold leading-[26px] text-[var(--black-400)]">
             <span className="max-md:hidden">견적서 공유하기</span>
 
             <span className="hidden max-md:inline">
@@ -95,30 +139,25 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
             </span>
           </h3>
 
-          <div className="mt-5 flex gap-3">
-            {/*
-              Figma에서 정확한 SVG를 export한 뒤 다음 경로로 사용:
-              /icons/share/link.svg
-              /icons/share/kakao.svg
-              /icons/share/facebook.svg
-            */}
+          <div className="mt-5 hidden items-center gap-3 min-[744px]:flex">
+            <IconButton kind="clip" size="md" aria-label="견적 링크 복사" />
 
-            <button
-              type="button"
-              aria-label="견적 링크 복사"
-              className="size-16 rounded-lg border border-[var(--line-200)] max-md:size-10"
-            />
+            <IconButton kind="kakao" size="md" aria-label="카카오톡으로 공유" />
 
-            <button
-              type="button"
-              aria-label="카카오톡으로 공유"
-              className="size-16 rounded-lg bg-[#FAE100] max-md:size-10"
-            />
-
-            <button
-              type="button"
+            <IconButton
+              kind="facebook"
+              size="md"
               aria-label="페이스북으로 공유"
-              className="size-16 rounded-lg bg-[var(--primary-400)] max-md:size-10"
+            />
+          </div>
+
+          <div className="mt-5 flex items-center gap-3 min-[744px]:hidden">
+            <IconButton kind="clip" size="xs" aria-label="견적 링크 복사" />
+            <IconButton kind="kakao" size="xs" aria-label="카카오톡으로 공유" />
+            <IconButton
+              kind="facebook"
+              size="xs"
+              aria-label="페이스북으로 공유"
             />
           </div>
         </aside>

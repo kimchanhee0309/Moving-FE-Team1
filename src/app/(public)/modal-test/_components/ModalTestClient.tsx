@@ -2,99 +2,23 @@
 
 import { useState } from "react";
 
-import {
-  MOVE_REQUEST_STATUS,
-  QUOTE_STATUS,
-  SERVICE_TYPE,
-} from "@/common/constants/domain";
+import { MOVE_REQUEST_STATUS, QUOTE_STATUS } from "@/common/constants/domain";
 import { MoverQuoteCard } from "@/features/mover-quote/components/MoverQuoteCard";
+import { RejectedRequestCard } from "@/features/mover-quote/components/RejectedRequestCard";
+import {
+  MOCK_MOVER_QUOTES,
+  MOCK_REJECTED_REQUESTS,
+} from "@/features/mover-quote/mover-quote.mock";
 import type { MoverQuoteCardData } from "@/features/mover-quote/mover-quote.types";
 import { ReceivedRequestCard } from "@/features/mover-requests/components/ReceivedRequestCard";
 import { RejectRequestModal } from "@/features/mover-requests/components/RejectRequestModal";
 import { SendQuoteModal } from "@/features/mover-requests/components/SendQuoteModal";
+import { MOCK_RECEIVED_REQUESTS } from "@/features/mover-requests/mover-requests.mock";
 import type {
   ReceivedRequestViewModel,
   RejectRequestFormValue,
   SendQuoteFormValue,
 } from "@/features/mover-requests/mover-requests.types";
-
-const MOCK_REQUESTS: ReceivedRequestViewModel[] = [
-  {
-    requestId: "request-1",
-    customerName: "김인서",
-    moveTypeLabel: "소형이사",
-    isDesignated: true,
-    requestedAt: "2026-07-01T09:00:00+09:00",
-    requestedAtLabel: "1시간 전",
-    departureLabel: "서울시 중구",
-    arrivalLabel: "경기도 수원시",
-    moveDate: "2026-07-01",
-    moveDateLabel: "2026년 07월 01일 (월)",
-  },
-  {
-    requestId: "request-2",
-    customerName: "박무빙",
-    moveTypeLabel: "가정이사",
-    isDesignated: false,
-    requestedAt: "2026-07-01T08:00:00+09:00",
-    requestedAtLabel: "2시간 전",
-    departureLabel: "서울시 마포구",
-    arrivalLabel: "인천시 연수구",
-    moveDate: "2026-07-08",
-    moveDateLabel: "2026년 07월 08일 (월)",
-  },
-];
-
-const MOCK_QUOTES: MoverQuoteCardData[] = [
-  {
-    id: "quote-pending",
-    customerName: "김인서",
-    serviceType: SERVICE_TYPE.SMALL,
-    isDesignated: true,
-    fromAddress: "서울시 중구",
-    toAddress: "경기도 수원시",
-    moveDate: "2026년 07월 01일 (월)",
-    price: 180000,
-    quoteStatus: QUOTE_STATUS.PENDING,
-    moveRequestStatus: MOVE_REQUEST_STATUS.WAITING,
-  },
-  {
-    id: "quote-confirmed",
-    customerName: "김인서",
-    serviceType: SERVICE_TYPE.SMALL,
-    isDesignated: true,
-    fromAddress: "서울시 중구",
-    toAddress: "경기도 수원시",
-    moveDate: "2026년 07월 01일 (월)",
-    price: 180000,
-    quoteStatus: QUOTE_STATUS.CONFIRMED,
-    moveRequestStatus: MOVE_REQUEST_STATUS.CONFIRMED,
-  },
-  {
-    id: "quote-completed",
-    customerName: "김인서",
-    serviceType: SERVICE_TYPE.SMALL,
-    isDesignated: true,
-    fromAddress: "서울시 중구",
-    toAddress: "경기도 수원시",
-    moveDate: "2026년 07월 01일 (월)",
-    price: 180000,
-    quoteStatus: QUOTE_STATUS.PENDING,
-    moveRequestStatus: MOVE_REQUEST_STATUS.COMPLETED,
-  },
-  {
-    id: "quote-confirmed-completed",
-    customerName: "김인서",
-    serviceType: SERVICE_TYPE.SMALL,
-    isDesignated: true,
-    fromAddress: "서울시 중구",
-    toAddress: "경기도 수원시",
-    moveDate: "2026년 07월 01일 (월)",
-    price: 180000,
-    quoteStatus: QUOTE_STATUS.CONFIRMED,
-    moveRequestStatus: MOVE_REQUEST_STATUS.COMPLETED,
-  },
-];
 
 type ActiveModal = "send-quote" | "reject-request" | null;
 
@@ -102,14 +26,16 @@ export function ModalTestClient() {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
 
   const [selectedRequest, setSelectedRequest] =
-    useState<ReceivedRequestViewModel>(MOCK_REQUESTS[0]);
+    useState<ReceivedRequestViewModel | null>(null);
 
   const [testMessage, setTestMessage] = useState(
     "카드의 버튼을 눌러 동작을 확인해 주세요.",
   );
 
   const openModal = (modal: Exclude<ActiveModal, null>, requestId: string) => {
-    const request = MOCK_REQUESTS.find((item) => item.requestId === requestId);
+    const request = MOCK_RECEIVED_REQUESTS.find(
+      (item) => item.requestId === requestId,
+    );
 
     if (!request) {
       setTestMessage("요청 정보를 찾을 수 없습니다.");
@@ -122,9 +48,14 @@ export function ModalTestClient() {
 
   const closeModal = () => {
     setActiveModal(null);
+    setSelectedRequest(null);
   };
 
   const handleSendQuote = (value: SendQuoteFormValue) => {
+    if (!selectedRequest) {
+      return;
+    }
+
     setTestMessage(
       [
         "견적 보내기 테스트 완료",
@@ -138,6 +69,10 @@ export function ModalTestClient() {
   };
 
   const handleRejectRequest = (value: RejectRequestFormValue) => {
+    if (!selectedRequest) {
+      return;
+    }
+
     setTestMessage(
       [
         "요청 반려 테스트 완료",
@@ -162,7 +97,7 @@ export function ModalTestClient() {
           </h1>
 
           <p className="text-[16px] leading-[26px] text-[var(--content-muted)]">
-            API 요청 없이 카드 상태와 모달 동작만 확인하는 페이지입니다.
+            API 요청 없이 카드 상태와 모달 동작을 확인하는 페이지입니다.
           </p>
 
           <output className="rounded-xl border border-[var(--line-200)] bg-white px-4 py-3 text-[14px] leading-6 text-[var(--black-300)]">
@@ -182,7 +117,7 @@ export function ModalTestClient() {
           </div>
 
           <div className="grid grid-cols-2 items-start gap-6 max-lg:grid-cols-1">
-            {MOCK_REQUESTS.map((request) => (
+            {MOCK_RECEIVED_REQUESTS.map((request) => (
               <ReceivedRequestCard
                 key={request.requestId}
                 request={request}
@@ -200,13 +135,12 @@ export function ModalTestClient() {
             </h2>
 
             <p className="mt-2 text-[14px] leading-6 text-[var(--content-muted)]">
-              대기, 확정, 이사 완료, 확정 후 이사 완료 상태를 비교할 수
-              있습니다.
+              대기, 확정, 이사 완료 상태를 비교할 수 있습니다.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
-            {MOCK_QUOTES.map((quote) => (
+          <div className="grid grid-cols-2 items-start gap-6 max-lg:grid-cols-1">
+            {MOCK_MOVER_QUOTES.map((quote) => (
               <div key={quote.id} className="flex flex-col gap-3">
                 <p className="text-[14px] font-semibold text-[var(--black-300)]">
                   {getQuoteStateLabel(quote)}
@@ -220,21 +154,45 @@ export function ModalTestClient() {
             ))}
           </div>
         </section>
+
+        <section className="flex flex-col gap-8">
+          <div>
+            <h2 className="text-[24px] font-bold leading-8 text-[var(--black-400)]">
+              반려된 요청 카드
+            </h2>
+
+            <p className="mt-2 text-[14px] leading-6 text-[var(--content-muted)]">
+              반려 요청 오버레이가 카드 전체에 표시되는지 확인해 주세요.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 items-start gap-6 max-lg:grid-cols-1">
+            {MOCK_REJECTED_REQUESTS.map((request) => (
+              <RejectedRequestCard key={request.id} request={request} />
+            ))}
+          </div>
+        </section>
       </div>
 
-      <SendQuoteModal
-        isOpen={activeModal === "send-quote"}
-        request={selectedRequest}
-        onClose={closeModal}
-        onSubmit={handleSendQuote}
-      />
+      {selectedRequest && activeModal === "send-quote" ? (
+        <SendQuoteModal
+          key={`send-${selectedRequest.requestId}`}
+          isOpen
+          request={selectedRequest}
+          onClose={closeModal}
+          onSubmit={handleSendQuote}
+        />
+      ) : null}
 
-      <RejectRequestModal
-        isOpen={activeModal === "reject-request"}
-        request={selectedRequest}
-        onClose={closeModal}
-        onSubmit={handleRejectRequest}
-      />
+      {selectedRequest && activeModal === "reject-request" ? (
+        <RejectRequestModal
+          key={`reject-${selectedRequest.requestId}`}
+          isOpen
+          request={selectedRequest}
+          onClose={closeModal}
+          onSubmit={handleRejectRequest}
+        />
+      ) : null}
     </main>
   );
 }
