@@ -3,8 +3,6 @@
 import Image from "next/image";
 import type { ComponentPropsWithRef } from "react";
 
-import styles from "./Button.module.css";
-
 export type IconButtonKind = "like" | "clip" | "kakao" | "facebook";
 export type IconButtonSize = "xs" | "sm" | "md";
 
@@ -20,15 +18,15 @@ export type IconButtonProps = Omit<ComponentPropsWithRef<"button">, "children" |
 );
 
 const KIND_CLASS: Record<IconButtonKind, string> = {
-  like: styles.neutral,
-  clip: styles.neutral,
-  kakao: styles.kakao,
-  facebook: styles.facebook,
+  like: "border-[var(--line-200)] bg-[var(--gray-50)] text-[var(--black-500)]",
+  clip: "border-[var(--line-200)] bg-[var(--gray-50)] text-[var(--black-500)]",
+  kakao: "bg-[#fae100] text-[var(--black-500)]",
+  facebook: "bg-[var(--primary-400)] text-[var(--gray-50)]",
 };
 const SIZE_CLASS: Record<IconButtonSize, string> = {
-  xs: styles.iconXs,
-  sm: styles.iconSm,
-  md: styles.iconMd,
+  xs: "size-10 rounded-lg",
+  sm: "size-[54px] rounded-2xl",
+  md: "size-16 rounded-2xl",
 };
 const ASSETS: Record<IconButtonKind, Record<IconButtonSize, string>> = {
   like: { xs: "like-sm", sm: "like-sm", md: "like-md" },
@@ -58,11 +56,11 @@ export function IconButton({
     <button
       {...buttonProps}
       type={type}
-      className={`${styles.base} ${styles.iconButton} ${SIZE_CLASS[size]} ${KIND_CLASS[kind]} ${className}`}
+      className={`box-border inline-flex shrink-0 cursor-pointer items-center justify-center border border-transparent font-[inherit] transition-colors focus-visible:outline-[3px] focus-visible:outline-offset-3 focus-visible:outline-[var(--primary-400)] disabled:cursor-not-allowed disabled:opacity-50 disabled:aria-busy:cursor-wait motion-reduce:transition-none ${SIZE_CLASS[size]} ${KIND_CLASS[kind]} ${className}`}
       disabled={disabled || isLoading}
       aria-busy={isLoading || ariaBusy}
     >
-      {isLoading ? <span className={styles.spinner} aria-hidden="true" /> : (
+      {isLoading ? <span className="size-5 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent motion-reduce:animate-none" aria-hidden="true" /> : (
         <Image src={`/icons/button/${ASSETS[kind][size]}.svg`} alt="" width={iconSize} height={iconSize} />
       )}
     </button>

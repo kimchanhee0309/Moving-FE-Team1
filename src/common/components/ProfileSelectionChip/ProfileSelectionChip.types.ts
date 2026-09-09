@@ -39,3 +39,16 @@ export interface ProfileSingleSelectChipGroupProps<T extends string = string> {
   ariaLabel: string;
   ariaDescribedBy?: string;
 }
+
+export interface ProfileMultiSelectChipGroupProps<T extends string = string> {
+  options: ReadonlyArray<ProfileSelectionChipOption<T>>;
+  values: ReadonlyArray<T>;
+  onValuesChange: (values: T[]) => void;
+  size?: ProfileSelectionChipSize;
+  disabled?: boolean;
+  isLoading?: boolean;
+  isInvalid?: boolean;
+  className?: string;
+  ariaLabel: string;
+  ariaDescribedBy?: string;
+}
