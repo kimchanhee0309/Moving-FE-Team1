@@ -76,7 +76,7 @@ export function SendQuoteModal({
       onClose={onClose}
     >
       <form
-        className="felx w-full flex-col gap-10 max-md:gap-[26px]"
+        className="flex w-full flex-col gap-10 max-md:gap-[26px]"
         aria-busy={isSubmitting}
         onSubmit={handleSubmit}
       >
