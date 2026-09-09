@@ -15,7 +15,7 @@ const FOCUSABLE_SELECTOR = "a[href], button:not([disabled])";
  * 알림 드롭다운의 치수/타이포그래피는 `GnbProfileMenu`와 마찬가지로 role(customer/mover)이 아니라
  * **화면 폭**에 따라 달라진다. Figma 컴포넌트(`Componenet/dropdown/알림`)의 `size` variant는
  * "sm"(태블릿/모바일, 312px 폭)과 "md"(PC, 359px 폭)이며, 이 저장소의 다른 GNB 반응형 기준과 맞춰
- * `lg`(1024px) 미만은 sm, 이상은 md 스타일을 쓴다.
+ * 1200px 미만(모바일+태블릿, 드로어 유지 구간)은 sm, 1200px 이상(PC)은 md 스타일을 쓴다.
  *
  * 색상은 `src/styles/colors.css` 토큰을 사용한다. Figma 변수 값과 완전히 일치하지 않는 항목은
  * `GnbProfileMenu`와 같은 방식으로 가장 가까운 기존 토큰을 사용했다(세부 내용은 컴포넌트 작업 보고 참고):
@@ -24,23 +24,23 @@ const FOCUSABLE_SELECTOR = "a[href], button:not([disabled])";
  *   (저장소 `--gray-300`은 #d9d9d9라 이름은 같지만 값 차이가 훨씬 커서 값 기준으로 더 가까운 토큰을 선택했다)
  */
 const NOTIFICATION_MENU_SIZE = {
-  /** 드롭다운 전체(카드) 폭. sm(기본) → md(`lg:`) */
-  panelWidth: "w-[312px] lg:w-[359px]",
+  /** 드롭다운 전체(카드) 폭. sm(기본) → md(1200px 이상) */
+  panelWidth: "w-[312px] min-[1200px]:w-[359px]",
   /** 상단 "알림" 헤더 행의 안쪽 여백. */
-  headerPadding: "pl-4 pr-3 py-3.5 lg:pl-6",
+  headerPadding: "pl-4 pr-3 py-3.5 min-[1200px]:pl-6",
   /** 알림 항목/빈 상태 행의 안쪽 여백. */
-  itemPadding: "px-4 py-3 lg:px-6 lg:py-4",
+  itemPadding: "px-4 py-3 min-[1200px]:px-6 min-[1200px]:py-4",
   /** 헤더 타이포그래피/색상. */
-  titleText: "text-lg-bold text-(--black-300) lg:text-2lg-bold lg:text-(--black-400)",
+  titleText: "text-lg-bold text-(--black-300) min-[1200px]:text-2lg-bold min-[1200px]:text-(--black-400)",
   /**
    * 알림 문구 타이포그래피(크기만). 색상은 읽음 여부에 따라 달라져서 여기 포함하지 않는다
    * ({@link NotificationItemContent}에서 `isRead`에 따라 별도로 붙인다) — 같은 요소에 색상 유틸리티
    * 두 개를 동시에 넣으면 어느 게 이길지 클래스 선언 순서가 아니라 Tailwind 생성 순서에 좌우돼
    * 예측하기 어렵기 때문이다.
    */
-  itemText: "text-md-medium lg:text-lg-medium",
+  itemText: "text-md-medium min-[1200px]:text-lg-medium",
   /** 상대 시간(예: "2시간 전") 타이포그래피/색상. */
-  timeText: "text-sm-medium text-(--gray-400) lg:text-md-medium",
+  timeText: "text-sm-medium text-(--gray-400) min-[1200px]:text-md-medium",
 };
 
 function NotificationItemContent({ item }: { item: GnbNotificationItem }) {
