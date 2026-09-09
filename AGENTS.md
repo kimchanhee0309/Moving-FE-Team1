@@ -10,483 +10,247 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-이 파일은 저장소 전체에 적용된다. Codex, Claude, Cursor, Copilot 등 어떤 AI 도구를 사용하더라도 아래 규칙을 동일하게 따른다. 하위 폴더에 별도의 `AGENTS.md`가 있다면 그 폴더에서는 더 가까운 문서의 추가 규칙을 함께 적용한다.
+이 파일은 저장소 전체에 적용한다. 어떤 AI 도구를 사용하더라도 작업 전 저장소 루트, 현재 브랜치, 이 파일의 절대경로를 확인하고 처음부터 끝까지 직접 읽는다. 하위 폴더에 더 가까운 `AGENTS.md`가 있다면 함께 적용하되, 이 파일을 우회하는 지침을 만들지 않는다.
 
-## 0. AGENTS.md 보호 규칙
+## 0. AGENTS.md 보호
 
-이 파일은 팀이 합의하고 교차 검증한 공용 규칙이므로 AI 작업 중에는 **읽기 전용 파일**로 취급한다.
+- 사용자가 현재 요청에서 명시적으로 허용하지 않으면 이 파일을 수정·이동·삭제·이름 변경하지 않는다.
+- 규칙 충돌이나 개선 필요는 코드 변경과 분리해 보고한다. 허용받은 경우에도 요청 범위만 최소 수정한다.
+- `AGENTS.override.md`나 도구별 파일을 만들어 규칙을 우회하지 않는다.
+- 공용 규칙 변경은 별도 PR과 팀 리뷰를 거친다.
+- 수정 후 UTF-8 파일 크기를 확인하고 Codex 기본 로딩 한도인 32KiB 미만을 유지한다. 반복 예시는 줄이고 핵심 규칙을 앞쪽에 둔다.
 
-- 사용자가 현재 요청에서 `AGENTS.md` 수정을 명시적으로 지시하지 않았다면 이 파일을 수정, 이동, 이름 변경, 삭제하지 않는다.
-- 기능 구현, 리팩터링, 오류 수정, 규칙 적용 요청은 `AGENTS.md` 수정 권한을 포함하지 않는다.
-- 기존 규칙이 작업을 어렵게 하거나 서로 충돌해도 AI가 임의로 완화·삭제·우회하지 않는다.
-- 규칙의 누락, 충돌, 개선 필요성을 발견하면 코드 변경과 분리하여 사용자에게 보고하고 수정 제안만 한다.
-- 사용자가 명시적으로 수정을 요청한 경우에도 요청된 범위만 최소 변경하고, 변경 이유와 영향을 보고한다.
-- `AGENTS.override.md`, 하위 폴더의 별도 `AGENTS.md`, AI 도구별 지침 파일을 만들어 이 규칙을 우회하지 않는다.
-- 팀 공용 규칙 변경은 별도 PR과 팀 리뷰를 거쳐 반영한다.
-
-## 1. 프로젝트 목표
+## 1. 프로젝트와 용어
 
 `무빙(Moving)`은 이사 소비자와 이사 전문가를 연결하는 견적 매칭 서비스다.
 
-- `CUSTOMER`: 일반 유저/소비자
-- `MOVER`: 기사님/이사 전문가
-- 비회원: 기사님 목록과 상세 정보만 조회 가능
-- 서비스의 핵심 가치는 견적·리뷰·평점·경력 정보를 투명하게 제공하여 신뢰할 수 있는 매칭을 만드는 것이다.
+- `CUSTOMER`: 화면에서는 `일반 유저`, 코드·경로에서는 `customer`
+- `MOVER`: 화면에서는 `기사님`, 코드·경로에서는 `mover`
+- 비회원: 랜딩과 기사님 목록·상세 조회 가능
+- 같은 개념에 `driver`, `provider` 등 새 명칭을 임의로 추가하지 않는다.
 
-코드, 타입, 경로에서는 `customer`, `mover`를 사용한다. 사용자 화면의 한국어 문구에서는 각각 `일반 유저`, `기사님`을 사용한다. 같은 개념에 `user`, `driver`, `provider` 같은 새 명칭을 임의로 추가하지 않는다.
+## 2. 판단 우선순위
 
-## 2. 작업 판단 기준
+충돌 시 다음 순서로 판단하고 충돌·선택 근거를 결과에 남긴다.
 
-### 우선순위
+1. 현재 사용자의 명시적 요청과 인수 조건
+2. 최신 기능 요구사항, Figma, Swagger/API 명세, 백엔드 스키마
+3. 이 문서
+4. 현재 저장소 설정과 구현 패턴
+5. 팀 Notion의 무빙 문서
+6. 교안·다른 프로젝트 예시
 
-서로 다른 자료가 충돌하면 다음 순서로 판단한다.
-
-1. 현재 작업 요청과 명시된 인수 조건
-2. 무빙 기능 요구사항, 최신 Figma, Swagger/API 명세, 백엔드 스키마
-3. 이 `AGENTS.md`
-4. 현재 저장소의 실제 설정과 구현 패턴
-5. 팀 Notion의 무빙 전용 문서
-6. 교안이나 다른 프로젝트의 예시 코드
-
-원하는 동작은 요구사항/Figma/Swagger를 따르고, 설치 여부·파일 위치·사용 가능한 명령처럼 현재 상태에 관한 사실은 저장소를 직접 확인한다. 충돌을 발견하면 추측으로 섞지 말고 작업 결과에 충돌 내용과 선택한 기준을 남긴다.
-
-### 레거시 예시 주의
-
-팀 문서 일부에는 포토카드, 마켓플레이스, 배스킨라빈스 폰트, `Grade`, `shopListing`, `exchange`, Prisma를 프론트에서 직접 사용하는 예시가 섞여 있다. 이는 무빙의 요구사항이 아니므로 복사하거나 새 코드에 도입하지 않는다.
-
-- 폴더명은 `src/shared`가 아니라 현재 저장소의 `src/common`을 사용한다.
-- 이 프로젝트는 TypeScript 프로젝트다. API 파일은 `.api.js`가 아니라 `.api.ts`를 사용한다.
-- Next.js App Router를 사용한다. 설치 목록에 있더라도 `react-router`로 라우팅하지 않는다.
-- `clsx`, `tailwind-merge`, `vaul`, `react-intersection-observer`는 문서에 언급되지만 현재 설치되어 있지 않다. 팀 승인 없이 import하거나 의존성을 추가하지 않는다.
-- PostgreSQL/Prisma는 백엔드 기술이다. 프론트엔드에서 Prisma 모델이나 DB에 직접 접근하지 않는다.
+저장소에서 확인 가능한 사실은 직접 확인한다. 불명확한 API 필드·Figma 수치·권한 규칙을 추측하지 않는다. 포토카드·마켓플레이스·`Grade`·`shopListing`·`exchange`·프론트 Prisma 등 다른 프로젝트 예시는 도입하지 않는다.
 
 ## 3. 작업 시작 전 필수 확인
 
-코드를 수정하기 전에 다음 순서로 확인한다.
+코드 수정 전에 다음을 순서대로 수행한다.
 
-1. `git status`로 현재 브랜치와 기존 변경 사항을 확인한다.
-2. `package.json`, `tsconfig.json`, 관련 페이지·feature·common 코드를 읽는다.
-3. 같은 역할의 공통 컴포넌트, 훅, 타입, API 함수, 상수가 이미 있는지 검색한다.
-4. 작업이 영향을 주는 유저 타입, 라우트, API 계약, 로딩/빈 값/오류 상태를 정리한다.
-5. API 필드·Figma 수치·권한 규칙이 불명확하면 임의의 계약을 만들지 말고 확인을 요청한다.
+1. `git rev-parse --show-toplevel`, `git status`로 저장소 루트·브랜치·기존 변경을 확인한다.
+2. `package.json`, `tsconfig.json`, 관련 Next.js 로컬 문서와 대상 페이지·feature·common 코드를 읽는다.
+3. 기존 공통 컴포넌트, 아이콘·이미지, typography, hook, type, API, 상수를 검색한다.
+4. 사용자 유형, 라우트, API 계약, loading·empty·error 상태와 담당 범위를 정리한다.
+5. Figma/API/권한이 모호하거나 다른 담당 파일 변경이 필요하면 구현 전 확인한다.
 
-사용자의 미완성 변경을 덮어쓰거나 되돌리지 않는다. 관련 없는 파일을 정리하거나 대규모 리팩터링하지 않는다. 작업 범위를 벗어난 오류는 결과에 별도로 보고하고, 요청 없이 함께 수정하지 않는다.
+사용자의 미완성 변경을 덮거나 되돌리지 않는다. 관련 없는 정리·대규모 리팩터링·전역 변경은 하지 않으며 범위 밖 오류는 보고만 한다.
 
-## 4. 현재 기술 스택
+## 4. 기술 스택
 
-- Next.js 16 App Router
-- React 19
-- TypeScript 5, `strict: true`
-- Tailwind CSS 4
-- TanStack Query 5
-- REST API + 공통 `apiClient`
-- CSS 디자인 토큰 + Pretendard Variable
+- Next.js 16 App Router, React 19
+- TypeScript 5 (`strict: true`)
+- Tailwind CSS 4, CSS 디자인 토큰, Pretendard Variable
+- TanStack Query 5, REST API, 공통 `apiClient`
 - npm + `package-lock.json`
-- Vercel 배포 예정
+- AWS 배포 예정
 
-정확한 버전은 항상 `package.json`과 lockfile을 기준으로 한다. 기존 패키지로 해결할 수 있는 작업에 새 라이브러리를 추가하지 않는다. 의존성 추가·삭제·대규모 버전 변경은 요청 또는 팀 합의가 있을 때만 수행하고 이유와 영향을 PR에 적는다. npm을 사용하며 다른 패키지 매니저의 lockfile을 만들지 않는다.
+정확한 버전과 script는 `package.json`·lockfile을 기준으로 한다. `react-router`를 사용하지 않는다. `clsx`, `tailwind-merge`, `vaul`, `react-intersection-observer` 등 미설치 패키지를 승인 없이 추가하지 않는다. 새 lockfile이나 패키지 매니저를 도입하지 않는다. PostgreSQL/Prisma는 백엔드 전용이다.
 
 ## 5. 폴더와 책임 경계
 
 ```text
-
-
-moving-fe-team1/
-├─ public/                         # 정적 이미지, 폰트, 아이콘 파일
-├─ src/
-│  ├─ app/                          # Next.js App Router 페이지
-│  │  ├─ (public)/
-│  │  │     └─ mover-search/         # 기사님 찾기 페이지
-│  │  │          └─ [moverId]/
-│  │  │
-│  │  ├─ (auth)/                    # 인증 관련 페이지 그룹
-│  │  │  ├─ login/                  # 로그인 페이지
-│  │  │  │    ├─ customer/
-│  │  │  │    └─ mover/
-│  │  │  └─ signup/                 # 회원가입 페이지
-│  │  │       ├─ customer/
-│  │  │       └─ mover/
-│  │  │
-│  │  └─ (customer)/                 # 일반유저 관련
-│  │  │   ├─ customer-profile/        # 일반유저 프로필
-│  │  │   │    ├─ register/
-│  │  │   │    └─ edit/
-│  │  │   ├─ move-request/            # 견적 요청
-│  │  │   ├─ customer-quote/          # 내 견적 관리(일반유저)
-│  │  │   │    ├─ pending/
-│  │  │   │    ├─ history/
-│  │  │   │    │   └─ [quoteId]/
-│  │  │   │    └─ [quoteId]/
-│  │  │   ├─ favorite/               # 찜한 기사님
-│  │  │   └─ review/                 # 리뷰
-│  │  │        ├─ create/
-│  │  │        └─ written/
-│  │  │
-│  │  └─ (mover)/                    # 기사님 관련
-│  │     ├─ mover-profile/            # 기사님 프로필
-│  │     │    ├─ register/
-│  │     │    └─ edit/
-│  │     ├─ mover-mypage/             # 기사님 마이페이지
-│  │     ├─ requests/                # 받은 요청
-│  │     └─ mover-quote/              # 내 견적 관리(기사님)
-│  │          ├─ rejected/
-│  │          └─ [quoteId]/
-│  │
-│  ├─ common/                       # 전역 공통 코드
-│  │  ├─ api/                       # 공통 API client, 외부 API 유틸
-│  │  ├─ components/                # 버튼, 모달, 인풋, GNB 등 공통 UI 컴포넌트
-│  │  ├─ hooks/
-│  │  └─ utils/                     # 공통 유틸 함수
-│  │
-│  ├─ features/                     # 기능 단위 FE 모듈
-│  │  ├─ auth/                      # 로그인/회원가입 API, 컴포넌트
-│  │  ├─ customer-profile/          # 일반유저 관련 기능
-│  │  ├─ mover-profile/             # 기사님 관련 기능
-│  │  ├─ move-request/              # 견적 요청 관련 기능
-│  │  ├─ mover-search/              # 기사님 찾기 관련 기능
-│  │  ├─ favorite/                  # 찜한 기사님 관련 기능
-│  │  ├─ customer-quote/            # 일반유저 견적 관리 관련 기능
-│  │  ├─ mover-quote/               # 기사님 견적 관리 관련 기능
-│  │  ├─ mover-requests/            # 기사님 받은 요청 관련 기능
-│  │  ├─ review/                    # 리뷰 관련 기능
-│  │  ├─ mover-mypage/              # 기사님 마이페이지 관련 기능
-│  │  └─ notification/              # 알림 관련 기능
-│  │
-│  ├─ providers/                    # 전역 Provider 모음
-│  │
-│  ├─ styles/                       # 전역 스타일 관련 파일
-│  └─ proxy.js                      # Next.js proxy/middleware 설정
-│
-├─ next.config.mjs                  # Next.js 설정, 이미지 도메인, API rewrite
-├─ package.json
-└─ README.md
+public/                  정적 이미지·폰트·아이콘
+src/app/(public)/        랜딩, 기사님 찾기·상세
+src/app/(auth)/          customer/mover 로그인·회원가입
+src/app/(customer)/      customer-profile, move-request, customer-quote, favorite, review
+src/app/(mover)/         mover-profile, mover-mypage, requests, mover-quote
+src/common/              여러 도메인이 공유하는 API·컴포넌트·hook·상수·유틸
+src/features/            auth 및 기능 단위 모듈
+src/providers/           전역 Provider
+src/styles/              전역 토큰·타이포그래피·reset
 ```
 
-- `page.tsx`는 데이터·레이아웃 조합만 담당하고 큰 UI와 비즈니스 로직을 담지 않는다.
-- 한 페이지에서만 쓰는 컴포넌트는 해당 라우트의 `_components`에 둔다.
-- 특정 도메인의 여러 페이지에서 재사용하면 `features/{feature}/components`에 둔다.
-- 도메인과 무관하게 여러 feature에서 재사용할 때만 `common/components`로 승격한다.
-- `common`이 feature를 import하지 않게 한다. feature 간 직접 의존도 피하고 공통 계약을 `common`으로 추출한다.
-- 새 최상위 폴더나 `shared`, `lib`, `services` 같은 중복 계층을 임의로 만들지 않는다.
-- 라우트 그룹 `(public)`, `(auth)`, `(customer)`, `(mover)`는 URL에 포함되지 않는다.
-- 파일 시스템 라우트와 `src/common/constants/routes.ts`를 함께 갱신하고 오탈자를 검증한다. 경로는 항상 `/`로 시작한다.
+- `page.tsx`는 기본적으로 데이터·레이아웃 조합만 담당한다. 한 페이지 전용 UI는 라우트 `_components`, 도메인 내 재사용 UI는 `features/{feature}/components`, 여러 도메인 공통 UI만 `common/components`에 둔다. 단, 재사용되지 않는 단순 페이지를 `page.tsx`에 직접 두라는 명시적 팀 리뷰가 있으면 그 지시를 우선한다.
+- `common`은 feature를 import하지 않는다. feature 간 직접 의존을 피하고 공통 계약만 추출한다.
+- `shared`, `lib`, `services` 같은 중복 최상위 계층을 만들지 않는다.
+- 라우트 그룹은 URL에 포함되지 않는다. 라우트 추가·변경 시 `src/common/constants/routes.ts`도 확인하며 모든 경로는 `/`로 시작한다.
+- 새 `src` 코드는 `.ts`/`.tsx`로 작성한다. JSX는 `.tsx`, 그 외 API·type·상수·hook·utility는 `.ts`를 사용한다. 컴포넌트는 `PascalCase.tsx`, hook은 `useSomething.ts`, API/type은 `feature-name.api.ts`/`feature-name.types.ts`를 따른다.
+- 주요 feature 이름은 `auth`, `customer-profile`, `customer-quote`, `favorite`, `move-request`, `mover-mypage`, `mover-profile`, `mover-quote`, `mover-requests`, `mover-search`, `notification`, `review`로 유지한다.
 
-### 폴더별 TypeScript 파일 규칙
+### 담당 영역
 
-`src` 아래의 애플리케이션 코드는 JavaScript가 아닌 TypeScript로 작성한다. 새 `.js`/`.jsx` 파일을 만들거나 TypeScript 파일을 JavaScript로 변환하지 않는다.
+| 영역 | 주요 경로 | 담당 |
+| --- | --- | --- |
+| 인증/랜딩 | `(auth)`, `(public)/page.tsx`, `features/auth` | 이승재 |
+| 프로필/기사님 마이페이지 | customer/mover profile, mover mypage | 김지훈 |
+| 견적 요청/GNB/알림 | `move-request`, `notification`, 공통 Header | 노진우 |
+| 기사님 찾기/상세 | `mover-search` | 이영주 |
+| 찜/리뷰 | `favorite`, `review` | 조민성 |
+| 일반 유저 견적 | `customer-quote` | 권태현 |
+| 기사님 요청/견적 | `mover-requests`, `mover-quote` | 김찬희 |
 
-| 위치/역할                     | 확장자와 예시                                                         |
-| ----------------------------- | --------------------------------------------------------------------- |
-| App Router 페이지/레이아웃    | `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `not-found.tsx` |
-| React 컴포넌트                | `PascalCase.tsx`                                                      |
-| React Context/Provider        | `SomethingProvider.tsx` 또는 기존 provider 네이밍을 따른 `.tsx`       |
-| JSX를 반환하는 hook           | 꼭 필요한 경우에만 `useSomething.tsx`                                 |
-| 일반 custom hook              | `useSomething.ts`                                                     |
-| API 함수                      | `{feature-name}.api.ts`                                               |
-| DTO/props/domain 타입         | `{feature-name}.types.ts` 또는 목적이 분명한 `types.ts`               |
-| Query key, 상수               | `{feature-name}.constants.ts` 또는 기존 `constants/*.ts`              |
-| validator/mapper/순수 utility | `.ts`                                                                 |
-| 전역·디자인 스타일            | `.css`                                                                |
+다른 담당자의 공통 컴포넌트·연동 파일을 바꿔야 하면 Figma/API를 MCP 또는 팀 지정 도구로 먼저 확인한다. 결과에 확인 자료, 변경 이유, 영향받는 사용처, 담당자 협의 사항을 분리해 적는다. 계약이 미확정이거나 다른 작업을 덮을 위험이 있으면 수정하지 않는다.
 
-- JSX 문법이 있으면 `.tsx`, JSX 문법이 없으면 `.ts`를 사용한다.
-- 브라우저에서 실행된다는 이유만으로 `.tsx`를 사용하지 않는다. React element/JSX 포함 여부로 구분한다.
-- route 파일명은 Next.js 예약 이름을 유지하고, 그 외 컴포넌트 파일은 `PascalCase.tsx`를 사용한다.
-- API, type, constant, utility 파일에서 React를 import하지 않는다.
-- 루트 설정 파일인 `eslint.config.mjs`, `postcss.config.mjs`, `next.config.ts`는 프론트 소스 확장자 규칙의 예외다.
-- `tsconfig.json`의 현재 `allowJs` 값과 무관하게 새 `src` 코드는 `.ts`/`.tsx`로 작성하고 `strict: true`를 유지한다. 설정 변경이 필요하면 팀과 먼저 논의한다.
+## 6. 공통 컴포넌트
 
-현재 주요 feature 이름은 다음을 유지한다.
+- 새 UI 전 `src/common/components` → feature `components` → 라우트 `_components` 순으로 검색하고 기존 요소를 재사용한다.
+- 공통화 후보는 GNB/Header, Input·Select·Dropdown, 주소/우편번호·달력, 견적 관련 카드·모달·SubHeader, 공통 제목·별점·찜·상태 라벨이다. 필요성과 실제 재사용이 있을 때만 만든다.
+- 공통 컴포넌트는 API 호출이나 페이지 라우팅을 소유하지 않는다. 값을 controlled props로 받고 행동은 callback으로 전달한다.
+- native props, `className`, disabled, loading, error와 접근성을 지원한다. Input은 label/error와 비밀번호 보기 기능을 일관되게 제공한다.
+- variant·size는 union type과 컴포넌트 밖 매핑으로 관리한다. 디자인 값은 토큰·variant에 모은다.
+- public props 변경 전 전체 사용처를 검색하고 하위 호환성을 확인한다.
 
-`auth`, `customer-profile`, `customer-quote`, `favorite`, `move-request`, `mover-mypage`, `mover-profile`, `mover-quote`, `mover-requests`, `mover-search`, `notification`, `review`
-
-### 현재 협업 담당 영역
-
-담당 변경에 대한 별도 지시가 없다면 다른 영역까지 불필요하게 수정하지 않는다.
-
-| 영역                     | 주요 경로                                      | 담당   |
-| ------------------------ | ---------------------------------------------- | ------ |
-| 인증/랜딩                | `(auth)`, `(public)/page.tsx`, `features/auth` | 이승재 |
-| 프로필/기사님 마이페이지 | customer/mover profile, mover mypage feature   | 김지훈 |
-| 견적 요청/GNB/알림       | `move-request`, `notification`, 공통 Header    | 노진우 |
-| 기사님 찾기/상세         | `mover-search`                                 | 이영주 |
-| 찜/리뷰                  | `favorite`, `review`                           | 조민성 |
-| 일반 유저 견적 관리      | `customer-quote`                               | 권태현 |
-| 기사님 요청/견적 관리    | `mover-requests`, `mover-quote`                | 김찬희 |
-
-## 6. 공통 컴포넌트 원칙
-
-새 UI를 만들기 전에 `src/common/components`, 관련 feature의 `components`, 페이지의 `_components` 순서로 검색한다. 비슷한 컴포넌트를 이름만 바꿔 복제하지 않는다.
-
-무빙에서 공통화 대상으로 합의된 UI는 다음과 같다.
-
-- 반응형 GNB/Header
-- Input 계열과 폼용 SelectInput, 정렬/필터용 Dropdown
-- 주소 카드와 카카오 우편번호 검색 모달
-- 달력/날짜 선택 UI
-- 견적 요청·대기 견적·과거 견적·받은 요청·반려 요청·이사 완료 카드
-- 견적 보내기/요청 반려 모달
-- 이사 유형·신청일·출발지·도착지·이사일을 보여주는 SubHeader
-- 공통 타이틀, 별점, 찜 버튼, 상태/지정 요청 라벨
-
-목록은 “미리 전부 구현하라”는 의미가 아니다. 현재 작업에서 필요하고 재사용성이 확인된 경우에만 구현한다.
-
-- 공통 컴포넌트는 API 호출이나 특정 페이지 라우팅을 직접 소유하지 않는다.
-- 값과 열림 상태는 가능한 한 controlled props로 받고, 행동은 `onChange`, `onClose`, `onSubmit`처럼 콜백으로 전달한다.
-- native element props를 적절히 확장하고 `className`, `disabled`, 오류, 로딩 상태를 지원한다.
-- Input은 `label`, `error`, `disabled`를 일관되게 표현하고 `type="password"`일 때 접근 가능한 보기/숨기기 기능을 제공한다.
-- 정렬/필터 Dropdown과 폼 입력 Select를 같은 컴포넌트의 모호한 모드로 섞지 않는다.
-- variant/size가 필요하면 허용 값을 union type과 컴포넌트 밖의 매핑 객체로 정의한다.
-- 색상·간격·타이포그래피 값을 호출부마다 복사하지 말고 토큰과 variant에 모은다.
-- 기존 공통 컴포넌트의 public props를 바꿀 때는 모든 사용처를 검색하고 하위 호환 여부를 확인한다.
-
-## 7. TypeScript, React, Next.js 규칙
+## 7. TypeScript, React, Next.js, 상태
 
 ### TypeScript
 
-- `any`, 무분별한 type assertion, `@ts-ignore`를 사용하지 않는다.
-- API 응답, 컴포넌트 props, hook 반환값을 명시적으로 타입화한다.
-- 타입 전용 import는 `import type`을 사용한다.
-- 백엔드 enum 문자열은 `src/common/constants/domain.ts` 또는 feature의 상수/type에서 단일 관리한다.
-- 서버 응답 필드를 UI 편의를 위해 임의로 바꾸지 않는다. 변환이 필요하면 API 계층의 mapper에 모은다.
-- null/undefined/빈 배열을 구분하고 optional chaining만으로 오류를 숨기지 않는다.
+- `any`, `@ts-ignore`, 근거 없는 type assertion을 사용하지 않는다.
+- API 응답, props, hook 반환값을 명시적으로 타입화하고 type-only import는 `import type`을 사용한다.
+- 백엔드 enum은 common 또는 feature 상수/type 한 곳에서 관리한다.
+- 서버 필드를 임의로 바꾸지 말고 변환은 API mapper에 둔다. null, undefined, 빈 배열을 구분한다.
 
 ### React/Next.js
 
-- Server Component를 기본값으로 한다.
-- state, effect, event handler, 브라우저 API, TanStack Query가 필요한 가장 작은 경계에만 `"use client"`를 둔다.
-- 라우팅은 `next/link`, `next/navigation`, App Router를 사용한다.
-- 페이지 컴포넌트와 layout만 Next.js 규칙에 따라 default export하고, 재사용 컴포넌트·함수·훅은 named export를 기본으로 한다.
-- 파생 가능한 상태를 별도 state로 저장하지 않는다. `useEffect`는 외부 시스템 동기화에만 사용한다.
-- list key에 배열 index를 쓰지 말고 안정적인 식별자를 사용한다.
-- 이미지에는 의미 있는 `alt`를 제공하고, 최적화가 가능한 정적/원격 이미지는 `next/image` 사용을 우선한다.
-- loading, empty, error, success 상태를 모두 구현한다. 화면 전체를 막을 필요가 없는 갱신에는 기존 데이터를 유지한다.
+- Server Component가 기본이다. state·effect·event·브라우저 API·TanStack Query가 필요한 최소 경계만 `"use client"`로 만든다.
+- 라우팅은 `next/link`, `next/navigation`을 사용한다.
+- page/layout만 기본 export하고 재사용 코드에는 named export를 우선한다.
+- 파생 상태를 별도 state로 저장하지 않는다. `useEffect`는 외부 시스템 동기화에만 쓴다.
+- 목록 key는 안정적인 식별자를 사용한다. 이미지에는 적절한 `alt`와 가능한 경우 `next/image`를 사용한다.
+- normal/loading/empty/error/success 상태를 구현하고 작은 갱신에는 기존 데이터를 유지한다.
 
 ### TanStack Query
 
-- 서버 상태는 TanStack Query로, 컴포넌트 한정 UI 상태는 local state로 관리한다.
-- 여러 화면이 공유하는 인증/모달/알림 UI 상태만 Context 사용을 검토한다.
-- query key는 feature 안에서 일관된 factory 형태로 관리한다.
-- API 호출은 `.api.ts`, Query/Mutation 조합은 `hooks`에 두고 화면 컴포넌트에서 직접 `fetch`하지 않는다.
-- mutation 성공 후 관련 query를 정확히 invalidate하거나 캐시를 갱신한다.
-- optimistic update는 실패 시 rollback 전략이 있을 때만 사용한다.
+- 서버 상태는 Query, 컴포넌트 UI 상태는 local state로 관리한다. Context는 공유 인증·모달·알림에 한해 검토한다.
+- API 함수는 `.api.ts`, Query/Mutation 조합은 feature `hooks`에 두며 화면에서 직접 `fetch`하지 않는다.
+- query key는 feature factory로 일관되게 관리한다. mutation 성공 후 정확한 캐시 갱신·무효화를 수행한다.
+- optimistic update는 rollback이 있을 때만 사용한다.
 
-## 8. 네이밍과 코드 스타일
+## 8. 네이밍, 스타일, 주석
 
-- 컴포넌트, 타입, interface: `PascalCase`
-- 변수, 함수: `camelCase`
-- hook: `use` + `PascalCase` (`useMoverList`)
-- 이벤트 prop: `onSubmit`, 내부 handler: `handleSubmit`
-- boolean: `is`, `has`, `can`, `should` 접두사
-- 배열/목록: 의미 있는 복수형 또는 `List` 접미사 (`moverList`)
-- 상수: `UPPER_SNAKE_CASE`
-- route/feature 폴더: `kebab-case`
-- 컴포넌트 파일: `PascalCase.tsx`
-- hook 파일: `useSomething.ts`
-- API/type 파일: `feature-name.api.ts`, `feature-name.types.ts`
+- 컴포넌트·type·interface: `PascalCase`; 변수·함수: `camelCase`; 상수: `UPPER_SNAKE_CASE`; 폴더: `kebab-case`.
+- hook은 `useSomething`, event prop은 `onSubmit`, 내부 handler는 `handleSubmit`, boolean은 `is/has/can/should` 접두사를 사용한다.
+- double quote, semicolon, trailing comma와 `@/*` alias를 사용한다. import는 외부 → `@/` → 상대 경로 순이다.
+- 디버그 로그, 미사용 코드·import, 코드 내용을 반복하는 주석은 남기지 않는다.
+- 재사용 컴포넌트·hook·API·mapper·validator에는 책임과 비책임, public props 계약을 필요한 만큼 설명한다.
+- Figma 고정값, breakpoint, 토큰 매핑, API 변환, 권한·수량·날짜 제한, 캐시·race·focus·aria처럼 이유가 숨은 로직에만 근거와 예외를 주석으로 남긴다.
+- 상태 우선순위가 있으면 분기 가까이에 설명한다. `TODO`에는 확인 자료·담당·제거 조건을 적고 민감정보를 포함하지 않는다. 코드와 주석을 함께 갱신한다.
 
-기존 코드 스타일에 맞춰 double quote, semicolon, trailing comma를 사용한다. import는 외부 모듈, `@/` 절대 경로, 상대 경로 순으로 정리한다. 긴 상대 경로 대신 `@/*` alias를 사용한다. 의미 없이 코드를 그대로 읽은 주석, 디버그 로그, 사용하지 않는 코드와 import를 남기지 않는다. 다만 아래 주석 작성 규칙에서 요구하는 의도·계약·예외 설명은 생략하지 않는다.
+## 9. 디자인과 반응형
 
-### 주석 작성 규칙
-
-팀원이 AI가 작성한 코드를 빠르게 검수하고 이후 작업자가 안전하게 수정할 수 있도록, AI는 현재 작업에서 새로 만들거나 실질적으로 변경한 코드에 구현 의도를 설명하는 주석을 작성한다.
-
-- 재사용 컴포넌트, hook, API 함수, mapper, validator에는 무엇을 책임지고 무엇을 책임지지 않는지 JSDoc 또는 블록 주석으로 설명한다.
-- 공통 컴포넌트의 public props에는 controlled/uncontrolled 여부, 상태 우선순위, 단위, 기본값, 접근성 요구처럼 호출자가 알아야 하는 계약을 설명한다.
-- Figma의 고정 수치, breakpoint, 디자인 토큰 매핑, API 필드 변환, 권한·수량·날짜 제한처럼 코드만 보고 이유를 알기 어려운 값에는 출처와 선택 이유를 적는다.
-- 로딩·오류·빈 값 처리, 캐시 갱신, race condition 방지, focus 처리, `aria-*` 연결처럼 누락 시 오류가 생기기 쉬운 로직에는 동작 순서와 예외를 설명한다.
-- 여러 상태가 동시에 전달될 수 있다면 어떤 상태가 우선하는지 해당 분기 가까이에 주석으로 남긴다.
-- 페이지 조합 코드에는 큰 화면 구역이나 역할별 흐름이 명확하지 않을 때만 구역 주석을 사용한다. JSX 태그 이름을 그대로 한국어로 반복하는 주석은 쓰지 않는다.
-- 변수명·함수명만으로 충분히 드러나는 대입, 단순 조건문, import/export에는 주석을 반복해서 달지 않는다.
-- `TODO`를 남겨야 한다면 담당 작업, 필요한 확인 자료, 제거 조건을 함께 적고 막연한 메모를 남기지 않는다.
-- 코드 변경으로 설명이 달라지면 같은 작업에서 주석도 함께 갱신한다. 현재 동작과 어긋난 주석은 없는 주석보다 위험하므로 제거하거나 수정한다.
-- 주석에는 토큰, cookie, 개인정보, 내부 URL 등 민감 정보를 포함하지 않는다.
-
-## 9. 스타일과 반응형
-
-- `src/styles/colors.css`, `typography.css`, `reset.css`가 현재 디자인 토큰의 기준이다.
-- 새 이미지나 아이콘 파일을 추가하기 전에 `public` 전체에서 같은 의미와 형태의 자산이 있는지 검색하고, 중복 자산이 있으면 기존 경로를 재사용한다. 일치하는 자산이 없을 때만 현재 컴포넌트나 작업 범위를 식별할 수 있는 하위 폴더에 추가한다.
-- 글꼴 크기·굵기·줄 높이를 직접 작성하기 전에 `src/styles/typography.css`의 기존 클래스를 확인하고 재사용한다. 필요한 조합이 없고 여러 화면에서 반복 사용할 값일 때만 팀 합의 후 공용 typography class를 한 번 추가하며, 같은 조합을 다른 이름으로 중복 정의하지 않는다.
-- 임의의 hex 색상과 중복 `font-size`를 컴포넌트마다 추가하지 않는다. 기존 CSS 변수와 typography class를 우선한다.
-- Tailwind를 사용할 때도 기존 토큰과 의미가 겹치는 새 팔레트를 만들지 않는다.
-- Tailwind v4 `@theme`으로 토큰 체계를 이전하는 작업은 별도 합의된 마이그레이션으로 수행한다. 기존 CSS 변수 체계와 두 벌로 장기간 운영하지 않는다.
-- Figma의 실제 breakpoint와 수치를 먼저 확인한다. 확인할 수 없으면 기존 주변 컴포넌트 패턴을 따르고 임의의 디자인 시스템을 만들지 않는다.
-- 최소한 모바일, 태블릿, 데스크톱에서 레이아웃이 깨지지 않는지 확인한다.
-- PC 기사님 찾기 화면 왼쪽에는 찜한 기사님을 최대 3명까지 표시한다.
-- overlay/modal은 GNB보다 위에 표시하되 z-index 숫자를 각 컴포넌트에서 경쟁적으로 키우지 않는다.
+- `src/styles/colors.css`, `typography.css`, `reset.css`를 기준으로 CSS 변수와 typography class를 우선 사용한다.
+- 이미지·아이콘 추가 전 `public`을 검색한다. 같은 자산은 재사용하고 새 자산은 작업 전용 하위 폴더에 둔다.
+- 임의 hex·중복 font-size·새 팔레트를 반복 추가하지 않는다. 공용 typography 추가와 Tailwind v4 `@theme` 이전은 팀 합의가 필요하다.
+- Figma의 Auto Layout, 크기, 간격, 색상, 폰트, radius와 실제 프레임을 확인한다.
+- 공통 viewport: 모바일 `375~743px`, 태블릿 `744~1199px`, 데스크톱 `1200px 이상`. `375px 미만`은 모바일 레이아웃을 유지하고 넘침·잘림만 방지한다.
+- Tailwind는 필요 시 `min-[744px]`, `min-[1200px]`를 사용하며 기본 `md/lg`와 같다고 가정하지 않는다. 별도 breakpoint에는 Figma 근거를 주석으로 남긴다.
+- 최소 375, 744, 1200px에서 검증한다. overlay/modal은 GNB보다 위에 두되 z-index 경쟁을 만들지 않는다.
+- PC 기사님 찾기의 찜한 기사님은 최대 3명이다.
 
 ## 10. 접근성과 폼
 
-- 클릭 동작은 `div`가 아니라 `button`/`a` 등 의미에 맞는 요소를 사용한다.
-- 모든 폼 요소에 연결된 label, 오류 문구, disabled/loading 상태를 제공한다.
-- 모달은 제목, focus 이동/복귀, Esc 닫기, backdrop 닫기 정책을 명확히 한다.
-- 아이콘만 있는 버튼에는 `aria-label`을 제공한다.
-- 키보드만으로 검색, 필터, Dropdown, 달력, 찜, 모달을 사용할 수 있어야 한다.
-- 색상만으로 선택/오류/지정 요청 상태를 전달하지 않는다.
+- 클릭은 의미에 맞는 `button`/`a`를 사용하고 모든 폼 요소에 연결된 label, 오류, disabled/loading 상태를 제공한다.
+- 모달은 제목, focus 이동·복귀, Esc와 backdrop 닫기 정책을 정의한다.
+- 아이콘 버튼은 `aria-label`을 갖고 주요 UI는 키보드만으로 사용할 수 있어야 한다.
+- 선택·오류·지정 요청을 색상만으로 전달하지 않는다.
+- 이메일은 일반 형식, 전화번호는 한국 형식으로 검증하고 표시값과 서버값을 일관되게 정규화한다.
+- 비밀번호는 8자 이상이며 영문·숫자·특수문자를 각각 하나 이상 포함한다.
+- 클라이언트 검증과 서버 오류를 구분해 구체적인 한국어 메시지를 표시한다.
 
-인증 폼의 기본 검증은 다음과 같다.
+## 11. API와 데이터
 
-- 이메일: 일반적인 이메일 형식
-- 전화번호: 대한민국 전화번호 형식. 화면 표시와 서버 전송 형식을 분리해 일관되게 정규화한다.
-- 비밀번호: 8자 이상이며 영문, 숫자, 특수문자를 각각 1개 이상 포함
+- 모든 REST 호출은 `src/common/api/client.ts`의 `apiClient`와 `NEXT_PUBLIC_API_URL`을 사용하고 `credentials: "include"`를 유지한다.
+- 기본 응답은 성공 `{ success: true, data }`, 실패 `{ success: false, error: { code, message } }`지만 구현 전 Swagger와 실제 응답을 확인한다.
+- 오류는 `ApiError`, query string은 `apiClient.query`로 처리한다. `FormData`에는 `Content-Type`을 직접 설정하지 않는다.
+- 토큰·cookie·주소·전화번호를 로그에 남기지 않고 `.env*`를 커밋하지 않는다.
+- Notion API는 `To Do`와 오탈자가 있으므로 아래 경로도 후보일 뿐이다. method/path/request/response를 최신 Swagger·백엔드에서 확정한 뒤 구현한다.
 
-검증 실패 메시지는 한국어로 구체적으로 표시한다. 클라이언트 검증은 UX를 위한 것이며 서버 오류도 별도로 처리한다.
+| 도메인 | 후보 API |
+| --- | --- |
+| Auth | signup/login/refresh/logout, `/auth/oauth/:provider`, callback |
+| Mover search | `GET /movers`, `/movers/:id`, `/reviews/:moverId` |
+| Move request | `POST /move-request` |
+| Customer quote | 목록·상세·확정·이력 |
+| Mover requests/quote | `/movers/me/received-requests`, 견적·반려·상세 |
+| Customer profile | `POST/GET/PATCH /customers/me/profile`, `GET/PATCH /customers/me` |
+| Mover profile | `POST/GET/PATCH /movers/me/profile`, `GET/PATCH /movers/me` |
+| Favorites/Reviews | 목록·등록·해제 계약 확인, `POST /reviews`, `/movers/me/reviews` |
+| Notification | 문서화 전 임의 endpoint 생성 금지 |
 
-## 11. API와 데이터 처리
+`auth/signup/userss`, 로그인으로 적힌 `POST auth/me`, 대상 없는 `DELETE /favorites`, `reviews?type=writable, me`는 확정 계약으로 쓰지 않는다. 프론트 타입은 ERD 테이블을 복제하지 말고 API DTO에 맞춘다.
 
-### 공통 규칙
+## 12. 사용자 흐름과 비즈니스 규칙
 
-- 모든 REST 호출은 `src/common/api/client.ts`의 `apiClient`를 사용한다.
-- `NEXT_PUBLIC_API_URL`을 기준으로 하고 인증 cookie를 위해 `credentials: "include"`를 유지한다.
-- 성공 응답은 `{ success: true, data }`, 실패 응답은 `{ success: false, error: { code, message } }` 형태를 전제로 하되 Swagger와 실제 응답을 최종 확인한다.
-- HTTP 오류는 `ApiError`로 처리하고 사용자에게 서버 원문/stack을 노출하지 않는다.
-- query parameter는 문자열 조합 대신 `apiClient`의 `query` 옵션을 사용한다.
-- `FormData` 요청에는 `Content-Type`을 직접 지정하지 않는다.
-- 토큰, cookie, 개인 주소/전화번호를 로그에 출력하지 않는다.
-- `.env*`는 커밋하지 않는다.
+### 인증·프로필
 
-### 현재 API 후보 목록
-
-Notion의 모든 API가 아직 `To Do` 상태이고 일부 경로에 오탈자나 모호함이 있다. 아래 목록은 feature 분리 기준으로 사용하되, 구현 전 반드시 최신 Swagger/백엔드와 method, path, request, response를 확인한다.
-
-| 도메인           | 후보 API                                                                         |
-| ---------------- | -------------------------------------------------------------------------------- |
-| Auth             | signup customer/mover, login, refresh, logout, `/auth/oauth/:provider`, callback |
-| Mover search     | `GET /movers`, `GET /movers/:id`, `GET /reviews/:moverId`                        |
-| Move request     | `POST /move-request`                                                             |
-| Customer quote   | `GET /customer-quote`, detail, confirm, history, history detail                  |
-| Mover requests   | `GET /movers/me/received-requests`, detail, quote 생성, rejection 생성           |
-| Mover quote      | `GET /movers/me/quotes`, `?status=CONFIRMED`, detail, rejected requests          |
-| Customer profile | `POST/GET/PATCH /customers/me/profile`, `GET/PATCH /customers/me`                |
-| Mover profile    | `POST/GET/PATCH /movers/me/profile`, `GET/PATCH /movers/me`                      |
-| Favorites        | `GET /favorites`, favorite 등록/해제 계약 확인 필요                              |
-| Reviews          | writable/written 목록 query 계약 확인, `POST /reviews`, `GET /movers/me/reviews` |
-| Notification     | 문서화된 endpoint가 없으므로 임의로 만들지 말고 확인                             |
-
-특히 문서의 `auth/signup/userss`, 로그인으로 표기된 `POST auth/me`, `DELETE /favorites`의 대상 식별 방식, `reviews?type=writable, me`는 확정 계약으로 사용하지 않는다.
-
-ERD의 주요 도메인은 `User`, `Customer`, `Mover`, `MoverDetail`, `ServiceType`, `Region`, `CustomerServiceType`, `MoverServiceType`, `MoverRegion`, `MoveRequest`, `DesignatedRequest`, `Quote`, `Review`, `Favorite`, `Notification`이다. 프론트 타입은 DB 테이블을 그대로 복제하지 말고 API DTO에 맞춰 정의한다.
-
-## 12. 핵심 비즈니스 규칙
-
-### 인증/프로필
-
-- customer와 mover의 로그인·회원가입 화면과 권한을 분리한다.
-- 이메일과 Google/Naver/Kakao OAuth를 지원한다.
-- 로그인 상태를 종료할 수 있는 로그아웃 동작을 모든 인증 화면 흐름과 일관되게 제공한다.
-- 프로필 등록 전에는 각 역할의 전용 기능에 접근할 수 없다.
-- 인증 여부와 별개로 role과 profile 등록 여부를 확인한다.
-- 프로필 이미지, 별명, 경력, 한 줄 소개, 상세 설명, 서비스 종류, 서비스 가능 지역 중 역할별 실제 필드는 Figma와 API DTO를 확인한다. customer와 mover가 같은 필드를 가진다고 추측하지 않는다.
-- customer는 GNB 아바타에서 프로필 수정으로, mover는 GNB 아바타에서 마이페이지를 거쳐 프로필 수정으로 이동한다.
-- 비회원이 찜 또는 지정 요청을 누르면 로그인 화면으로 이동한다. 원래 목적지 복귀가 가능하도록 redirect 정보를 보존한다.
+- customer/mover 인증 화면과 권한을 분리하고 이메일 및 Google/Naver/Kakao OAuth, 로그아웃을 지원한다.
+- 인증 여부와 별도로 role과 profile 등록 여부를 확인한다. 미등록 사용자는 역할 전용 기능에 접근할 수 없다.
+- 비회원이 인증 필요 행동을 누르면 역할별 로그인으로 보내고 원래 목적지를 `redirect`로 보존한다.
+- 일반 유저: 가입/첫 로그인 → 미등록이면 `/customer-profile/register` → GNB에서 `/customer-profile/edit`.
+- 기사님: 가입/첫 로그인 → 미등록이면 `/mover-profile/register` → `/mover-mypage`; 수정은 `/mover-profile/edit`, 기본정보는 `/mover-mypage/basic-info`.
+- 프로필 필드는 역할별 Figma/API를 확인한다. customer와 mover가 같은 필드라고 추측하지 않는다.
+- 페이지 구현에서 인증 hook, TanStack Query 전역 설정, 공통 API client를 담당자 협의 없이 수정하지 않는다.
 
 ### 견적 요청
 
-- 한 customer는 동시에 하나의 활성 견적 요청만 가질 수 있다.
-- 활성 요청은 확정 전 대기 요청과, 확정 후 이사일 이전 요청을 모두 포함한다.
-- 이사일이 지난 뒤에만 새 요청을 만들 수 있다.
-- 일반 견적은 최대 5명, 지정 견적은 최대 3명에게 받을 수 있고 총 최대 8개다.
-- 지정 요청은 일반 견적 요청을 먼저 만든 뒤 가능하며 UI에서 명확한 라벨로 강조한다.
-- 이사 종류, 날짜, 출발지, 도착지 입력 단계를 progress bar로 표시한다.
-- 이전 답변을 수정해도 이후 단계와 서버 payload의 일관성이 깨지지 않게 한다.
-- 주소는 카카오 우편번호 서비스를 감싼 공통 모달/adapter를 통해 입력한다.
+- customer는 동시에 하나의 활성 요청만 가진다. 확정 전 대기 요청과 확정 후 이사일 이전 요청을 포함하며 이사일 이후 새 요청이 가능하다.
+- 일반 견적 최대 5명, 지정 견적 최대 3명, 총 최대 8개다. 지정 요청은 일반 요청 완료 후 가능하고 라벨로 강조한다.
+- 흐름은 이사 종류 → 이사 예정일 → 주소이며 progress bar를 표시한다. 이전 단계 수정 시 이후 상태와 payload 일관성을 유지한다.
+- 주소는 카카오 우편번호 공통 modal/adapter로 입력한다.
 
-### 기사님 찾기
+### 기사님 찾기·견적·리뷰·알림
 
-- 비회원과 customer 모두 목록/상세/리뷰/평점을 볼 수 있다.
-- 별명 검색, 리뷰·평점·경력·확정 횟수 정렬, 지역·서비스 필터, 필터 초기화를 지원한다.
-- 기사님 목록은 무한 스크롤이다. query key에 검색·정렬·필터를 모두 포함하고 조건 변경 시 첫 페이지부터 다시 조회한다.
-- 중복 항목, 중복 요청, 마지막 페이지 이후 요청, 빠른 조건 변경의 race condition을 방지한다.
-- 공유 문구 형식은 `이사를 준비하시나요? OOO 기사님을 추천합니다. 무빙에서 확인해 보세요! <기사님 상세 페이지 URL>`을 기준으로 한다.
+- 비회원/customer가 기사님 목록·상세·리뷰·평점을 조회할 수 있다. 검색, 리뷰·평점·경력·확정 횟수 정렬, 지역·서비스 필터와 초기화를 제공한다.
+- 기사님 목록은 무한 스크롤이며 검색·정렬·필터를 query key에 포함한다. 조건 변경 시 첫 페이지부터 조회하고 중복·마지막 페이지 이후 요청·race를 막는다.
+- mover는 가능 지역 요청만 보고 지정 요청을 강조하며 견적 또는 반려할 수 있다. 요청은 유형·지역·지정 여부 필터와 이사일순·최근순 정렬을 지원하고 반려 목록을 유지한다.
+- 받은 견적은 지정 여부를 구분하고 찜·상세·확정을 제공한다. 완료 이력은 전체/확정 견적을 구분한다.
+- 리뷰는 이사 완료 후 확정 기사님에게만 작성한다. 기사님 목록은 무한 스크롤, 리뷰 목록은 pagination을 사용한다.
+- customer는 작성 가능/완료 리뷰와 찜 전체 목록을 보고, mover 마이페이지는 평점과 받은 리뷰를 보여준다.
+- 알림: customer는 새 견적·견적 확정·이사 당일, mover는 새 요청·견적 확정·이사 당일.
+- 제한은 서버도 검증해야 하며 401/403/409와 도메인 오류를 처리한다.
 
-### 견적/리뷰/알림
+## 13. Git, 브랜치, PR
 
-- 받은 견적에서 지정 요청을 라벨로 구분하고 기사님 찜·상세·확정 기능을 제공한다.
-- 완료 이력에서는 이사 정보, 전체 견적, 확정 견적을 필터로 구분해 조회한다.
-- mover는 서비스 가능 지역의 요청만 보고, 지정 요청을 분리/강조하며 견적 전송 또는 반려할 수 있다.
-- mover 요청 목록은 이사 유형, 서비스 가능 지역, 지정 요청 여부로 필터링하고 이사일이 빠른 순/최근 요청 순으로 정렬한다.
-- 반려한 요청은 별도 목록에서 조회할 수 있게 유지한다.
-- 리뷰는 이사 완료 후 확정된 기사님에 대해서만 작성 가능하다.
-- 기사님 찾기 목록은 무한 스크롤이지만 리뷰 목록은 요구사항대로 pagination을 사용한다. “모든 목록을 무한 스크롤”로 일반화하지 않는다.
-- customer 리뷰 화면은 작성 가능한 목록과 작성 완료 목록을 구분하고, mover 마이페이지는 받은 리뷰와 평점을 함께 보여준다.
-- customer는 찜한 기사님 전체 목록을 별도 페이지에서 조회할 수 있다.
-- customer 알림: 새 견적, 견적 확정, 이사 당일.
-- mover 알림: 새 요청, 견적 확정, 이사 당일.
-
-UI에서 비즈니스 제한을 안내하되 프론트만으로 권한과 수량 제한이 보장된다고 가정하지 않는다. 서버의 401/403/409와 도메인 오류를 처리한다.
-
-## 13. Git, 브랜치, PR 규칙
-
-### 브랜치
-
-- 기준 브랜치: `dev`
-- 배포 브랜치: `main`
-- 기능 브랜치: `feat/<lowercase-kebab-case>`
-- 흐름: `feat/* -> dev -> main`
-
-새 작업은 최신 `dev`에서 분기한다. 작업 브랜치에 최신 `dev`를 반영할 때는 merge commit을 늘리기보다 rebase를 사용한다. 단, AI는 사용자의 미커밋 변경을 임의로 stash/reset하지 않는다.
-
-### 커밋과 PR
-
-커밋과 PR 제목은 다음 형식을 사용한다.
-
-```text
-feat: 로그인 페이지 구현
-fix: 기사님 목록 정렬 오류 수정
-refactor: 견적 query hook 분리
-docs: API 사용 규칙 보완
-chore: 개발 설정 정리
-```
-
-- 하나의 커밋은 하나의 논리적 변경을 담는다.
-- PR 대상은 `dev`다.
-- PR 본문에 연관 이슈, 작업 내용, 검증 방법, UI 변경 스크린샷, 필요한 리뷰 포인트를 작성한다.
-- 2명 이상의 리뷰와 Approve를 받은 뒤 GitHub의 **Squash and merge**로 병합한다.
-- Approve 없이 작성자가 임의로 merge하지 않는다.
-- 충돌이 생기면 팀에 알리고 자신의 feature 브랜치에서 해결한다.
-
-### 금지/주의 명령
-
-- `git push --force`와 `git reset --hard`는 금지한다.
-- `main`, `dev`, 다른 사람의 브랜치에 force push하지 않는다.
-- 이미 PR에 올린 자신의 feature 브랜치를 rebase한 경우에만, 원격의 다른 커밋이 없는지 확인하고 팀 동의를 얻은 뒤 `--force-with-lease`를 사용할 수 있다.
-- 사용자 변경 삭제, 브랜치 삭제, 대량 파일 이동은 명시적 요청 없이 수행하지 않는다.
+- 기준 `dev`, 배포 `main`, 기능 `feat/<lowercase-kebab-case>`, 흐름 `feat/* → dev → main`.
+- 최신 `dev`에서 분기한다. 최신화는 원칙적으로 rebase지만 AI가 사용자 변경을 임의 stash/reset하지 않는다.
+- 사용자의 별도 허용 없이 commit, push, PR, merge, rebase, 배포를 수행하지 않는다.
+- 커밋은 `feat|fix|refactor|docs|chore: 설명` 형식으로 논리 변경 하나만 담는다.
+- PR 대상은 `dev`; 이슈·작업·검증·UI 스크린샷·리뷰 포인트를 적고 2명 이상 Approve 후 Squash and merge한다.
+- 충돌은 자신의 feature 브랜치에서 해결하고 팀에 알린다.
+- `git push --force`, `git reset --hard`는 금지한다. rebase한 자신의 브랜치도 팀 동의와 원격 확인 후에만 `--force-with-lease`를 검토한다.
+- 브랜치 삭제, 사용자 변경 삭제, 대량 이동은 명시적 요청 없이 하지 않는다.
 
 ## 14. 검증과 완료 기준
 
-최소 검증 명령은 다음과 같다.
+실제 `package.json` script를 먼저 확인한 뒤 최소 다음을 실행한다.
 
 ```bash
 npm run lint
 npx tsc --noEmit
 ```
 
-배포에 영향을 주는 변경은 필요한 환경변수가 준비된 상태에서 다음도 실행한다.
+배포 영향 변경은 필요한 환경변수와 함께 `npm run build`도 실행한다. 현재 실제 테스트 환경은 없으므로 빈 `test.tsx`를 테스트로 보고하지 않는다.
 
-```bash
-npm run build
-```
+UI는 관련 역할과 375/744/1200px에서 normal/loading/empty/error, 로그인·role·profile 상태, 키보드/focus, 긴 문구·작은 화면, 검색·필터, 마지막 페이지, 중복 제출과 실패 복구를 작업 범위에 맞게 확인한다.
 
-현재 자동 테스트 스크립트와 테스트 프레임워크는 설정되어 있지 않다. 빈 `test.tsx` 파일을 테스트로 간주하거나 실행했다고 보고하지 않는다. 테스트 도입은 별도 합의 후 package script와 실제 테스트 파일을 함께 추가한다.
+실패를 성공으로 표현하지 않는다. 명령, 결과, 기존 문제·환경 부족·이번 변경의 관련성을 구분한다. 마지막으로 변경 파일이 담당 범위와 일치하는지 확인한다.
 
-UI 변경 시 관련 역할과 viewport에서 다음을 직접 확인한다.
+## 15. 완료 보고
 
-- 정상/로딩/빈 목록/오류 상태
-- 로그인 전/후, role 불일치, profile 미등록
-- 키보드 조작과 focus
-- 긴 한국어 문구와 작은 화면
-- 검색·정렬·필터 초기화
-- 무한 스크롤 또는 pagination의 마지막 페이지
-- mutation 중 중복 제출 방지와 실패 복구
+짧고 구체적으로 다음을 보고한다.
 
-검증 명령이 기존 저장소 문제나 환경변수 부족으로 실패하면 실패를 숨기거나 성공으로 표현하지 않는다. 실행한 명령, 결과, 이번 변경과의 관련성을 구분해 보고한다.
+1. 생성·수정·삭제한 파일과 구현 기능
+2. 재사용한 공통 컴포넌트와 상태·반응형 결과
+3. 실행한 lint·TypeScript·build·브라우저 검증과 결과
+4. API/Figma 의존성, 남은 위험과 팀 협의 사항
+5. 담당 범위 밖이라 수정하지 않은 사항
 
-## 15. AI 작업 결과 보고 형식
-
-작업을 마칠 때 다음 내용을 짧고 구체적으로 보고한다.
-
-1. 무엇을 변경했는지
-2. 변경한 주요 파일
-3. 실행한 검증과 결과
-4. 확인하지 못한 사항, API/Figma 의존성, 남은 위험
-
-요청하지 않은 commit, push, PR 생성, merge, 배포는 하지 않는다. 작업하지 않은 기능을 구현했다고 말하지 않으며, 임시 데이터·TODO·mock을 남겼다면 위치와 이유를 명시한다.
+작업하지 않은 기능을 구현했다고 말하지 않는다. mock·임시 데이터·TODO를 남겼다면 위치와 이유를 명시한다.
