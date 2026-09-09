@@ -48,7 +48,11 @@ function FavoriteCheckbox({
         aria-hidden="true"
       >
         {checked ? (
-          <svg viewBox="0 0 12 12" className="size-3 text-[var(--gray-50)]" fill="none">
+          <svg
+            viewBox="0 0 12 12"
+            className="size-3 text-[var(--gray-50)]"
+            fill="none"
+          >
             <path
               d="M2 6.2L4.8 9L10 3"
               stroke="currentColor"
@@ -92,13 +96,14 @@ export function FavoritePage() {
 
   const handleDeleteSelected = () => {
     if (selectedIds.length === 0) return;
-    setMovers((prev) => prev.filter((mover) => !selectedIds.includes(mover.id)));
+    setMovers((prev) =>
+      prev.filter((mover) => !selectedIds.includes(mover.id)),
+    );
     setSelectedIds([]);
   };
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
-      {/* Figma Header: desktop py-32, 타이틀 영역 */}
       <header className="bg-[var(--gray-50)] py-4 shadow-[0px_2px_10px_0px_rgba(248,248,248,0.1)] min-[744px]:py-5 min-[1200px]:py-8">
         <div className="mx-auto w-full max-w-[1200px] px-6 min-[744px]:px-[72px] min-[1200px]:px-2">
           <h1 className="text-2xl-semibold text-[var(--black-500)] max-[743px]:text-xl-bold">
@@ -107,7 +112,6 @@ export function FavoritePage() {
         </div>
       </header>
 
-      {/* desktop: 헤더~툴바 32px, 툴바~리스트 28px, 카드 간격 20px */}
       <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-6 pt-4 pb-10 min-[744px]:gap-7 min-[744px]:px-[72px] min-[744px]:pt-6 min-[1200px]:gap-7 min-[1200px]:px-0 min-[1200px]:pt-8">
         <div className="flex h-9 w-full items-center justify-between">
           <div className="group flex items-center gap-1">
@@ -172,9 +176,12 @@ export function FavoritePage() {
             </Link>
           </section>
         ) : (
-          <ul className="flex flex-col items-center gap-5 min-[744px]:items-stretch">
+          <ul className="flex flex-col gap-5">
             {movers.map((mover) => (
-              <li key={mover.id} className="w-full">
+              <li
+                key={mover.id}
+                className="flex w-full justify-center min-[744px]:block"
+              >
                 <MoverSearchCard
                   serviceType={mover.serviceType}
                   moverName={mover.moverName}
