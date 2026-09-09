@@ -332,7 +332,13 @@ export function CustomerQuoteDetailView({
             <p className="sr-only">견적 번호 {quoteId}</p>
           </section>
 
-          <aside className="flex w-full shrink-0 flex-col min-[1200px]:w-[320px]">
+          <aside
+            className={[
+              "flex w-full shrink-0 flex-col min-[1200px]:w-[320px]",
+              /* 확정 상세(1:11818): 공유는 프로필이 아니라 본문 쪽. 프로필 top 281, 공유 top 485. */
+              isConfirmed ? "min-[1200px]:mt-[204px]" : "",
+            ].join(" ")}
+          >
             {isConfirmed ? null : (
               <>
                 <div className="flex flex-col">
