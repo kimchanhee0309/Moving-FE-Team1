@@ -16,3 +16,21 @@ export interface CustomerProfileFormProps {
   submissionError?: string;
   onSubmit?: (values: CustomerProfileFormValues) => Promise<void>;
 }
+
+export interface CustomerProfileEditFormValues extends CustomerProfileFormValues {
+  name: string;
+  email: string;
+  phone: string;
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+}
+
+export interface CustomerProfileEditFormProps {
+  initialValues: Omit<CustomerProfileEditFormValues, "profileImage"> & {
+    profileImageUrl?: string;
+  };
+  isPending?: boolean;
+  submissionError?: string;
+  onSubmit?: (values: CustomerProfileEditFormValues) => Promise<void>;
+}

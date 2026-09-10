@@ -1,4 +1,6 @@
-import type { AuthFormErrors, AuthFormValues, AuthMode } from "./auth.types";
+import { ROUTES } from "@/common/constants/routes";
+
+import type { AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
 
 /** 한국 전화번호는 공백/하이픈만 제거합니다. 문자까지 제거해 잘못된 입력을 허용하지 않습니다. */
 export function normalizePhone(phone: string): string {
@@ -46,4 +48,16 @@ export function safeAuthRedirect(value: string | string[] | undefined): string |
 export function authHref(path: string, redirectTo?: string): string {
   const safePath = safeAuthRedirect(redirectTo);
   return safePath ? `${path}?${new URLSearchParams({ redirect: safePath })}` : path;
+}
+
+/** 인증 성공 뒤 프로필 미등록 사용자를 역할별 등록 화면으로 먼저 보냅니다. */
+export function resolveAuthenticatedPath(user: AuthUser, redirectTo?: string): string {
+  if (!user.profileCompleted) {
+    return user.role === "MOVER"
+      ? ROUTES.MOVER.PROFILE.REGISTER
+      : ROUTES.CUSTOMER.PROFILE.REGISTER;
+  }
+
+  const target = safeAuthRedirect(redirectTo);
+  return target && !/^\/(auth|login|signup)(\/|$)/.test(target) ? target : ROUTES.HOME;
 }
