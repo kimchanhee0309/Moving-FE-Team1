@@ -93,7 +93,7 @@ function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
       className={[
         "flex items-center justify-center bg-[var(--primary-100)] pr-[7px] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]",
         "gap-0.5 rounded py-0.5 pl-1",
-        "min-[558px]:gap-1 min-[558px]:rounded-md min-[558px]:py-1 min-[558px]:pl-[5px]",
+        "min-[744px]:gap-1 min-[744px]:rounded-md min-[744px]:py-1 min-[744px]:pl-[5px]",
       ].join(" ")}
     >
       <Image
@@ -108,7 +108,7 @@ function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
         className={[
           "whitespace-nowrap text-[var(--primary-400)]",
           "text-sm-semibold",
-          "min-[558px]:text-md-semibold",
+          "min-[744px]:text-md-semibold",
         ].join(" ")}
       >
         {SERVICE_TYPE_LABEL[serviceType]}
@@ -123,7 +123,7 @@ function DesignatedChip() {
       className={[
         "flex items-center justify-center bg-[#ffeef0] pr-[7px] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]",
         "gap-0.5 rounded py-0.5 pl-1",
-        "min-[558px]:gap-1 min-[558px]:rounded-md min-[558px]:py-1 min-[558px]:pl-[5px]",
+        "min-[744px]:gap-1 min-[744px]:rounded-md min-[744px]:py-1 min-[744px]:pl-[5px]",
       ].join(" ")}
     >
       <Image
@@ -138,7 +138,7 @@ function DesignatedChip() {
         className={[
           "whitespace-nowrap text-[#ff4f64]",
           "text-sm-semibold",
-          "min-[558px]:text-md-semibold",
+          "min-[744px]:text-md-semibold",
         ].join(" ")}
       >
         지정 견적 요청
@@ -217,10 +217,10 @@ function ChipGroup({
 function MoveInfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col items-start">
-      <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[558px]:text-md-regular">
+      <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[744px]:text-md-regular">
         {label}
       </span>
-      <span className="text-sm-medium whitespace-nowrap text-[var(--black-100)] min-[558px]:text-md-medium">
+      <span className="text-sm-medium whitespace-nowrap text-[var(--black-100)] min-[744px]:text-md-medium">
         {value}
       </span>
     </div>
@@ -230,7 +230,7 @@ function MoveInfoItem({ label, value }: { label: string; value: string }) {
 function MoveInfoDivider() {
   return (
     <div
-      className="hidden h-[50px] w-px shrink-0 bg-[var(--line-200)] min-[558px]:block"
+      className="hidden h-[50px] w-px shrink-0 bg-[var(--line-200)] min-[744px]:block"
       aria-hidden="true"
     />
   );
@@ -265,6 +265,10 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+/**
+ * 내가 작성한 리뷰 카드입니다.
+ * Figma Card-list/내가 작성한 리뷰: Mobile(375) vs Tablet+(744) 레이아웃을 전환합니다.
+ */
 export function WrittenReviewCard({
   moverName,
   profileImageUrl,
@@ -288,13 +292,13 @@ export function WrittenReviewCard({
         "flex w-full flex-col rounded-[20px] border-[0.5px] border-[var(--line-100)] bg-[var(--gray-50)]",
         "shadow-[-2px_-2px_10px_rgba(220,220,220,0.2),2px_2px_10px_rgba(220,220,220,0.2)]",
         "gap-4 px-5 py-6",
-        "min-[558px]:gap-5 min-[558px]:p-10",
+        "min-[744px]:gap-5 min-[744px]:p-10",
         className,
       ]
         .filter(Boolean)
         .join(" ")}
     >
-      <div className="flex w-full flex-col gap-3 min-[558px]:hidden">
+      <div className="flex w-full flex-col gap-3 min-[744px]:hidden">
         <div className="flex items-center gap-2">
           <ChipGroup
             serviceType={serviceType}
@@ -314,7 +318,7 @@ export function WrittenReviewCard({
         </div>
       </div>
 
-      <div className="hidden w-full items-start gap-5 min-[558px]:flex">
+      <div className="hidden w-full items-start gap-5 min-[744px]:flex">
         <MoverProfile src={profileImageUrl} moverName={moverName} size={80} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -343,11 +347,11 @@ export function WrittenReviewCard({
       </div>
 
       <div
-        className="h-px w-full bg-[var(--line-100)] min-[558px]:hidden"
+        className="h-px w-full bg-[var(--line-100)] min-[744px]:hidden"
         aria-hidden="true"
       />
 
-      <div className="flex w-full items-center gap-4 min-[558px]:gap-5">
+      <div className="flex w-full items-center gap-4 min-[744px]:gap-5">
         <MoveInfoItem label="출발지" value={departure} />
         <MoveInfoDivider />
         <MoveInfoItem label="도착지" value={arrival} />
@@ -356,19 +360,19 @@ export function WrittenReviewCard({
       </div>
 
       <div
-        className="h-px w-full bg-[var(--line-100)] min-[558px]:hidden"
+        className="h-px w-full bg-[var(--line-100)] min-[744px]:hidden"
         aria-hidden="true"
       />
 
       <div className="flex w-full flex-col items-start gap-3">
         <StarRating rating={rating} />
-        <p className="text-lg-medium w-full text-[var(--black-400)] min-[558px]:text-2lg-medium">
+        <p className="text-lg-medium w-full text-[var(--black-400)] min-[744px]:text-2lg-medium">
           {content}
         </p>
       </div>
 
       {writtenAtLabel ? (
-        <div className="flex w-full items-center justify-end gap-1.5 min-[558px]:hidden">
+        <div className="flex w-full items-center justify-end gap-1.5 min-[744px]:hidden">
           <p className="text-xs-regular whitespace-nowrap text-[#ababab]">
             작성일
           </p>
