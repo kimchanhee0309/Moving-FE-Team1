@@ -180,7 +180,7 @@ export function ReceivedRequestsView({
                     "focus-visible:outline-2 focus-visible:outline-offset-2",
                     "focus-visible:outline-[var(--primary-400)]",
                     isSelected
-                      ? "border-[var(--primary-400)] bg-[var(--primary-100)] font-medium texxt-[var(--primary-400)]"
+                      ? "border-[var(--primary-400)] bg-[var(--primary-100)] font-medium text-[var(--primary-400)]"
                       : "border-[var(--gray-300)] bg-[var(--backgroud-100)] text-[var(--black-400)]",
                   ].join(" ")}
                   onClick={() =>
