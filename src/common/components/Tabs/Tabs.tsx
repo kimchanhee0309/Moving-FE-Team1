@@ -32,7 +32,7 @@ export interface TabsProps<T extends string = string> {
 
 function getTabClassName(isSelected: boolean) {
   return [
-    "relative shrink-0 whitespace-nowrap",
+    "relative inline-flex shrink-0 items-center whitespace-nowrap",
     "h-[54px] min-[1200px]:h-auto min-[1200px]:py-4",
     isSelected
       ? "border-b-2 border-[var(--black-400)] text-[var(--black-500)] min-[1200px]:border-[var(--black-500)]"
