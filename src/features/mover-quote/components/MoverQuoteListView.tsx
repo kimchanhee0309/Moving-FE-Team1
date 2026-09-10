@@ -47,7 +47,7 @@ export function MoverQuoteListView({
             description="받은 요청에서 고객님에게 견적을 보내보세요."
           />
         ) : (
-          <div className="mx-auto grid w-full max-w-[1200px] grid-cols-2 items-start gap-6 px-6 py-16 max-lg:grid-cols-1 max-lg:justify-center max-md:max-w-[375px] max-md:gap-5 max-md:py-6">
+          <div className="mx-auto grid w-full max-w-[1200px] grid-cols-1 items-start justify-items-center gap-6 px-6 py-16 min-[1200px]:grid-cols-2 max-[743px]:max-w-[375px] max-[743px]:gap-5 max-[743px]:py-6">
             {quotes.map((quote) => (
               <MoverQuoteCard
                 key={quote.id}

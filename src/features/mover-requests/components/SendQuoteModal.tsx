@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 
-import { Modal } from "@/common/components/MoverModal/Modal";
 import { Input, Textarea } from "@/common/components/Input";
 import { Button } from "@/common/components/button";
 
@@ -11,10 +10,10 @@ import type {
   ReceivedRequestViewModel,
   SendQuoteFormValue,
 } from "../mover-requests.types";
-import { RequestModalSummary } from "./RequestInfo";
+import { RequestInfo } from "./RequestInfo";
+import { RequestModalPanel } from "./RequestModalPanel";
 
 interface SendQuoteModalProps {
-  isOpen: boolean;
   request: ReceivedRequestViewModel;
   isSubmitting?: boolean;
   serverError?: string;
@@ -23,7 +22,6 @@ interface SendQuoteModalProps {
 }
 
 export function SendQuoteModal({
-  isOpen,
   request,
   isSubmitting = false,
   serverError,
@@ -34,13 +32,12 @@ export function SendQuoteModal({
   const [comment, setComment] = useState("");
 
   const price = priceInput === "" ? 0 : Number(priceInput);
-
   const trimmedComment = comment.trim();
 
   const isValidPrice = Number.isSafeInteger(price) && price > 0;
+  const isValidComment = trimmedComment.length >= 10;
 
-  const canSubmit =
-    isValidPrice && trimmedComment.length >= 10 && !isSubmitting;
+  const canSubmit = isValidPrice && isValidComment && !isSubmitting;
 
   const formattedPrice =
     priceInput === "" ? "" : Number(priceInput).toLocaleString("ko-KR");
@@ -69,33 +66,33 @@ export function SendQuoteModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
+    <RequestModalPanel
       title="견적 보내기"
-      closeOnBackdrop={!isSubmitting}
+      isSubmitting={isSubmitting}
       onClose={onClose}
     >
       <form
-        className="flex w-full flex-col gap-10 max-md:gap-[26px]"
+        className="flex w-full flex-col gap-10 max-[743px]:gap-[26px]"
         aria-busy={isSubmitting}
         onSubmit={handleSubmit}
       >
-        <div className="flex flex-col gap-8 max-md:gap-5">
-          <RequestModalSummary request={request} />
+        <div className="flex flex-col gap-8 max-[743px]:gap-5">
+          <RequestInfo request={request} />
 
           <Input
-            label="견적가를 입력해 주세요"
+            label="견적가를 입력해주세요"
             inputSize="md"
             type="text"
             inputMode="numeric"
             autoComplete="off"
             placeholder="견적가 입력"
             value={formattedPrice}
+            required
             disabled={isSubmitting}
             containerClassName="!max-w-none"
             trailingIcon={
               <Image
-                src="/icons/mover-request/visibiity-off.svg"
+                src="/icons/mover-request/visibility-off.svg"
                 alt=""
                 width={24}
                 height={24}
@@ -111,6 +108,7 @@ export function SendQuoteModal({
             placeholder="최소 10자 이상 입력해주세요"
             minLength={10}
             value={comment}
+            required
             disabled={isSubmitting}
             containerClassName="!max-w-none"
             onChange={handleCommentChange}
@@ -136,6 +134,6 @@ export function SendQuoteModal({
           견적 보내기
         </Button>
       </form>
-    </Modal>
+    </RequestModalPanel>
   );
 }
