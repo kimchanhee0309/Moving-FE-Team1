@@ -64,4 +64,22 @@ export const moverSearchQueryKeys = {
   recommended: () => [...moverSearchQueryKeys.all, "recommended"] as const,
   favorites: (userId: string) =>
     [...moverSearchQueryKeys.all, "favorites", userId] as const,
+  detail: (moverId: string) =>
+    [...moverSearchQueryKeys.all, "detail", moverId] as const,
+  reviews: (moverId: string) =>
+    [...moverSearchQueryKeys.all, "reviews", moverId] as const,
+  designated: (userId: string) =>
+    [...moverSearchQueryKeys.all, "designated", userId] as const,
+  generalQuote: (userId: string) =>
+    [...moverSearchQueryKeys.all, "general-quote", userId] as const,
 };
+
+export const MOVER_DETAIL_REVIEW_PAGE_SIZE = 5;
+
+export function createMoverDetailShareUrl(origin: string, detailHref: string) {
+  return `${origin}${detailHref}`;
+}
+
+export function createKakaoShareUrl(detailUrl: string) {
+  return `https://story.kakao.com/s/share?url=${encodeURIComponent(detailUrl)}`;
+}

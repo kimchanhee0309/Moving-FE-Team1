@@ -5,16 +5,14 @@ import {
   SIDEBAR_MOVER_LIMIT,
 } from "./mover-search.constants";
 import type {
+  MoverDetail,
+  MoverReview,
+  MoverReviewSummary,
   MoverSearchListParams,
   MoverSearchPageResult,
   MoverSearchResult,
 } from "./mover-search.types";
 
-/**
- * TODO(mover-search): `GET /movers`가 확정되면 이 mock 배열과 클라이언트 필터/정렬/페이지네이션을
- * 실제 API 호출(TanStack Query `useInfiniteQuery`)로 교체합니다.
- * favoriteCount는 사이드바의 "추천 기사님"(찜 많은 순) 정렬을 검증하기 위해 값을 서로 다르게 구성했습니다.
- */
 export const MOCK_MOVER_SEARCH_RESULTS: MoverSearchResult[] = [
   {
     id: "mover-1",
@@ -208,10 +206,6 @@ function matchesListParams(
   return true;
 }
 
-/**
- * mock 목록을 검색·필터·정렬한 뒤 페이지 단위로 잘라 반환합니다.
- * 실제 `GET /movers`가 붙으면 이 함수 호출을 API 레이어로 교체합니다.
- */
 export function queryMockMoverSearchPage(
   params: MoverSearchListParams,
   page: number,
@@ -233,18 +227,54 @@ export function queryMockMoverSearchPage(
   };
 }
 
-/**
- * 로그인 일반 유저의 찜 사이드바 UI를 검증하기 위한 초기 id입니다.
- * 추천(찜 수 상위)과 목록이 달라야 분기가 눈에 보입니다.
- * TODO(mover-search): `GET /favorites` 확정 후 이 배열과 클라이언트 토글을 API로 교체합니다.
- */
 export const MOCK_FAVORITE_MOVER_IDS = [
-  "mover-1",
+  "mover-3",
   "mover-6",
   "mover-8",
 ] as const;
 
-/** id 순서를 유지한 채 mock 목록에서 기사님을 찾습니다. 없는 id는 건너뜁니다. */
+export const MOCK_DESIGNATED_MOVER_IDS: string[] = ["mover-5"];
+
+export const MOCK_CUSTOMER_HAS_GENERAL_QUOTE = false;
+
+export const MOCK_DESIGNATED_STORAGE_KEY = "moving-mock-designated-mover-ids";
+
+export function readStoredDesignatedMoverIds(): string[] {
+  if (typeof window === "undefined") {
+    return [...MOCK_DESIGNATED_MOVER_IDS];
+  }
+
+  try {
+    const raw = sessionStorage.getItem(MOCK_DESIGNATED_STORAGE_KEY);
+    if (!raw) {
+      return [...MOCK_DESIGNATED_MOVER_IDS];
+    }
+
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      !Array.isArray(parsed) ||
+      parsed.some((value) => typeof value !== "string")
+    ) {
+      return [...MOCK_DESIGNATED_MOVER_IDS];
+    }
+
+    return [...new Set([...MOCK_DESIGNATED_MOVER_IDS, ...parsed])];
+  } catch {
+    return [...MOCK_DESIGNATED_MOVER_IDS];
+  }
+}
+
+export function writeStoredDesignatedMoverIds(ids: readonly string[]) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  sessionStorage.setItem(
+    MOCK_DESIGNATED_STORAGE_KEY,
+    JSON.stringify([...new Set(ids)]),
+  );
+}
+
 export function getMoversByIds(ids: readonly string[]): MoverSearchResult[] {
   const moversById = new Map(
     MOCK_MOVER_SEARCH_RESULTS.map((mover) => [mover.id, mover]),
@@ -256,7 +286,6 @@ export function getMoversByIds(ids: readonly string[]): MoverSearchResult[] {
   });
 }
 
-/** 비로그인·기사님 사이드바용. 기존 사용자의 찜 수 기준 상위 N명입니다. */
 export function getRecommendedMovers(
   limit = SIDEBAR_MOVER_LIMIT,
 ): MoverSearchResult[] {
@@ -270,10 +299,167 @@ export function getRecommendedMovers(
     .slice(0, limit);
 }
 
-/** 로그인 일반 유저 사이드바용. 찜 id 앞쪽 N명만 보여 줍니다. */
 export function getFavoriteMovers(
   ids: readonly string[],
   limit = SIDEBAR_MOVER_LIMIT,
 ): MoverSearchResult[] {
   return getMoversByIds(ids).slice(0, limit);
+}
+
+const MOVER_1_DETAIL_DESCRIPTION =
+  "안녕하세요. 이사업계 경력 7년으로 안전한 이사를 도와드리는 김코드입니다.\n고객님의 물품을 소중하고 안전하게 운송하여 드립니다. 소형이사 및 가정이사 서비스를 제공하며 서비스 가능 지역은 서울과 경기권입니다.";
+
+const EMPTY_RATING_COUNTS = [
+  { score: 5 as const, count: 0 },
+  { score: 4 as const, count: 0 },
+  { score: 3 as const, count: 0 },
+  { score: 2 as const, count: 0 },
+  { score: 1 as const, count: 0 },
+];
+
+const MOCK_MOVER_1_REVIEWS: MoverReview[] = [
+  {
+    id: "review-1",
+    reviewerName: "kim****",
+    writtenAt: "2024-07-01",
+    rating: 5,
+    content:
+      "듣던대로 정말 친절하시고 물건도 잘 옮겨주셨어요~~\n나중에 또 짐 옮길 일 있으면 김코드 기사님께 부탁드릴 예정입니다!!\n비 오는데 꼼꼼히 잘 해주셔서 감사드립니다 :)",
+  },
+  {
+    id: "review-2",
+    reviewerName: "kim****",
+    writtenAt: "2024-07-01",
+    rating: 5,
+    content: "기사님 안전하고 신속하고 이사했습니다! 정말 감사합니다~!",
+  },
+  {
+    id: "review-3",
+    reviewerName: "kim****",
+    writtenAt: "2024-07-01",
+    rating: 5,
+    content: "김코드 기사님 두 번째 견적인데, 항상 친절하시고 정말 좋아요!",
+  },
+  {
+    id: "review-4",
+    reviewerName: "kim****",
+    writtenAt: "2024-07-01",
+    rating: 5,
+    content:
+      "지인분께 추천받아서 견적 받았어요!\n정말 멀어서 걱정했는데 김코드 덕분에 이사가 수월했어요!\n짐이 많아서 걱정했는데 김코드 덕분에 이사가 수월했어요!",
+  },
+  {
+    id: "review-5",
+    reviewerName: "kim****",
+    writtenAt: "2024-07-01",
+    rating: 5,
+    content: "역시 리뷰 나온대로 꼼꼼하세요! 감사합니다 :)",
+  },
+  {
+    id: "review-6",
+    reviewerName: "lee****",
+    writtenAt: "2024-06-18",
+    rating: 4,
+    content: "일정에 맞춰 잘 옮겨 주셨어요. 다음에도 부탁드리고 싶습니다.",
+  },
+  {
+    id: "review-7",
+    reviewerName: "park****",
+    writtenAt: "2024-06-02",
+    rating: 4,
+    content: "포장과 운반이 꼼꼼했습니다. 소형이사에 잘 맞아요.",
+  },
+];
+
+const MOCK_MOVER_2_REVIEWS: MoverReview[] = [
+  {
+    id: "review-office-1",
+    reviewerName: "choi****",
+    writtenAt: "2024-07-12",
+    rating: 5,
+    content: "사무실 이전을 주말에 맞춰 잘 진행해 주셨습니다.",
+  },
+  {
+    id: "review-office-2",
+    reviewerName: "jung****",
+    writtenAt: "2024-06-20",
+    rating: 4,
+    content: "대형 책상도 안전하게 옮겼어요. 일정 조율이 빨랐습니다.",
+  },
+];
+
+export function getMockMoverDetail(moverId: string): MoverDetail | null {
+  const mover = MOCK_MOVER_SEARCH_RESULTS.find((item) => item.id === moverId);
+  if (!mover) {
+    return null;
+  }
+
+  if (mover.id === "mover-1") {
+    return {
+      ...mover,
+      serviceTypes: [SERVICE_TYPE.SMALL, SERVICE_TYPE.HOME],
+      regionValues: ["seoul", "gyeonggi"],
+      detailDescription: MOVER_1_DETAIL_DESCRIPTION,
+    };
+  }
+
+  if (mover.id === "mover-2") {
+    return {
+      ...mover,
+      serviceTypes: [SERVICE_TYPE.OFFICE, SERVICE_TYPE.SMALL],
+      regionValues: ["gyeonggi", "seoul"],
+      detailDescription:
+        "안녕하세요. 사무실 이사 전문 박이사입니다.\n소형이사와 사무실 이전을 함께 진행하며 경기·서울 권역을 다닙니다.",
+    };
+  }
+
+  if (mover.id === "mover-5") {
+    return {
+      ...mover,
+      serviceTypes: [SERVICE_TYPE.HOME, SERVICE_TYPE.SMALL],
+      regionValues: ["daegu", "gyeongbuk"],
+      detailDescription:
+        "가정이사 15년 경력의 정하늘입니다.\n대구·경북 지역에서 지정 견적 요청이 이미 완료된 상태를 확인할 수 있습니다.",
+    };
+  }
+
+  return {
+    ...mover,
+    serviceTypes: [mover.serviceType],
+    regionValues: [mover.region],
+    detailDescription: mover.description,
+  };
+}
+
+export function getMockMoverReviews(moverId: string): MoverReviewSummary {
+  if (moverId === "mover-1") {
+    return {
+      reviews: MOCK_MOVER_1_REVIEWS,
+      ratingCounts: [
+        { score: 5, count: 170 },
+        { score: 4, count: 8 },
+        { score: 3, count: 0 },
+        { score: 2, count: 0 },
+        { score: 1, count: 0 },
+      ],
+    };
+  }
+
+  if (moverId === "mover-2") {
+    return {
+      reviews: MOCK_MOVER_2_REVIEWS,
+      ratingCounts: [
+        { score: 5, count: 1 },
+        { score: 4, count: 1 },
+        { score: 3, count: 0 },
+        { score: 2, count: 0 },
+        { score: 1, count: 0 },
+      ],
+    };
+  }
+
+  return {
+    reviews: [],
+    ratingCounts: EMPTY_RATING_COUNTS,
+  };
 }
