@@ -1,4 +1,6 @@
-import type { AuthFormErrors, AuthFormValues, AuthMode } from "./auth.types";
+import { ROUTES } from "@/common/constants/routes";
+
+import type { AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
 
 /** 한국 전화번호는 공백/하이픈만 제거합니다. 문자까지 제거해 잘못된 입력을 허용하지 않습니다. */
 export function normalizePhone(phone: string): string {
@@ -46,4 +48,20 @@ export function safeAuthRedirect(value: string | string[] | undefined): string |
 export function authHref(path: string, redirectTo?: string): string {
   const safePath = safeAuthRedirect(redirectTo);
   return safePath ? `${path}?${new URLSearchParams({ redirect: safePath })}` : path;
+}
+
+/** 이메일·SNS 인증 모두 서버의 프로필 상태를 우선하며, 인증 화면으로의 반복 이동을 막습니다. */
+export function getAuthSuccessPath(
+  user: Pick<AuthUser, "role" | "profileCompleted">,
+  redirectTo?: string,
+): string {
+  if (!user.profileCompleted) {
+    return ROUTES[user.role].PROFILE.REGISTER;
+  }
+
+  const target = safeAuthRedirect(redirectTo);
+  if (!target || /^\/(auth|login|signup)(\/|\?|#|$)/.test(target)) {
+    return ROUTES.HOME;
+  }
+  return target;
 }
