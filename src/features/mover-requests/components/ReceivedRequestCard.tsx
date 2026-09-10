@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { Button } from "@/common/components/button";
 
 import type { ReceivedRequestViewModel } from "../mover-requests.types";
 import { RequestBadges, RequestSummary } from "./RequestInfo";
@@ -10,9 +10,6 @@ interface ReceivedRequestCardProps {
   isDisabled?: boolean;
 }
 
-const CARD_BUTTON_CLASS_NAME =
-  "inline-flex h-[54px] min-w-0 flex-1 items-center justify-center gap-1 rounded-xl px-6 py-4 text-[16px] font-semibold leading-[26px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] disabled:cursor-not-allowed disabled:opacity-50 max-md:w-full max-md:flex-none";
-
 export function ReceivedRequestCard({
   request,
   onSendQuote,
@@ -20,8 +17,8 @@ export function ReceivedRequestCard({
   isDisabled = false,
 }: ReceivedRequestCardProps) {
   return (
-    <article className="box-border flex w-full max-w-[588px] flex-col gap-8 rounded-[20px] border-[0.5px] border-[var(--line-100)] bg-[var(--gray-50)] px-10 py-8 shadow-[0_2px_10px_rgb(220_220_220/20%)] max-md:max-w-[328px] max-md:gap-6 max-md:px-5 max-md:py-6">
-      <div className="flex flex-col gap-6 max-md:gap-4">
+    <article className="box-border flex w-full max-w-[588px] flex-col gap-8 rounded-[20px] border-[0.5px] border-[var(--line-100)] bg-[var(--gray-50)] px-10 py-8 shadow-[0_2px_10px_rgb(220_220_220_/20%)] max-[743px]:max-w-[328px] max-[743px]:px-5 max-[743px]:py-6">
+      <div className="flex flex-col gap-6 max-[743px]:gap-4">
         <header className="flex min-h-[34px] items-center justify-between gap-4">
           <RequestBadges
             serviceType={request.serviceType}
@@ -45,30 +42,30 @@ export function ReceivedRequestCard({
         <RequestSummary request={request} variant="card" />
       </div>
 
-      <div className="flex items-center gap-[11px] max-md:flex-col">
-        <button
+      <div className="flex items-center gap-[11px] max-[743px]:flex-col">
+        <Button
           type="button"
-          className={`${CARD_BUTTON_CLASS_NAME} border border-[var(--primary-400)] bg-[var(--gray-50)] text-[var(--primary-400)]`}
+          size="sm"
+          variant="outlined"
+          fullWidth
           disabled={isDisabled}
+          className="!w-full !border-[var(--primary-400)] !text-[var(--primary-400)]"
           onClick={() => onReject(request.requestId)}
         >
           반려하기
-        </button>
+        </Button>
 
-        <button
+        <Button
           type="button"
-          className={`${CARD_BUTTON_CLASS_NAME} bg-[var(--primary-400)] text-[var(--gray-50)] max-md:order-first`}
+          size="sm"
+          fullWidth
+          withWritingIcon
           disabled={isDisabled}
+          className="!w-full max-[743px]:order-first"
           onClick={() => onSendQuote(request.requestId)}
         >
           견적 보내기
-          <Image
-            src="/icons/mover-request/writing.svg"
-            alt=""
-            width={24}
-            height={24}
-          />
-        </button>
+        </Button>
       </div>
     </article>
   );
