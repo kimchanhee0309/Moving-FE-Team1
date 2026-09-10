@@ -38,6 +38,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
   const [values, setValues] = useState(INITIAL_VALUES);
   const [touched, setTouched] = useState<Partial<Record<AuthField, boolean>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeSocialProvider, setActiveSocialProvider] = useState<SocialProvider | null>(null);
   const [submitError, setSubmitError] = useState("");
   const submitLock = useRef(false);
   const fields = mode === "signup" ? SIGNUP_FIELDS : LOGIN_FIELDS;
@@ -74,10 +75,12 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
     if (!onSocialLogin) { setSubmitError("현재 SNS 로그인을 이용할 수 없습니다. 잠시 후 다시 시도해 주세요."); return; }
     submitLock.current = true;
     setIsSubmitting(true);
+    // 요청 잠금은 이메일 인증과 공유하되, 진행 안내는 선택한 SNS 버튼에 표시합니다.
+    setActiveSocialProvider(provider);
     setSubmitError("");
     try { await onSocialLogin(provider); }
     catch (error) { setSubmitError(error instanceof ApiError && error.code === "OAUTH_NOT_CONFIGURED" ? "SNS 로그인 준비 중입니다. 이메일 로그인을 이용해 주세요." : "SNS 로그인에 실패했습니다. 다시 시도해 주세요."); }
-    finally { submitLock.current = false; setIsSubmitting(false); }
+    finally { submitLock.current = false; setIsSubmitting(false); setActiveSocialProvider(null); }
   }
 
   return (
@@ -108,7 +111,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
             );
           })}
         </div>
-        <Button type="submit" size="md" fullWidth className={styles.submit} disabled={isIncomplete} isLoading={isSubmitting}>
+        <Button type="submit" size="md" fullWidth className={styles.submit} disabled={isIncomplete || isSubmitting} isLoading={isSubmitting && activeSocialProvider === null}>
           {mode === "login" ? "로그인" : "시작하기"}
         </Button>
       </form>
@@ -123,11 +126,16 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
         <p>SNS 계정으로 간편 가입하기</p>
         <div className={styles.socialButtons}>
           {SOCIAL_PROVIDERS.map(({ provider, label, image }) => (
-            <button key={provider} type="button" aria-label={`${label}로 ${role === "CUSTOMER" ? "일반 유저" : "기사님"} 로그인`} disabled={isSubmitting} onClick={() => void handleSocialLogin(provider)}>
+            <button key={provider} type="button" aria-label={`${label}로 ${role === "CUSTOMER" ? "일반 유저" : "기사님"} 로그인`} aria-busy={activeSocialProvider === provider} disabled={isSubmitting} onClick={() => void handleSocialLogin(provider)}>
               <Image src={`/images/auth/${image}`} alt="" width={72} height={72} />
             </button>
           ))}
         </div>
+        {activeSocialProvider && (
+          <p role="status" className="mt-4 text-center text-md-regular">
+            {`${SOCIAL_PROVIDERS.find(({ provider }) => provider === activeSocialProvider)?.label} 로그인 화면으로 연결하고 있습니다.`}
+          </p>
+        )}
       </section>
     </div>
   );
