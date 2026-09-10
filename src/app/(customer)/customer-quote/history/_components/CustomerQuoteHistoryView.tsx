@@ -1,90 +1,27 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { FilterDropdown } from "@/common/components/Dropdown";
 import { Tabs } from "@/common/components/Tabs";
-import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
-import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
+import { QUOTE_STATUS } from "@/common/constants/domain";
+import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
 import { QuoteHistoryCard } from "@/features/customer-quote/components";
 
+import { SERVICE_TYPE_LABEL } from "../../_lib/customerQuoteDetail";
+import {
+  MOCK_HISTORY_GROUPS,
+  type HistoryRequestGroup,
+} from "../_data/mockHistoryGroups";
+
 type QuoteFilterValue = "all" | QuoteStatus;
-
-interface HistoryQuoteItem {
-  id: string;
-  serviceType: ServiceType;
-  isDesignated: boolean;
-  status: QuoteStatus;
-  message: string;
-  moverName: string;
-  rating: number;
-  reviewCount: number;
-  careerYears: number;
-  confirmedCount: number;
-  favoriteCount: number;
-  price: number;
-}
-
-interface HistoryRequestGroup {
-  id: string;
-  requestedAt: string;
-  serviceType: ServiceType;
-  from: string;
-  to: string;
-  moveDate: string;
-  quotes: HistoryQuoteItem[];
-}
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 const QUOTE_FILTER_OPTIONS = [
   { value: QUOTE_STATUS.CONFIRMED, label: "확정견적" },
   { value: QUOTE_STATUS.PENDING, label: "견적대기" },
 ] as const;
-
-/**
- * 받았던 견적 목록 UI입니다. history API가 아직 없어서 Figma(node 1:11657)
- * 카피로 화면만 구성합니다. 목록 조회가 연결되면 이 mock을 교체합니다.
- */
-const MOCK_HISTORY_GROUPS: HistoryRequestGroup[] = [
-  createMockHistoryGroup("history-1"),
-  createMockHistoryGroup("history-2"),
-];
-
-function createMockHistoryGroup(id: string): HistoryRequestGroup {
-  const baseQuote = {
-    serviceType: SERVICE_TYPE.OFFICE,
-    isDesignated: true,
-    message: "고객님의 물품을 안전하게 운송해 드립니다.",
-    moverName: "김코드",
-    rating: 5,
-    reviewCount: 178,
-    careerYears: 7,
-    confirmedCount: 334,
-    favoriteCount: 136,
-    price: 180000,
-  };
-
-  return {
-    id,
-    requestedAt: "24. 06. 24.",
-    serviceType: SERVICE_TYPE.OFFICE,
-    from: "서울 중구 삼일대로 343",
-    to: "서울 강남구 선릉로 428",
-    moveDate: "2024년 07월 01일 (월)",
-    quotes: [
-      { ...baseQuote, id: `${id}-quote-1`, status: QUOTE_STATUS.CONFIRMED },
-      { ...baseQuote, id: `${id}-quote-2`, status: QUOTE_STATUS.PENDING },
-      { ...baseQuote, id: `${id}-quote-3`, status: QUOTE_STATUS.PENDING },
-      { ...baseQuote, id: `${id}-quote-4`, status: QUOTE_STATUS.PENDING },
-    ],
-  };
-}
 
 function QuoteInfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -192,19 +129,29 @@ function HistoryRequestCard({ group }: { group: HistoryRequestGroup }) {
             <ul className="flex w-full flex-col">
               {visibleQuotes.map((quote) => (
                 <li key={quote.id}>
-                  <QuoteHistoryCard
-                    careerYears={quote.careerYears}
-                    confirmedCount={quote.confirmedCount}
-                    favoriteCount={quote.favoriteCount}
-                    isDesignated={quote.isDesignated}
-                    message={quote.message}
-                    moverName={quote.moverName}
-                    price={quote.price}
-                    rating={quote.rating}
-                    reviewCount={quote.reviewCount}
-                    serviceType={quote.serviceType}
-                    status={quote.status}
-                  />
+                  <Link
+                    aria-label={`${quote.moverName} 기사님 견적 상세 보기`}
+                    className={[
+                      "block w-full rounded-xl text-left",
+                      "hover:bg-[var(--background-200)]",
+                      "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                    ].join(" ")}
+                    href={ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id)}
+                  >
+                    <QuoteHistoryCard
+                      careerYears={quote.careerYears}
+                      confirmedCount={quote.confirmedCount}
+                      favoriteCount={quote.favoriteCount}
+                      isDesignated={quote.isDesignated}
+                      message={quote.message}
+                      moverName={quote.moverName}
+                      price={quote.price}
+                      rating={quote.rating}
+                      reviewCount={quote.reviewCount}
+                      serviceType={quote.serviceType}
+                      status={quote.status}
+                    />
+                  </Link>
                 </li>
               ))}
             </ul>

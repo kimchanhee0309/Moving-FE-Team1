@@ -4,7 +4,6 @@ import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
-
 import type { ServiceType } from "@/common/constants/domain";
 
 import type { ReceivedRequestViewModel } from "../mover-requests.types";
@@ -19,7 +18,7 @@ interface RequestSummaryProps {
   variant: "card" | "modal";
 }
 
-interface RequestModalSummaryProps {
+interface RequestInfoProps {
   request: ReceivedRequestViewModel;
   hideMobileDivider?: boolean;
 }
@@ -31,7 +30,7 @@ const CARD_INFO_VALUE_CLASS_NAME =
   "whitespace-nowrap text-[16px] font-semibold leading-[26px] text-[var(--black-500)]";
 
 const MODAL_INFO_VALUE_CLASS_NAME =
-  "whitespace-nowrap text-[16px] font-medium leading-[26px] text-[var(--black-500)] max-md:text-[14px] max-md:leading-6";
+  "whitespace-nowrap text-[16px] font-medium leading-[26px] text-[var(--black-500)] max-[743px]:text-[14px] max-[743px]:leading-6";
 
 export function RequestBadges({
   serviceType,
@@ -41,7 +40,7 @@ export function RequestBadges({
     <div className="flex flex-wrap items-center gap-2">
       <MoveTypeChip variant={serviceType} />
 
-      {isDesignated && <MoveTypeChip variant={DESIGNATED_REQUEST_CHIP} />}
+      {isDesignated ? <MoveTypeChip variant={DESIGNATED_REQUEST_CHIP} /> : null}
     </div>
   );
 }
@@ -50,15 +49,15 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
   const isModal = variant === "modal";
 
   const summaryClassName = isModal
-    ? "gap-12 max-md:flex-col max-md:gap-2"
-    : "justify-between gap-6 max-md:flex-col max-md:gap-3";
+    ? "gap-12 max-[743px]:flex-col max-[743px]:gap-2"
+    : "justify-between gap-6 max-[743px]:flex-col max-[743px]:gap-3";
 
   const routeGroupClassName = isModal
-    ? "flex w-[201px] shrink-0 items-end gap-3 max-md:w-full max-md:items-center"
+    ? "flex w-[201px] shrink-0 items-end gap-3 max-[743px]:w-full max-[743px]:items-center"
     : "flex w-[201px] shrink-0 items-end gap-3";
 
   const infoItemClassName = isModal
-    ? "flex flex-col items-start max-md:flex-row max-md:items-center max-md:gap-2"
+    ? "flex flex-col items-start max-[743px]:flex-row max-[743px]:items-center max-[743px]:gap-2"
     : "flex flex-col items-start";
 
   const infoValueClassName = isModal
@@ -104,12 +103,12 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
   );
 }
 
-export function RequestModalSummary({
+export function RequestInfo({
   request,
   hideMobileDivider = false,
-}: RequestModalSummaryProps) {
+}: RequestInfoProps) {
   const mobileDividerClassName = hideMobileDivider
-    ? "max-md:border-b-0 max-md:pb-0"
+    ? "max-[743px]:border-b-0 max-[743px]:pb-0"
     : "";
 
   return (
@@ -117,7 +116,7 @@ export function RequestModalSummary({
       className={[
         "flex flex-col gap-5",
         "border-b border-[var(--line-100)] pb-5",
-        "max-md:gap-4",
+        "max-[743px]:gap-4",
         mobileDividerClassName,
       ]
         .filter(Boolean)

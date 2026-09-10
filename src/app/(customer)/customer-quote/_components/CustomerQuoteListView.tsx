@@ -39,7 +39,7 @@ const MOCK_MOVE_REQUEST = {
 
 const MOCK_QUOTE_LIST: QuoteListItem[] = [
   {
-    id: "quote-1",
+    id: "1",
     serviceType: SERVICE_TYPE.SMALL,
     isDesignated: true,
     status: QUOTE_STATUS.PENDING,
@@ -53,7 +53,7 @@ const MOCK_QUOTE_LIST: QuoteListItem[] = [
     price: 180000,
   },
   {
-    id: "quote-2",
+    id: "2",
     serviceType: SERVICE_TYPE.SMALL,
     isDesignated: true,
     status: QUOTE_STATUS.PENDING,
@@ -67,7 +67,7 @@ const MOCK_QUOTE_LIST: QuoteListItem[] = [
     price: 180000,
   },
   {
-    id: "quote-3",
+    id: "3",
     serviceType: SERVICE_TYPE.SMALL,
     isDesignated: true,
     status: QUOTE_STATUS.PENDING,
@@ -81,7 +81,7 @@ const MOCK_QUOTE_LIST: QuoteListItem[] = [
     price: 180000,
   },
   {
-    id: "quote-4",
+    id: "4",
     serviceType: SERVICE_TYPE.SMALL,
     isDesignated: true,
     status: QUOTE_STATUS.PENDING,

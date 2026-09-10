@@ -38,6 +38,7 @@ export interface MoverSearchCardProps {
   confirmedCount: number;
   favoriteCount: number;
   onFavoriteClick?: () => void;
+  isFavorite?: boolean;
   selectable?: boolean;
   isSelected?: boolean;
   onSelectChange?: (isSelected: boolean) => void;
@@ -216,12 +217,14 @@ function MovingBadge({ compact }: { compact?: boolean }) {
 function FavoriteButton({
   favoriteCount,
   onFavoriteClick,
+  isFavorite = false,
   showCount,
   size,
   className,
 }: {
   favoriteCount: number;
   onFavoriteClick?: () => void;
+  isFavorite?: boolean;
   showCount: boolean;
   size: 20 | 24;
   className?: string;
@@ -255,9 +258,14 @@ function FavoriteButton({
     return (
       <button
         type="button"
-        onClick={onFavoriteClick}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onFavoriteClick();
+        }}
         className={sharedClassName}
-        aria-label="찜하기"
+        aria-label={isFavorite ? "찜 해제" : "찜하기"}
+        aria-pressed={isFavorite}
       >
         {content}
       </button>
@@ -391,6 +399,7 @@ export function MoverSearchCard({
   confirmedCount,
   favoriteCount,
   onFavoriteClick,
+  isFavorite = false,
   selectable = false,
   isSelected,
   onSelectChange,
@@ -458,6 +467,7 @@ export function MoverSearchCard({
                 <FavoriteButton
                   favoriteCount={favoriteCount}
                   onFavoriteClick={onFavoriteClick}
+                  isFavorite={isFavorite}
                   showCount={false}
                   size={20}
                 />
@@ -506,6 +516,7 @@ export function MoverSearchCard({
                   <FavoriteButton
                     favoriteCount={favoriteCount}
                     onFavoriteClick={onFavoriteClick}
+                    isFavorite={isFavorite}
                     showCount
                     size={24}
                     className="shrink-0"
@@ -558,6 +569,7 @@ export function MoverSearchCard({
                 <FavoriteButton
                   favoriteCount={favoriteCount}
                   onFavoriteClick={onFavoriteClick}
+                  isFavorite={isFavorite}
                   showCount
                   size={24}
                 />

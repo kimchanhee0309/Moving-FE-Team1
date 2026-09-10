@@ -88,15 +88,15 @@ src/styles/              전역 토큰·타이포그래피·reset
 
 ### 담당 영역
 
-| 영역 | 주요 경로 | 담당 |
-| --- | --- | --- |
-| 인증/랜딩 | `(auth)`, `(public)/page.tsx`, `features/auth` | 이승재 |
-| 프로필/기사님 마이페이지 | customer/mover profile, mover mypage | 김지훈 |
-| 견적 요청/GNB/알림 | `move-request`, `notification`, 공통 Header | 노진우 |
-| 기사님 찾기/상세 | `mover-search` | 이영주 |
-| 찜/리뷰 | `favorite`, `review` | 조민성 |
-| 일반 유저 견적 | `customer-quote` | 권태현 |
-| 기사님 요청/견적 | `mover-requests`, `mover-quote` | 김찬희 |
+| 영역                     | 주요 경로                                      | 담당   |
+| ------------------------ | ---------------------------------------------- | ------ |
+| 인증/랜딩                | `(auth)`, `(public)/page.tsx`, `features/auth` | 이승재 |
+| 프로필/기사님 마이페이지 | customer/mover profile, mover mypage           | 김지훈 |
+| 견적 요청/GNB/알림       | `move-request`, `notification`, 공통 Header    | 노진우 |
+| 기사님 찾기/상세         | `mover-search`                                 | 이영주 |
+| 찜/리뷰                  | `favorite`, `review`                           | 조민성 |
+| 일반 유저 견적           | `customer-quote`                               | 권태현 |
+| 기사님 요청/견적         | `mover-requests`, `mover-quote`                | 김찬희 |
 
 다른 담당자의 공통 컴포넌트·연동 파일을 바꿔야 하면 Figma/API를 MCP 또는 팀 지정 도구로 먼저 확인한다. 결과에 확인 자료, 변경 이유, 영향받는 사용처, 담당자 협의 사항을 분리해 적는다. 계약이 미확정이거나 다른 작업을 덮을 위험이 있으면 수정하지 않는다.
 
@@ -173,17 +173,17 @@ src/styles/              전역 토큰·타이포그래피·reset
 - 토큰·cookie·주소·전화번호를 로그에 남기지 않고 `.env*`를 커밋하지 않는다.
 - Notion API는 `To Do`와 오탈자가 있으므로 아래 경로도 후보일 뿐이다. method/path/request/response를 최신 Swagger·백엔드에서 확정한 뒤 구현한다.
 
-| 도메인 | 후보 API |
-| --- | --- |
-| Auth | signup/login/refresh/logout, `/auth/oauth/:provider`, callback |
-| Mover search | `GET /movers`, `/movers/:id`, `/reviews/:moverId` |
-| Move request | `POST /move-request` |
-| Customer quote | 목록·상세·확정·이력 |
-| Mover requests/quote | `/movers/me/received-requests`, 견적·반려·상세 |
-| Customer profile | `POST/GET/PATCH /customers/me/profile`, `GET/PATCH /customers/me` |
-| Mover profile | `POST/GET/PATCH /movers/me/profile`, `GET/PATCH /movers/me` |
-| Favorites/Reviews | 목록·등록·해제 계약 확인, `POST /reviews`, `/movers/me/reviews` |
-| Notification | 문서화 전 임의 endpoint 생성 금지 |
+| 도메인               | 후보 API                                                          |
+| -------------------- | ----------------------------------------------------------------- |
+| Auth                 | signup/login/refresh/logout, `/auth/oauth/:provider`, callback    |
+| Mover search         | `GET /movers`, `/movers/:id`, `/reviews/:moverId`                 |
+| Move request         | `POST /move-request`                                              |
+| Customer quote       | 목록·상세·확정·이력                                               |
+| Mover requests/quote | `/movers/me/received-requests`, 견적·반려·상세                    |
+| Customer profile     | `POST/GET/PATCH /customers/me/profile`, `GET/PATCH /customers/me` |
+| Mover profile        | `POST/GET/PATCH /movers/me/profile`, `GET/PATCH /movers/me`       |
+| Favorites/Reviews    | 목록·등록·해제 계약 확인, `POST /reviews`, `/movers/me/reviews`   |
+| Notification         | 문서화 전 임의 endpoint 생성 금지                                 |
 
 `auth/signup/userss`, 로그인으로 적힌 `POST auth/me`, 대상 없는 `DELETE /favorites`, `reviews?type=writable, me`는 확정 계약으로 쓰지 않는다. 프론트 타입은 ERD 테이블을 복제하지 말고 API DTO에 맞춘다.
 

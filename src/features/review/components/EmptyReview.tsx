@@ -20,6 +20,7 @@ export interface EmptyReviewProps {
  * 리뷰 empty 상태입니다.
  * Figma Component/empty: CTA는 호출부가 label·href를 줄 때만 노출합니다.
  * (작성 가능 empty는 CTA opacity 0 → action 미전달)
+ * 페이지 인스턴스 CTA 폭: Mobile/Tablet 240 · Desktop 253
  */
 export function EmptyReview({
   message,
@@ -30,7 +31,8 @@ export function EmptyReview({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-6 min-[1200px]:gap-8",
+        // 캐릭터 240 기준 스택 폭 · Desktop은 문구 폭(253)에 맞춤
+        "flex w-[240px] flex-col items-center gap-6 min-[1200px]:w-[253px] min-[1200px]:gap-8",
         className,
       )}
     >
@@ -62,9 +64,12 @@ export function EmptyReview({
         <Link
           href={href}
           className={cn(
-            "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! p-4",
-            "text-[16px] leading-[26px] font-semibold text-[var(--gray-50)]!",
-            "min-[1200px]:h-16 min-[1200px]:rounded-2xl min-[1200px]:text-[18px]",
+            // Figma 페이지 인스턴스: M/T 240×54 radius12 · D 253×64 radius16
+            "box-border flex h-[54px] w-full shrink-0 items-center justify-center",
+            "rounded-[12px] bg-[var(--primary-400)]! px-4",
+            "text-[16px] leading-[26px] font-semibold whitespace-nowrap text-[var(--gray-50)]!",
+            "min-[1200px]:h-16 min-[1200px]:rounded-[16px] min-[1200px]:text-[18px]",
+            "transition-colors hover:bg-[#e04829]!",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
           )}
         >

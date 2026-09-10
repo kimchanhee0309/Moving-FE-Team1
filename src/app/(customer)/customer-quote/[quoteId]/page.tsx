@@ -1,3 +1,4 @@
+import { MOCK_PENDING_QUOTE } from "../_lib/customerQuoteDetail";
 import { CustomerQuoteDetailView } from "./_components/CustomerQuoteDetailView";
 
 interface CustomerQuoteDetailPageProps {
@@ -9,5 +10,9 @@ export default async function CustomerQuoteDetailPage({
 }: CustomerQuoteDetailPageProps) {
   const { quoteId } = await params;
 
-  return <CustomerQuoteDetailView quoteId={quoteId} />;
+  return (
+    <CustomerQuoteDetailView
+      quote={{ ...MOCK_PENDING_QUOTE, id: quoteId }}
+    />
+  );
 }

@@ -14,25 +14,21 @@ import { ReceivedRequestCard } from "@/features/mover-requests/components/Receiv
 import { RejectRequestModal } from "@/features/mover-requests/components/RejectRequestModal";
 import { SendQuoteModal } from "@/features/mover-requests/components/SendQuoteModal";
 import { MOCK_RECEIVED_REQUESTS } from "@/features/mover-requests/mover-requests.mock";
-import type {
-  ReceivedRequestViewModel,
-  RejectRequestFormValue,
-  SendQuoteFormValue,
-} from "@/features/mover-requests/mover-requests.types";
+import { useModal } from "@/providers/modal-provider";
 
-type ActiveModal = "send-quote" | "reject-request" | null;
+type RequestModalType = "send-quote" | "reject-request";
 
 export function ModalTestClient() {
-  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
-
-  const [selectedRequest, setSelectedRequest] =
-    useState<ReceivedRequestViewModel | null>(null);
+  const { openModal, closeModal } = useModal();
 
   const [testMessage, setTestMessage] = useState(
     "카드의 버튼을 눌러 동작을 확인해 주세요.",
   );
 
-  const openModal = (modal: Exclude<ActiveModal, null>, requestId: string) => {
+  const handleOpenRequestModal = (
+    modalType: RequestModalType,
+    requestId: string,
+  ) => {
     const request = MOCK_RECEIVED_REQUESTS.find(
       (item) => item.requestId === requestId,
     );
@@ -42,46 +38,46 @@ export function ModalTestClient() {
       return;
     }
 
-    setSelectedRequest(request);
-    setActiveModal(modal);
-  };
+    if (modalType === "send-quote") {
+      openModal(
+        <SendQuoteModal
+          request={request}
+          onClose={closeModal}
+          onSubmit={(value) => {
+            setTestMessage(
+              [
+                "견적 보내기 테스트 완료",
+                `고객: ${request.customerName}`,
+                `견적 금액: ${value.price.toLocaleString("ko-KR")}원`,
+                `코멘트: ${value.comment}`,
+              ].join(" / "),
+            );
 
-  const closeModal = () => {
-    setActiveModal(null);
-    setSelectedRequest(null);
-  };
+            closeModal();
+          }}
+        />,
+      );
 
-  const handleSendQuote = (value: SendQuoteFormValue) => {
-    if (!selectedRequest) {
       return;
     }
 
-    setTestMessage(
-      [
-        "견적 보내기 테스트 완료",
-        `고객: ${selectedRequest.customerName}`,
-        `견적 금액: ${value.price.toLocaleString("ko-KR")}원`,
-        `코멘트: ${value.comment}`,
-      ].join(" / "),
+    openModal(
+      <RejectRequestModal
+        request={request}
+        onClose={closeModal}
+        onSubmit={(value) => {
+          setTestMessage(
+            [
+              "요청 반려 테스트 완료",
+              `고객: ${request.customerName}`,
+              `반려 사유: ${value.reason}`,
+            ].join(" / "),
+          );
+
+          closeModal();
+        }}
+      />,
     );
-
-    closeModal();
-  };
-
-  const handleRejectRequest = (value: RejectRequestFormValue) => {
-    if (!selectedRequest) {
-      return;
-    }
-
-    setTestMessage(
-      [
-        "요청 반려 테스트 완료",
-        `고객: ${selectedRequest.customerName}`,
-        `반려 사유: ${value.reason}`,
-      ].join(" / "),
-    );
-
-    closeModal();
   };
 
   const handleQuoteDetail = (quoteId: string) => {
@@ -92,7 +88,7 @@ export function ModalTestClient() {
     <main className="min-h-screen bg-[var(--background-200)] px-5 py-10">
       <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-16">
         <header className="flex flex-col gap-3">
-          <h1 className="text-[32px] font-bold leading-[42px] text-[var(--black-400)] max-md:text-[24px] max-md:leading-8">
+          <h1 className="text-[32px] font-bold leading-[42px] text-[var(--black-400)] max-[743px]:text-[24px] max-[743px]:leading-8">
             기사님 컴포넌트 UI 테스트
           </h1>
 
@@ -116,13 +112,17 @@ export function ModalTestClient() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 items-start gap-6 max-lg:grid-cols-1">
+          <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
             {MOCK_RECEIVED_REQUESTS.map((request) => (
               <ReceivedRequestCard
                 key={request.requestId}
                 request={request}
-                onSendQuote={(requestId) => openModal("send-quote", requestId)}
-                onReject={(requestId) => openModal("reject-request", requestId)}
+                onSendQuote={(requestId) =>
+                  handleOpenRequestModal("send-quote", requestId)
+                }
+                onReject={(requestId) =>
+                  handleOpenRequestModal("reject-request", requestId)
+                }
               />
             ))}
           </div>
@@ -139,9 +139,12 @@ export function ModalTestClient() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 items-start gap-6 max-lg:grid-cols-1">
+          <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
             {MOCK_MOVER_QUOTES.map((quote) => (
-              <div key={quote.id} className="flex flex-col gap-3">
+              <div
+                key={quote.id}
+                className="flex w-full max-w-[588px] flex-col gap-3"
+              >
                 <p className="text-[14px] font-semibold text-[var(--black-300)]">
                   {getQuoteStateLabel(quote)}
                 </p>
@@ -166,33 +169,13 @@ export function ModalTestClient() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 items-start gap-6 max-lg:grid-cols-1">
+          <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
             {MOCK_REJECTED_REQUESTS.map((request) => (
               <RejectedRequestCard key={request.id} request={request} />
             ))}
           </div>
         </section>
       </div>
-
-      {selectedRequest && activeModal === "send-quote" ? (
-        <SendQuoteModal
-          key={`send-${selectedRequest.requestId}`}
-          isOpen
-          request={selectedRequest}
-          onClose={closeModal}
-          onSubmit={handleSendQuote}
-        />
-      ) : null}
-
-      {selectedRequest && activeModal === "reject-request" ? (
-        <RejectRequestModal
-          key={`reject-${selectedRequest.requestId}`}
-          isOpen
-          request={selectedRequest}
-          onClose={closeModal}
-          onSubmit={handleRejectRequest}
-        />
-      ) : null}
     </main>
   );
 }

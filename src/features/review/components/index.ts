@@ -12,3 +12,4 @@ export type { EmptyReviewProps } from "./EmptyReview";
 
 export { ReviewTabs } from "./ReviewTabs";
 export { WritableReviewPage } from "./WritableReviewPage";
+export { WrittenReviewPage } from "./WrittenReviewPage";
