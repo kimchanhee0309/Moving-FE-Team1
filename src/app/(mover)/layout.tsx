@@ -7,7 +7,7 @@ export default function MoverLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <GnbContainer />
-      <AuthGuard role="MOVER">{children}</AuthGuard>
+      {<AuthGuard role="MOVER">{children}</AuthGuard>}
     </>
   );
 }

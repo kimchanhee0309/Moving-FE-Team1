@@ -42,14 +42,14 @@ export function ReceivedRequestCard({
         <RequestSummary request={request} variant="card" />
       </div>
 
-      <div className="flex items-center gap-[11px] max-[743px]:flex-col">
+      <div className="grid w-full grid-cols-2 gap-[11px] max-[743px]:grid-cols-1">
         <Button
           type="button"
           size="sm"
           variant="outlined"
           fullWidth
           disabled={isDisabled}
-          className="!w-full !border-[var(--primary-400)] !text-[var(--primary-400)]"
+          className="!border-[var(--primary-400)] !text-[var(--primary-400)]"
           onClick={() => onReject(request.requestId)}
         >
           반려하기
@@ -61,7 +61,7 @@ export function ReceivedRequestCard({
           fullWidth
           withWritingIcon
           disabled={isDisabled}
-          className="!w-full max-[743px]:order-first"
+          className="max-[743px]:order-first"
           onClick={() => onSendQuote(request.requestId)}
         >
           견적 보내기
