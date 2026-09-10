@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState, type FormEvent } from "react";
 
-import { Button } from "@/common/components/button";
+import { Button } from "@/common/components/Button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
 import { ApiError } from "@/common/api/error";

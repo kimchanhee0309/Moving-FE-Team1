@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Button, IconButton } from "@/common/components/button";
+import { Button, IconButton } from "@/common/components/Button";
 
 /** 예시 상태만 관리합니다. 공유 버튼은 외부 전송 없이 콜백 전달 여부를 보여줍니다. */
 export function ButtonExamples() {

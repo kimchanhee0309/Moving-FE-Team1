@@ -5,7 +5,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 
 import { Modal } from "@/common/components/MoverModal/Modal";
 import { Input, Textarea } from "@/common/components/Input";
-import { Button } from "@/common/components/button";
+import { Button } from "@/common/components/Button";
 
 import type {
   ReceivedRequestViewModel,

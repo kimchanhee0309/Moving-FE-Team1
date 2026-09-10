@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { IconButton } from "@/common/components/button";
+import { IconButton } from "@/common/components/Button";
 import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,

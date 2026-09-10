@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 
-import { Button } from "@/common/components/button";
+import { Button } from "@/common/components/Button";
 import { Input, Textarea } from "@/common/components/Input";
 import { ProfileImageInput } from "@/common/components/ProfileImageInput";
 import { ProfileMultiSelectChipGroup } from "@/common/components/ProfileSelectionChip";

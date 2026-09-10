@@ -4,7 +4,7 @@ Figma 디자인 시스템의 [Button 영역](https://www.figma.com/design/fgvdOr
 검수 주소: `/component-example/button`.
 
 ```tsx
-import { Button, IconButton } from "@/common/components/button";
+import { Button, IconButton } from "@/common/components/Button";
 
 <Button size="md" fullWidth isLoading={isSaving} onClick={handleSave}>저장</Button>
 <Button variant="outlined" disabled={!canSubmit} type="submit">확인</Button>

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button } from "@/common/components/button";
+import { Button } from "@/common/components/Button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
 
