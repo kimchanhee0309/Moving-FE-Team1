@@ -41,7 +41,7 @@ export const ROUTES = {
     MOVE_REQUEST: "/move-request",
 
     QUOTE: {
-      PENDING: "/customer-quote/pending",
+      PENDING: "/customer-quote",
 
       DETAIL: (quoteId: string) => `/customer-quote/${quoteId}`,
 

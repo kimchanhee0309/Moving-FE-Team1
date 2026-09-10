@@ -7,57 +7,18 @@ import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
-import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
-import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
+import { QUOTE_STATUS } from "@/common/constants/domain";
+
+import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
 
 interface CustomerQuoteDetailViewProps {
-  quoteId: string;
+  quote: CustomerQuoteDetail;
+  /**
+   * `pending`은 활성 요청 상세(확정 CTA).
+   * `history`는 받았던 견적 상세(조회만). 뱃지는 `quote.status`를 따릅니다.
+   */
+  variant?: "pending" | "history";
 }
-
-interface QuoteDetailMock {
-  serviceType: ServiceType;
-  isDesignated: boolean;
-  status: QuoteStatus;
-  message: string;
-  moverName: string;
-  profileImageUrl: string;
-  rating: number;
-  reviewCount: number;
-  careerYears: number;
-  confirmedCount: number;
-  favoriteCount: number;
-  price: number;
-  requestedAt: string;
-  serviceLabel: string;
-  moveDateLabel: string;
-  from: string;
-  to: string;
-}
-
-/**
- * 대기 중인 견적 상세 UI입니다. 견적 상세 API가 아직 없어서
- * Figma(node 1:9115) 카피로 화면만 구성합니다. 조회가 연결되면
- * quoteId로 서버 데이터를 받아 이 mock을 교체합니다.
- */
-const MOCK_QUOTE: QuoteDetailMock = {
-  serviceType: SERVICE_TYPE.SMALL,
-  isDesignated: true,
-  status: QUOTE_STATUS.PENDING,
-  message: "고객님의 물품을 안전하게 운송해 드립니다.",
-  moverName: "김코드",
-  profileImageUrl: "/images/customer-quote/mover-profile.png",
-  rating: 5,
-  reviewCount: 178,
-  careerYears: 7,
-  confirmedCount: 334,
-  favoriteCount: 136,
-  price: 180000,
-  requestedAt: "24.08.26",
-  serviceLabel: "사무실이사",
-  moveDateLabel: "2024. 08. 26(월) 오전 10:00",
-  from: "서울 중구 삼일대로 343",
-  to: "서울 강남구 선릉로 428",
-};
 
 function MovingBadge() {
   return (
@@ -127,13 +88,44 @@ function ShareButton({
   );
 }
 
+function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
+  if (isConfirmed) {
+    return (
+      <span className="flex shrink-0 items-center justify-center gap-1 rounded-md px-2 py-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
+        <Image
+          src="/icons/ic-check-confirmed.svg"
+          alt=""
+          width={20}
+          height={20}
+          className="size-5 object-contain"
+          unoptimized
+        />
+        <span className="text-lg-bold whitespace-nowrap text-[var(--primary-400)]">
+          확정견적
+        </span>
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-lg-semibold shrink-0 rounded-md px-2 text-[var(--content-placeholder)] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
+      견적대기
+    </span>
+  );
+}
+
+/**
+ * 견적 상세 UI입니다. 표시할 견적은 `quote`로만 받습니다.
+ * 대기 상세는 Figma node 1:9115, 확정(이력) 상세는 node 1:11818입니다.
+ */
 export function CustomerQuoteDetailView({
-  quoteId,
+  quote,
+  variant = "pending",
 }: CustomerQuoteDetailViewProps) {
-  const priceLabel = `${MOCK_QUOTE.price.toLocaleString("ko-KR")}원`;
-  const ratingLabel = MOCK_QUOTE.rating.toFixed(1);
-  const statusLabel =
-    MOCK_QUOTE.status === QUOTE_STATUS.CONFIRMED ? "확정견적" : "견적대기";
+  const isConfirmed = quote.status === QUOTE_STATUS.CONFIRMED;
+  const canConfirm = variant === "pending";
+  const priceLabel = `${quote.price.toLocaleString("ko-KR")}원`;
+  const ratingLabel = quote.rating.toFixed(1);
 
   const getShareUrl = () => {
     return window.location.href;
@@ -190,8 +182,8 @@ export function CustomerQuoteDetailView({
           <section className="flex min-w-0 flex-1 flex-col gap-5">
             <div className="relative mb-5 size-[134px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
               <Image
-                src={MOCK_QUOTE.profileImageUrl}
-                alt={`${MOCK_QUOTE.moverName} 기사님 프로필`}
+                src={quote.profileImageUrl}
+                alt={`${quote.moverName} 기사님 프로필`}
                 width={134}
                 height={134}
                 className="size-[134px] object-cover"
@@ -200,8 +192,8 @@ export function CustomerQuoteDetailView({
 
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <MoveTypeChip variant={MOCK_QUOTE.serviceType} size="md" />
-                {MOCK_QUOTE.isDesignated ? (
+                <MoveTypeChip variant={quote.serviceType} size="md" />
+                {quote.isDesignated ? (
                   <MoveTypeChip
                     variant={DESIGNATED_REQUEST_CHIP}
                     size="md"
@@ -210,11 +202,9 @@ export function CustomerQuoteDetailView({
               </div>
               <div className="flex w-full items-center justify-between gap-3">
                 <p className="text-2xl-semibold text-[var(--black-300)]">
-                  {MOCK_QUOTE.message}
+                  {quote.message}
                 </p>
-                <span className="text-lg-semibold shrink-0 rounded-md px-2 text-[var(--content-placeholder)] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
-                  {statusLabel}
-                </span>
+                <StatusBadge isConfirmed={isConfirmed} />
               </div>
             </div>
 
@@ -225,12 +215,12 @@ export function CustomerQuoteDetailView({
                 <div className="flex items-center gap-1">
                   <MovingBadge />
                   <p className="text-2lg-semibold text-[var(--black-300)]">
-                    {MOCK_QUOTE.moverName} 기사님
+                    {quote.moverName} 기사님
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-2lg-medium text-[var(--content-muted)]">
-                    {MOCK_QUOTE.favoriteCount}
+                    {quote.favoriteCount}
                   </span>
                   <Image
                     src="/icons/ic-like.svg"
@@ -255,7 +245,7 @@ export function CustomerQuoteDetailView({
                   <p className="text-md-medium flex items-center gap-0.5 whitespace-nowrap">
                     <span className="text-[var(--black-300)]">{ratingLabel}</span>
                     <span className="text-[var(--content-placeholder)]">
-                      ({MOCK_QUOTE.reviewCount})
+                      ({quote.reviewCount})
                     </span>
                   </p>
                 </div>
@@ -266,7 +256,7 @@ export function CustomerQuoteDetailView({
                 <p className="text-md-medium flex items-center gap-1 whitespace-nowrap">
                   <span className="text-[var(--content-placeholder)]">경력</span>
                   <span className="text-[var(--black-300)]">
-                    {MOCK_QUOTE.careerYears}년
+                    {quote.careerYears}년
                   </span>
                 </p>
                 <span
@@ -275,7 +265,7 @@ export function CustomerQuoteDetailView({
                 />
                 <p className="text-md-medium flex items-center gap-1 whitespace-nowrap">
                   <span className="text-[var(--black-300)]">
-                    {MOCK_QUOTE.confirmedCount.toLocaleString("ko-KR")}건
+                    {quote.confirmedCount.toLocaleString("ko-KR")}건
                   </span>
                   <span className="text-[var(--content-placeholder)]">확정</span>
                 </p>
@@ -296,36 +286,56 @@ export function CustomerQuoteDetailView({
                 견적 정보
               </h2>
               <dl className="flex flex-col gap-4">
-                <QuoteInfoRow label="견적 요청일" value={MOCK_QUOTE.requestedAt} />
-                <QuoteInfoRow label="서비스" value={MOCK_QUOTE.serviceLabel} />
-                <QuoteInfoRow label="이용일" value={MOCK_QUOTE.moveDateLabel} />
-                <QuoteInfoRow label="출발지" value={MOCK_QUOTE.from} />
-                <QuoteInfoRow label="도착지" value={MOCK_QUOTE.to} />
+                <QuoteInfoRow label="견적 요청일" value={quote.requestedAt} />
+                <QuoteInfoRow label="서비스" value={quote.serviceLabel} />
+                <QuoteInfoRow label="이용일" value={quote.moveDateLabel} />
+                <QuoteInfoRow label="출발지" value={quote.from} />
+                <QuoteInfoRow label="도착지" value={quote.to} />
               </dl>
             </div>
 
-            <p className="sr-only">견적 번호 {quoteId}</p>
+            <p className="sr-only">견적 번호 {quote.id}</p>
           </section>
 
-          <aside className="flex w-full shrink-0 flex-col min-[1200px]:w-[320px]">
-            <div className="flex flex-col">
-              <p className="text-2lg-semibold text-[var(--content-placeholder)]">
-                견적가
-              </p>
-              <p className="text-2xl-bold text-[var(--black-400)]">{priceLabel}</p>
-            </div>
-            <button
-              type="button"
+          <aside
+            className={[
+              "flex w-full shrink-0 flex-col min-[1200px]:w-[320px]",
+              /* 대기 상세(1:9115): 사이드바 견적가 top 547, 프로필 top 281. */
+              /* 이력 상세(1:11818): 공유 top 485, 프로필 top 281. */
+              canConfirm
+                ? "min-[1200px]:mt-[266px]"
+                : "min-[1200px]:mt-[204px]",
+            ].join(" ")}
+          >
+            {canConfirm ? (
+              <>
+                <div className="flex flex-col">
+                  <p className="text-2lg-semibold text-[var(--content-placeholder)]">
+                    견적가
+                  </p>
+                  <p className="text-2xl-bold text-[var(--black-400)]">
+                    {priceLabel}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className={[
+                    "mt-[29px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
+                    "text-2lg-semibold text-[var(--gray-50)]",
+                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                  ].join(" ")}
+                >
+                  견적 확정하기
+                </button>
+                <div className="mt-10 h-px w-full bg-[var(--line-200)]" />
+              </>
+            ) : null}
+            <div
               className={[
-                "mt-[87px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
-                "text-2lg-semibold text-[var(--gray-50)]",
-                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                "flex flex-col gap-[22px]",
+                canConfirm ? "mt-10" : "",
               ].join(" ")}
             >
-              견적 확정하기
-            </button>
-            <div className="mt-10 h-px w-full bg-[var(--line-200)]" />
-            <div className="mt-10 flex flex-col gap-[22px]">
               <h2 className="text-xl-semibold text-[var(--black-400)]">
                 견적서 공유하기
               </h2>
