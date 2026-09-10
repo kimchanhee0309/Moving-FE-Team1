@@ -5,23 +5,18 @@ import { useMemo, useState } from "react";
 
 import { FilterDropdown } from "@/common/components/Dropdown";
 import { Tabs } from "@/common/components/Tabs";
-import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
-import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
+import { QUOTE_STATUS } from "@/common/constants/domain";
+import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
 import { QuoteHistoryCard } from "@/features/customer-quote/components";
 
+import { SERVICE_TYPE_LABEL } from "../../_lib/customerQuoteDetail";
 import {
   MOCK_HISTORY_GROUPS,
   type HistoryRequestGroup,
 } from "../_data/mockHistoryGroups";
 
 type QuoteFilterValue = "all" | QuoteStatus;
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 const QUOTE_FILTER_OPTIONS = [
   { value: QUOTE_STATUS.CONFIRMED, label: "확정견적" },

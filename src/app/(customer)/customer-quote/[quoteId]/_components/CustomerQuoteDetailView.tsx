@@ -7,62 +7,18 @@ import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
-import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
-import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
+import { QUOTE_STATUS } from "@/common/constants/domain";
+
+import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
 
 interface CustomerQuoteDetailViewProps {
-  quoteId: string;
+  quote: CustomerQuoteDetail;
   /**
    * `pending`은 활성 요청 상세(확정 CTA).
-   * `history`는 받았던 견적 상세(조회만). 뱃지는 `status`를 따릅니다.
+   * `history`는 받았던 견적 상세(조회만). 뱃지는 `quote.status`를 따릅니다.
    */
   variant?: "pending" | "history";
-  status?: QuoteStatus;
 }
-
-interface QuoteDetailMock {
-  serviceType: ServiceType;
-  isDesignated: boolean;
-  status: QuoteStatus;
-  message: string;
-  moverName: string;
-  profileImageUrl: string;
-  rating: number;
-  reviewCount: number;
-  careerYears: number;
-  confirmedCount: number;
-  favoriteCount: number;
-  price: number;
-  requestedAt: string;
-  serviceLabel: string;
-  moveDateLabel: string;
-  from: string;
-  to: string;
-}
-
-/**
- * 견적 상세 UI입니다. API가 아직 없어서 Figma 카피로 화면만 구성합니다.
- * 대기 상세는 node 1:9115, 확정 상세는 node 1:11818입니다.
- */
-const MOCK_QUOTE: QuoteDetailMock = {
-  serviceType: SERVICE_TYPE.SMALL,
-  isDesignated: true,
-  status: QUOTE_STATUS.PENDING,
-  message: "고객님의 물품을 안전하게 운송해 드립니다.",
-  moverName: "김코드",
-  profileImageUrl: "/images/customer-quote/mover-profile.png",
-  rating: 5,
-  reviewCount: 178,
-  careerYears: 7,
-  confirmedCount: 334,
-  favoriteCount: 136,
-  price: 180000,
-  requestedAt: "24.08.26",
-  serviceLabel: "사무실이사",
-  moveDateLabel: "2024. 08. 26(월) 오전 10:00",
-  from: "서울 중구 삼일대로 343",
-  to: "서울 강남구 선릉로 428",
-};
 
 function MovingBadge() {
   return (
@@ -158,15 +114,18 @@ function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
   );
 }
 
+/**
+ * 견적 상세 UI입니다. 표시할 견적은 `quote`로만 받습니다.
+ * 대기 상세는 Figma node 1:9115, 확정(이력) 상세는 node 1:11818입니다.
+ */
 export function CustomerQuoteDetailView({
-  quoteId,
+  quote,
   variant = "pending",
-  status = QUOTE_STATUS.PENDING,
 }: CustomerQuoteDetailViewProps) {
-  const isConfirmed = status === QUOTE_STATUS.CONFIRMED;
+  const isConfirmed = quote.status === QUOTE_STATUS.CONFIRMED;
   const canConfirm = variant === "pending";
-  const priceLabel = `${MOCK_QUOTE.price.toLocaleString("ko-KR")}원`;
-  const ratingLabel = MOCK_QUOTE.rating.toFixed(1);
+  const priceLabel = `${quote.price.toLocaleString("ko-KR")}원`;
+  const ratingLabel = quote.rating.toFixed(1);
 
   const getShareUrl = () => {
     return window.location.href;
@@ -223,8 +182,8 @@ export function CustomerQuoteDetailView({
           <section className="flex min-w-0 flex-1 flex-col gap-5">
             <div className="relative mb-5 size-[134px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
               <Image
-                src={MOCK_QUOTE.profileImageUrl}
-                alt={`${MOCK_QUOTE.moverName} 기사님 프로필`}
+                src={quote.profileImageUrl}
+                alt={`${quote.moverName} 기사님 프로필`}
                 width={134}
                 height={134}
                 className="size-[134px] object-cover"
@@ -233,8 +192,8 @@ export function CustomerQuoteDetailView({
 
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3">
-                <MoveTypeChip variant={MOCK_QUOTE.serviceType} size="md" />
-                {MOCK_QUOTE.isDesignated ? (
+                <MoveTypeChip variant={quote.serviceType} size="md" />
+                {quote.isDesignated ? (
                   <MoveTypeChip
                     variant={DESIGNATED_REQUEST_CHIP}
                     size="md"
@@ -243,7 +202,7 @@ export function CustomerQuoteDetailView({
               </div>
               <div className="flex w-full items-center justify-between gap-3">
                 <p className="text-2xl-semibold text-[var(--black-300)]">
-                  {MOCK_QUOTE.message}
+                  {quote.message}
                 </p>
                 <StatusBadge isConfirmed={isConfirmed} />
               </div>
@@ -256,12 +215,12 @@ export function CustomerQuoteDetailView({
                 <div className="flex items-center gap-1">
                   <MovingBadge />
                   <p className="text-2lg-semibold text-[var(--black-300)]">
-                    {MOCK_QUOTE.moverName} 기사님
+                    {quote.moverName} 기사님
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-2lg-medium text-[var(--content-muted)]">
-                    {MOCK_QUOTE.favoriteCount}
+                    {quote.favoriteCount}
                   </span>
                   <Image
                     src="/icons/ic-like.svg"
@@ -286,7 +245,7 @@ export function CustomerQuoteDetailView({
                   <p className="text-md-medium flex items-center gap-0.5 whitespace-nowrap">
                     <span className="text-[var(--black-300)]">{ratingLabel}</span>
                     <span className="text-[var(--content-placeholder)]">
-                      ({MOCK_QUOTE.reviewCount})
+                      ({quote.reviewCount})
                     </span>
                   </p>
                 </div>
@@ -297,7 +256,7 @@ export function CustomerQuoteDetailView({
                 <p className="text-md-medium flex items-center gap-1 whitespace-nowrap">
                   <span className="text-[var(--content-placeholder)]">경력</span>
                   <span className="text-[var(--black-300)]">
-                    {MOCK_QUOTE.careerYears}년
+                    {quote.careerYears}년
                   </span>
                 </p>
                 <span
@@ -306,7 +265,7 @@ export function CustomerQuoteDetailView({
                 />
                 <p className="text-md-medium flex items-center gap-1 whitespace-nowrap">
                   <span className="text-[var(--black-300)]">
-                    {MOCK_QUOTE.confirmedCount.toLocaleString("ko-KR")}건
+                    {quote.confirmedCount.toLocaleString("ko-KR")}건
                   </span>
                   <span className="text-[var(--content-placeholder)]">확정</span>
                 </p>
@@ -327,15 +286,15 @@ export function CustomerQuoteDetailView({
                 견적 정보
               </h2>
               <dl className="flex flex-col gap-4">
-                <QuoteInfoRow label="견적 요청일" value={MOCK_QUOTE.requestedAt} />
-                <QuoteInfoRow label="서비스" value={MOCK_QUOTE.serviceLabel} />
-                <QuoteInfoRow label="이용일" value={MOCK_QUOTE.moveDateLabel} />
-                <QuoteInfoRow label="출발지" value={MOCK_QUOTE.from} />
-                <QuoteInfoRow label="도착지" value={MOCK_QUOTE.to} />
+                <QuoteInfoRow label="견적 요청일" value={quote.requestedAt} />
+                <QuoteInfoRow label="서비스" value={quote.serviceLabel} />
+                <QuoteInfoRow label="이용일" value={quote.moveDateLabel} />
+                <QuoteInfoRow label="출발지" value={quote.from} />
+                <QuoteInfoRow label="도착지" value={quote.to} />
               </dl>
             </div>
 
-            <p className="sr-only">견적 번호 {quoteId}</p>
+            <p className="sr-only">견적 번호 {quote.id}</p>
           </section>
 
           <aside

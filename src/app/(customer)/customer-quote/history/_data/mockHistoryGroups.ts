@@ -1,6 +1,12 @@
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 
+import {
+  DEFAULT_MOVER_PROFILE_IMAGE,
+  SERVICE_TYPE_LABEL,
+  type CustomerQuoteDetail,
+} from "../../_lib/customerQuoteDetail";
+
 export interface HistoryQuoteItem {
   id: string;
   serviceType: ServiceType;
@@ -84,16 +90,52 @@ function createMockHistoryGroup(
   };
 }
 
-/** 이력 상세가 목록 mock의 status를 그대로 쓰게 합니다. */
+export interface FoundHistoryQuote {
+  quote: HistoryQuoteItem;
+  group: HistoryRequestGroup;
+}
+
+/** 목록 mock에서 견적과 소속 요청을 함께 찾습니다. 없으면 undefined입니다. */
 export function findHistoryQuoteById(
   quoteId: string,
-): HistoryQuoteItem | undefined {
+): FoundHistoryQuote | undefined {
   for (const group of MOCK_HISTORY_GROUPS) {
     const quote = group.quotes.find((item) => item.id === quoteId);
     if (quote) {
-      return quote;
+      return { group, quote };
     }
   }
 
   return undefined;
+}
+
+/**
+ * 이력 목록 카드와 같은 견적·이사 정보를 상세 화면 모델로 맞춥니다.
+ * 칩 서비스 유형은 quote.serviceType, 견적 정보 문구는 같은 값의 라벨입니다.
+ */
+export function toCustomerQuoteDetail(
+  found: FoundHistoryQuote,
+): CustomerQuoteDetail {
+  const { quote, group } = found;
+
+  return {
+    id: quote.id,
+    serviceType: quote.serviceType,
+    isDesignated: quote.isDesignated,
+    status: quote.status,
+    message: quote.message,
+    moverName: quote.moverName,
+    profileImageUrl: DEFAULT_MOVER_PROFILE_IMAGE,
+    rating: quote.rating,
+    reviewCount: quote.reviewCount,
+    careerYears: quote.careerYears,
+    confirmedCount: quote.confirmedCount,
+    favoriteCount: quote.favoriteCount,
+    price: quote.price,
+    requestedAt: group.requestedAt,
+    serviceLabel: SERVICE_TYPE_LABEL[quote.serviceType],
+    moveDateLabel: group.moveDate,
+    from: group.from,
+    to: group.to,
+  };
 }

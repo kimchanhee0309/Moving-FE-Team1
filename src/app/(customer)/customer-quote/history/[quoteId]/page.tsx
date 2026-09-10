@@ -1,7 +1,10 @@
-import { QUOTE_STATUS } from "@/common/constants/domain";
+import { notFound } from "next/navigation";
 
 import { CustomerQuoteDetailView } from "../../[quoteId]/_components/CustomerQuoteDetailView";
-import { findHistoryQuoteById } from "../_data/mockHistoryGroups";
+import {
+  findHistoryQuoteById,
+  toCustomerQuoteDetail,
+} from "../_data/mockHistoryGroups";
 
 interface CustomerQuoteHistoryDetailPageProps {
   params: Promise<{ quoteId: string }>;
@@ -11,12 +14,15 @@ export default async function CustomerQuoteHistoryDetailPage({
   params,
 }: CustomerQuoteHistoryDetailPageProps) {
   const { quoteId } = await params;
-  const historyQuote = findHistoryQuoteById(quoteId);
+  const found = findHistoryQuoteById(quoteId);
+
+  if (!found) {
+    notFound();
+  }
 
   return (
     <CustomerQuoteDetailView
-      quoteId={quoteId}
-      status={historyQuote?.status ?? QUOTE_STATUS.PENDING}
+      quote={toCustomerQuoteDetail(found)}
       variant="history"
     />
   );
