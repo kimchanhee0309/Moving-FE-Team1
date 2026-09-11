@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { safeAuthRedirect } from "../auth.utils";
+import { resolveAuthenticatedPath } from "../auth.utils";
 
 const MESSAGES:Record<string,string>={
   OAUTH_CANCELLED:"SNS 로그인이 취소되었습니다.",
@@ -18,8 +18,7 @@ export function AuthCallback({error,role,redirect}:{error?:string;role?:string;r
   const auth=useAuth(),router=useRouter();
   useEffect(()=>{
     if(!error&&!auth.isPending&&auth.user) {
-      const target=safeAuthRedirect(redirect);
-      router.replace(auth.user.profileCompleted&&target&&!/^\/(auth|login|signup)(\/|$)/.test(target)?target:"/");
+      router.replace(resolveAuthenticatedPath(auth.user, redirect));
     }
   },[error,auth.isPending,auth.user,redirect,router]);
   const failed=!!error||(!auth.isPending&&!auth.user);
