@@ -14,13 +14,17 @@ import { ROUTES } from "@/common/constants/routes";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { authHref } from "@/features/auth/auth.utils";
 
+import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
 import { useLoadMoreSentinel } from "../hooks/useLoadMoreSentinel";
 import { useMoverSearchInfiniteQuery } from "../hooks/useMoverSearchInfiniteQuery";
 import {
   useMoverSearchFavorites,
   useMoverSearchRecommended,
 } from "../hooks/useMoverSearchSidebar";
-import { DEFAULT_SORT_VALUE } from "../mover-search.constants";
+import {
+  DEFAULT_SORT_VALUE,
+  MOVER_SEARCH_DEBOUNCE_MS,
+} from "../mover-search.constants";
 import type { MoverSearchSortValue } from "../mover-search.types";
 import {
   getMoverSearchSidebarVariant,
@@ -54,15 +58,26 @@ export function MoverSearchPageContent() {
   const isDesktopToolbar = useMinWidth(1200);
   const [openMenu, setOpenMenu] = useState<OpenMenu>(null);
   const [toolbar, setToolbar] = useState(createDefaultToolbarState);
+  const debouncedSearch = useDebouncedSearch(
+    toolbar.search,
+    MOVER_SEARCH_DEBOUNCE_MS,
+  );
 
   const listParams = useMemo(
     () => ({
-      search: toolbar.search,
+      search: debouncedSearch,
       regions: toolbar.isAllRegions ? [] : toolbar.regionValues,
       services: toolbar.isAllServices ? [] : toolbar.serviceValues,
       sort: toolbar.sort,
     }),
-    [toolbar],
+    [
+      debouncedSearch,
+      toolbar.isAllRegions,
+      toolbar.isAllServices,
+      toolbar.regionValues,
+      toolbar.serviceValues,
+      toolbar.sort,
+    ],
   );
 
   const viewer = getMoverSearchViewer(user, isAuthPending, Boolean(authError));
