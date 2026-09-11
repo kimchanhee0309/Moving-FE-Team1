@@ -37,3 +37,27 @@ export interface MoverSearchPageResult {
   nextPage: number | undefined;
   totalCount: number;
 }
+
+export interface MoverDetail extends MoverSearchResult {
+  serviceTypes: ServiceType[];
+  regionValues: string[];
+  detailDescription: string;
+}
+
+export interface MoverReview {
+  id: string;
+  reviewerName: string;
+  writtenAt: string;
+  rating: number;
+  content: string;
+}
+
+export interface MoverReviewRatingCount {
+  score: 1 | 2 | 3 | 4 | 5;
+  count: number;
+}
+
+export interface MoverReviewSummary {
+  reviews: MoverReview[];
+  ratingCounts: MoverReviewRatingCount[];
+}
