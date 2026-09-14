@@ -194,11 +194,11 @@ export function MoverSearchDetailPageContent({
       />
       <div
         aria-hidden="true"
-        className="hidden h-[180px] w-full bg-cover bg-center bg-[url('/images/mover-quote/quote-detail-banner.svg')] min-[1200px]:block"
+        className="hidden h-[225px] w-full bg-cover bg-center bg-[url('/images/mover-quote/quote-detail-banner.svg')] min-[1200px]:block"
       />
 
       <div className="mx-auto w-full max-w-[1200px] px-5 min-[744px]:px-[72px] min-[1200px]:px-0">
-        <div className="-mt-[42px] flex flex-col min-[744px]:-mt-[77px] min-[1200px]:-mt-[83px]">
+        <div className="-mt-[42px] flex flex-col min-[744px]:-mt-[77px] min-[1200px]:-mt-[103px]">
           <div className="relative z-10 mb-[13px] flex size-16 items-center justify-center overflow-hidden rounded-xl bg-[var(--black-300)] p-0.5 min-[744px]:mb-[23px] min-[744px]:size-[100px] min-[744px]:p-1 min-[1200px]:mb-5 min-[1200px]:size-[134px] min-[1200px]:rounded-[12px] min-[1200px]:p-1.5">
             <Image
               src={mover.profileImageUrl ?? "/images/mover-search/profile-placeholder.png"}
