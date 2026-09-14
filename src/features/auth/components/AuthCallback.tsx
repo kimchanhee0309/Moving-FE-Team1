@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { getAuthSuccessPath } from "../auth.utils";
+import { authHref, getAuthSuccessPath } from "../auth.utils";
 
 const MESSAGES:Record<string,string>={
   OAUTH_CANCELLED:"SNS 로그인이 취소되었습니다.",
@@ -25,6 +25,6 @@ export function AuthCallback({error,role,redirect}:{error?:string;role?:string;r
   return <main className="mx-auto max-w-xl px-6 py-20 text-center">
     <h1 className="text-2xl-bold">SNS 로그인</h1>
     <p className="my-6" role={failed?"alert":"status"}>{failed?(error&&MESSAGES[error])||"로그인을 완료하지 못했습니다. 다시 시도해 주세요.":"로그인 정보를 확인하고 있습니다."}</p>
-    {failed&&<Link className="text-(--primary-400) underline" href={`/login/${role==="MOVER"?"mover":"customer"}`}>로그인 화면으로 돌아가기</Link>}
+    {failed&&<Link className="text-(--primary-400) underline" href={authHref(`/login/${role==="MOVER"?"mover":"customer"}`, redirect)}>로그인 화면으로 돌아가기</Link>}
   </main>;
 }
