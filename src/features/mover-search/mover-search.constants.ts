@@ -48,6 +48,8 @@ export const SIDEBAR_MOVER_LIMIT = 3;
 
 export const MOVER_SEARCH_PAGE_SIZE = 5;
 
+export const MOVER_SEARCH_DEBOUNCE_MS = 300;
+
 export const MOVER_SEARCH_SIDEBAR_TITLE = {
   recommended: "추천 기사님",
   favorite: "찜한 기사님",
