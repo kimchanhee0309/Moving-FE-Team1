@@ -14,7 +14,11 @@ interface AuthGuardProps {
   children: ReactNode;
 }
 
-/** 역할 라우트 그룹의 화면 이동만 안내합니다. Refresh와 API 인가는 여기서 처리하지 않습니다. */
+/**
+ * (customer)/(mover) 레이아웃에서 역할별 화면 진입을 안내합니다. 공개 라우트에는 적용하지 않습니다.
+ * 인증 조회·Refresh는 Provider/apiClient, 실제 데이터 인가는 백엔드 책임입니다.
+ * 로그인 링크에 현재 query도 보존하며 useSearchParams의 정적 렌더링을 위해 Suspense 경계를 둡니다.
+ */
 export function AuthGuard({ role, children }: AuthGuardProps) {
   return <Suspense fallback={<p role="status" className="p-8 text-center">로그인 정보를 확인하고 있습니다.</p>}>
     <AuthGuardContent role={role}>{children}</AuthGuardContent>

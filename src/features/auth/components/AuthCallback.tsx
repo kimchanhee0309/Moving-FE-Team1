@@ -20,7 +20,11 @@ const MESSAGES: Record<string, string> = {
   AUTH_RATE_LIMIT_EXCEEDED: "요청이 많습니다. 잠시 후 다시 시도해 주세요.",
 };
 
-/** callback query의 성공 표시를 신뢰하지 않고 최신 /me 조회 결과로만 이동합니다. */
+/**
+ * 백엔드 OAuth callback이 이동시키는 프론트 /auth/callback의 처리 화면입니다.
+ * error query는 허용된 코드의 안내에만 사용하고, 성공은 Provider의 최신 /auth/me 결과로 검증합니다.
+ * role 일치와 profileCompleted를 확인한 뒤 안전한 목적지로 이동합니다. 공급자 code 교환은 하지 않습니다.
+ */
 export function AuthCallback({ error, role, redirect }: { error?: string; role?: string; redirect?: string }) {
   const { refetch } = useAuth();
   const router = useRouter();

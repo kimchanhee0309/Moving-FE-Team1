@@ -7,6 +7,7 @@ export function getAuthAccess(
   role: UserRole,
   allowIncompleteProfile = false,
 ): AuthAccess {
+  // 캐시 user가 남아 있어도 최신 인증을 확인하지 못한 오류 상태에서는 보호 기능을 허용하지 않습니다.
   if (status === "loading") return "loading";
   if (status === "auth-error" || status === "network-error" || status === "error") return "unavailable";
   if (!user) return "guest";

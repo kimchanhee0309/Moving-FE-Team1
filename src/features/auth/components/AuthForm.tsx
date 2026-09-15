@@ -16,7 +16,9 @@ import styles from "./AuthScreen.module.css";
 interface AuthFormProps extends AuthScreenProps {
   /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
   onSubmitValues: (values: AuthFormValues) => Promise<void>;
+  /** 공급자 인증 시작만 요청합니다. 공급자 페이지로 이동하는 동작은 AuthController에 위임합니다. */
   onSocialLogin: (provider: SocialProvider) => Promise<void>;
+  /** Provider 이메일 mutation과 화면 OAuth mutation의 isPending을 합친 값으로 제출·입력을 잠급니다. */
   isPending: boolean;
 }
 
@@ -64,6 +66,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
     } catch (error) {
       if (error instanceof ApiError) {
         const fieldErrors: AuthFormErrors = {};
+        // 백엔드 Validator의 details(field/reason)를 현재 폼 필드에만 연결합니다. 임의 서버 필드를 폼에 추가하지 않습니다.
         for (const detail of error.details) {
           const field = fields.find((candidate) => candidate === detail.field);
           if (field) fieldErrors[field] = detail.reason;

@@ -81,7 +81,12 @@ function refreshSession(generation: number, revision: number): Promise<unknown> 
   return refreshRequest;
 }
 
-/** Access 쿠키의 만료/자동 삭제만 갱신합니다. 자격 증명 오류 및 Refresh 자체는 제외합니다. */
+/**
+ * 모든 도메인의 공통 요청 계층입니다. credentials: include로 백엔드 HttpOnly 쿠키를 전달합니다.
+ * 브라우저의 Access 만료/자동 삭제만 POST /auth/refresh로 갱신하고 원 요청을 최대 한 번 재시도합니다.
+ * 자격 증명 오류와 Refresh 자체는 제외합니다. 갱신 실패를 Provider에 통지하며 화면 이동은 담당하지 않습니다.
+ * 서버 호출에서는 브라우저 쿠키를 자동 전달하거나 Refresh하지 않습니다.
+ */
 export async function apiClient<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
   const generation = getAuthGeneration();
   const revision = refreshRevision;

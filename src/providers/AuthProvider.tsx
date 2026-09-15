@@ -23,6 +23,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const router = useRouter();
   const pathname = usePathname();
   const [isChangingSession, setIsChangingSession] = useState(false);
+  // GNB·모달·역할 가드는 이 단일 /auth/me Query를 공유합니다. 계정 변경 중에는 자동 조회를 멈춥니다.
   const session = useQuery({
     queryKey: authKeys.session(),
     queryFn: ({ signal }) => fetchSession(signal),
@@ -44,12 +45,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       .forEach((mutation) => mutations.remove(mutation));
   }, [client]);
 
+  // 다른 계정의 화면/개인 데이터가 새 인증 결과와 섞이지 않도록 mutation 전에 조회를 취소합니다.
   const prepareSessionChange = useCallback(async () => {
     setIsChangingSession(true);
     await client.cancelQueries();
     removePrivateCaches();
   }, [client, removePrivateCaches]);
 
+  // AuthController → 이 mutation → 가입/로그인 API → 최신 /me 확인 → 단일 세션 캐시 반영 순서입니다.
   const credentials = useMutation({
     mutationFn: authenticateCredentials,
     onMutate: prepareSessionChange,
@@ -61,6 +64,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     onSettled: () => { setIsChangingSession(false); },
   });
 
+  // 서버 쿠키 삭제 성공 후에만 비회원으로 확정합니다. 실패 시 /me로 실제 세션을 다시 확인합니다.
   const logout = useMutation({
     mutationFn: logoutSession,
     onMutate: prepareSessionChange,
@@ -84,6 +88,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const error = isGuestFailure(failure)
       ? null
       : failure instanceof Error ? failure : new Error("인증 정보를 확인하지 못했습니다.");
+    // 연결 실패만으로 로그아웃을 확정하지 않습니다. 마지막 사용자 표시는 유지하고 오류 status로 접근을 막습니다.
     client.setQueryData<AuthSession>(authKeys.session(), (cached) => ({
       user: error instanceof TypeError ? cached?.user ?? null : null,
       failure: error,
@@ -108,6 +113,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     credentials,
     logout,
     refetch: session.refetch,
+    // 프로필 API 담당자는 저장 성공 후 호출합니다. 서버의 최신 profileCompleted를 반영하고 조회 실패는 숨기지 않습니다.
     refetchUser: async () => {
       const result = await session.refetch();
       const failure = result.error ?? result.data?.failure;
