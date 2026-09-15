@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, type ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, type ReactNode } from "react";
 
 import type { UserRole } from "@/common/auth/types";
 import { ROUTES } from "@/common/constants/routes";
@@ -16,26 +16,34 @@ interface AuthGuardProps {
 
 /** 역할 라우트 그룹의 화면 이동만 안내합니다. Refresh와 API 인가는 여기서 처리하지 않습니다. */
 export function AuthGuard({ role, children }: AuthGuardProps) {
+  return <Suspense fallback={<p role="status" className="p-8 text-center">로그인 정보를 확인하고 있습니다.</p>}>
+    <AuthGuardContent role={role}>{children}</AuthGuardContent>
+  </Suspense>;
+}
+
+function AuthGuardContent({ role, children }: AuthGuardProps) {
   const { user, status, error, refetch, checkAccess } = useAuth();
   const path = usePathname();
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const destination = query ? `${path}?${query}` : path;
   const router = useRouter();
   const loginPath = ROUTES.AUTH.LOGIN[role];
   const profileRegister = role === "MOVER"
     ? ROUTES.MOVER.PROFILE.REGISTER : ROUTES.CUSTOMER.PROFILE.REGISTER;
   const access = checkAccess(role, path === profileRegister);
-  const login = authHref(loginPath, path);
+  const login = authHref(loginPath, destination);
   const hasRegisteredProfile = access === "allowed" && user?.profileCompleted && path === profileRegister;
 
   useEffect(() => {
     if (access === "guest") {
-      // 경로가 렌더링될 때는 브라우저 query까지 보존하여 로그인 후 원래 목적지로 복귀합니다.
-      router.replace(authHref(loginPath, path + window.location.search));
+      router.replace(login);
     } else if (access === "profile-required") {
       router.replace(profileRegister);
     } else if (hasRegisteredProfile && user) {
       router.replace(resolveAuthenticatedPath(user));
     }
-  }, [access, hasRegisteredProfile, loginPath, path, profileRegister, router, user]);
+  }, [access, hasRegisteredProfile, login, profileRegister, router, user]);
 
   if (access === "loading") {
     return <p role="status" className="p-8 text-center">로그인 정보를 확인하고 있습니다.</p>;

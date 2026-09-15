@@ -6,13 +6,20 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { MODAL_COMPONENTS } from "./modal-registry";
 
+interface ModalNameOptions {
+  /** 내용의 제목 요소 ID. 지정하면 ariaLabel보다 우선합니다. */
+  ariaLabelledBy?: string;
+  /** 제목 ID를 연결하지 않을 때 사용하는 구체적인 모달 이름. */
+  ariaLabel?: string;
+}
+
 interface ModalContextValue {
   isOpen: boolean;
   /**
    * JSX를 그대로 받아 모달로 띄운다(state 기반). 넘긴 `content`가 제목·닫기 버튼까지 전부
    * 책임진다. 새로고침하면 사라진다 — 확인창, 폼 입력처럼 공유/재접속이 필요 없는 모달에 쓴다.
    */
-  openModal: (content: ReactNode) => void;
+  openModal: (content: ReactNode, options?: ModalNameOptions) => void;
   closeModal: () => void;
 }
 
@@ -45,11 +52,13 @@ function BareModal({
   isOpen,
   onClose,
   children,
+  ariaLabel,
+  ariaLabelledBy,
 }: {
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
-}) {
+} & ModalNameOptions) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -127,6 +136,8 @@ function BareModal({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
+        aria-labelledby={ariaLabelledBy}
+        aria-label={ariaLabelledBy ? undefined : ariaLabel || "알림"}
         tabIndex={-1}
         className="box-border max-h-[calc(100dvh-48px)] overflow-y-auto rounded-[32px] bg-(--gray-50) outline-none"
       >
@@ -186,9 +197,11 @@ function UrlModal() {
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState<ReactNode>(null);
+  const [modalName, setModalName] = useState<ModalNameOptions>({});
 
-  const openModal = (content: ReactNode) => {
+  const openModal = (content: ReactNode, options: ModalNameOptions = {}) => {
     setModalContent(content);
+    setModalName(options);
     setIsOpen(true);
   };
 
@@ -201,7 +214,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     <ModalContext.Provider value={{ isOpen, openModal, closeModal }}>
       {children}
 
-      <BareModal isOpen={isOpen} onClose={closeModal}>
+      <BareModal isOpen={isOpen} onClose={closeModal} {...modalName}>
         {modalContent}
       </BareModal>
 
@@ -213,7 +226,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * `ModalProvider` 하위에서만 호출할 수 있다. `Providers`(src/providers/index.tsx)가 루트
+ * `ModalProvider` 하위에서만 호출할 수 있다. `Providers`(src/providers/Providers.tsx)가 루트
  * layout에서 이미 감싸고 있으므로 일반적으로는 항상 사용 가능하다.
  *
  * @example
@@ -226,7 +239,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
  *         <h2>제목</h2>
  *         <p>내용</p>
  *         <button onClick={closeModal}>닫기</button>
- *       </div>
+ *       </div>,
+ *       { ariaLabel: "제목" },
  *     );
  *   };
  *

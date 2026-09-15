@@ -5,10 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
 
 import { isGuestFailure, subscribeAuthFailure } from "@/common/api/auth-session";
-import { ApiError } from "@/common/api/error";
 import { AuthContext } from "@/common/auth/AuthContext";
 import { getAuthAccess } from "@/common/auth/access";
-import type { AuthContextValue, AuthSession, AuthStatus } from "@/common/auth/types";
+import { getAuthSessionState } from "@/common/auth/session";
+import type { AuthContextValue, AuthSession } from "@/common/auth/types";
 import { ROUTES } from "@/common/constants/routes";
 import { authenticateCredentials, fetchSession, logoutSession } from "@/features/auth/auth.api";
 import { authKeys } from "@/features/auth/auth.keys";
@@ -84,7 +84,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const error = isGuestFailure(failure)
       ? null
       : failure instanceof Error ? failure : new Error("인증 정보를 확인하지 못했습니다.");
-    client.setQueryData<AuthSession>(authKeys.session(), { user: null, failure: error });
+    client.setQueryData<AuthSession>(authKeys.session(), (cached) => ({
+      user: error instanceof TypeError ? cached?.user ?? null : null,
+      failure: error,
+    }));
   }), [client, isCredentialsPending, removePrivateCaches, resetCredentials]);
 
   const { isSuccess: hasLoggedOut, reset: resetLogout } = logout;
@@ -92,21 +95,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (hasLoggedOut && pathname === ROUTES.HOME) resetLogout();
   }, [hasLoggedOut, pathname, resetLogout]);
 
-  const error = session.error ?? session.data?.failure ?? null;
   // 로그아웃 후 홈 이동이 완료되기 전 역할 guard가 로그인 화면으로 덮어 이동하지 못하게 합니다.
   const isPending = session.isPending || isChangingSession || (hasLoggedOut && pathname !== ROUTES.HOME);
-  const user = error || isPending ? null : session.data?.user ?? null;
-  const status: AuthStatus = isPending ? "loading"
-    : error instanceof TypeError ? "network-error"
-    : error instanceof ApiError && error.status === 401 ? "auth-error"
-    : error ? "error"
-    : user ? "authenticated" : "guest";
+  const { user, status, error, isAuthenticated } = getAuthSessionState(session.data, session.error, isPending);
   const auth: AuthContextValue = {
     user,
     status,
     isPending,
     isLoading: isPending,
-    isAuthenticated: user !== null,
+    isAuthenticated,
     error,
     credentials,
     logout,

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { after, afterEach, before, beforeEach, mock, test } from "node:test";
+import { QueryClient } from "@tanstack/react-query";
 import { changeAuthSession, subscribeAuthFailure } from "../../src/common/api/auth-session";
 import { ApiError } from "../../src/common/api/error";
 import { getAuthAccess } from "../../src/common/auth/access";
-import { resolveAuthenticatedPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
-import type { AuthUser } from "../../src/common/auth/types";
+import { getAuthSessionState } from "../../src/common/auth/session";
+import { authHref, resolveAuthenticatedPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
+import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
 const customer: AuthUser = { id: "customer-1", name: "테스트", email: "test@example.com", phone: null, role: "CUSTOMER", profileCompleted: true };
 const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!" };
@@ -310,5 +312,62 @@ test("OAuth 시작 응답의 잘못된 주소와 다른 공급자 주소를 거�
     await assert.rejects(beginSocialLogin("google", "CUSTOMER"), (error: unknown) => error instanceof ApiError && error.code === "INVALID_RESPONSE");
     mock.restoreAll();
   }
+});
+
+test("캐시된 세션의 /me 재조회가 네트워크 오류여도 로그인 표시를 유지하고 복구한다", async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const queryKey = ["auth", "session"];
+  const options = { queryKey, queryFn: () => fetchSession(), staleTime: 0 };
+  try {
+    mock.method(globalThis, "fetch", async () => success({ user: customer }));
+    await client.fetchQuery(options);
+    mock.restoreAll();
+    const networkError = new TypeError("Network failure");
+    mock.method(globalThis, "fetch", async () => { throw networkError; });
+    await assert.rejects(client.fetchQuery(options), TypeError);
+    const query = client.getQueryState<AuthSession>(queryKey);
+    assert.ok(query);
+    const state = getAuthSessionState(query.data, query.error, query.status === "pending");
+    assert.deepEqual(state, { user: customer, status: "network-error", error: networkError, isAuthenticated: true });
+    assert.equal(getAuthAccess(state.user, state.status, "CUSTOMER"), "unavailable");
+    mock.restoreAll();
+    mock.method(globalThis, "fetch", async () => success({ user: { ...customer, name: "복구된 사용자" } }));
+    await client.fetchQuery(options);
+    const recovered = client.getQueryState<AuthSession>(queryKey);
+    assert.ok(recovered);
+    const recoveredState = getAuthSessionState(recovered.data, recovered.error, recovered.status === "pending");
+    assert.equal(recoveredState.status, "authenticated");
+    assert.equal(recoveredState.user?.name, "복구된 사용자");
+  } finally { client.clear(); }
+});
+
+test("캐시가 없는 네트워크 오류·401·세션 변경은 로그인 상태를 만들지 않는다", () => {
+  const networkError = new TypeError("Network failure");
+  assert.equal(getAuthSessionState(undefined, networkError, false).isAuthenticated, false);
+  for (const error of [new ApiError(401, "ACCESS_TOKEN_INVALID", "인증 오류"), new Error("조회 오류")]) {
+    const state = getAuthSessionState({ user: customer, failure: null }, error, false);
+    assert.equal(state.user, null);
+    assert.equal(state.isAuthenticated, false);
+  }
+  assert.equal(getAuthSessionState({ user: customer, failure: new ApiError(401, "REFRESH_TOKEN_INVALID", "인증 오류") }, null, false).status, "auth-error");
+  assert.equal(getAuthSessionState({ user: customer, failure: networkError }, null, false).user, customer);
+  assert.equal(getAuthSessionState({ user: customer, failure: null }, null, true).user, null);
+  assert.equal(getAuthSessionState({ user: null, failure: null }, null, false).status, "guest");
+});
+
+test("010은 11자리만, 구형 휴대전화는 10·11자리만 허용한다", () => {
+  for (const phone of ["01012345678", "010-1234-5678", "0111234567", "01612345678", "0171234567", "01812345678", "0191234567"]) {
+    assert.equal(validateAuthForm({ ...values, phone }, "signup").phone, undefined);
+  }
+  for (const phone of ["0101234567", "010123456789", "011123456", "019123456789", "01512345678", "0212345678"]) {
+    assert.ok(validateAuthForm({ ...values, phone }, "signup").phone);
+  }
+});
+
+test("인증 오류 로그인 링크도 중복 키와 인코딩된 쿼리 목적지를 유지한다", () => {
+  const destination = "/mover-mypage?view=error&filter=a&filter=b&name=%ED%95%9C%EA%B8%80";
+  const login = new URL(authHref("/login/mover", destination), "https://moving.local");
+  assert.equal(login.searchParams.get("redirect"), destination);
+  assert.equal(resolveAuthenticatedPath({ ...customer, role: "MOVER" }, login.searchParams.get("redirect") ?? undefined), destination);
 });
 

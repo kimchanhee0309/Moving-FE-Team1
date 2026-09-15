@@ -20,6 +20,7 @@ Access/Refresh JWT는 HttpOnly 쿠키로만 전달합니다. 토큰을 응답 Bo
 Provider가 `user`, `status`, `credentials`, `logout`, `refetchUser`, `checkAccess`를 제공합니다.
 
 - status: loading / guest / authenticated / auth-error / network-error / error
+- network-error에서는 마지막으로 확인된 user/isAuthenticated를 유지할 수 있습니다. 로그인 표시용 캐시이며 최신 인증 성공을 의미하지 않습니다. 보호 페이지·행동은 status와 checkAccess를 함께 확인하세요. 최초 조회에 캐시가 없으면 user는 null이며, 401 인증 오류에서는 캐시 여부와 관계없이 비인증 상태입니다.
 - checkAccess: 로딩·오류·비회원·역할 불일치·프로필 필요·접근 가능을 구분
 - 라우트 가드: customer/mover 그룹에서 화면 이동만 안내
 - 실제 권한: 백엔드 Auth guard와 Service가 최종 검사
@@ -43,7 +44,7 @@ Provider가 `user`, `status`, `credentials`, `logout`, `refetchUser`, `checkAcce
 
 `ACCESS_TOKEN_EXPIRED`와 `ACCESS_TOKEN_MISSING`만 갱신합니다. Access 쿠키는 만료 시 브라우저에서 자동 삭제되므로 MISSING도 포함합니다. INVALID_CREDENTIALS, Access 위변조, 삭제된 사용자 및 기타 401은 무조건 갱신하지 않습니다.
 
-동시 요청과 갱신 중 시작한 요청, 늦은 401은 갱신 Promise를 공유합니다. 성공 후 원래 요청을 최대 한 번만 재시도하며 Refresh 자체는 재귀 갱신하지 않습니다. 실패 시 Provider에 알리고 사용자·개인 캐시를 정리합니다. 원 요청의 취소는 공유 Refresh를 취소하지 않습니다.
+동시 요청과 갱신 중 시작한 요청, 늦은 401은 갱신 Promise를 공유합니다. 성공 후 원래 요청을 최대 한 번만 재시도하며 Refresh 자체는 재귀 갱신하지 않습니다. 실패 시 Provider에 알리고 개인 캐시를 정리합니다. 인증 실패는 사용자도 비우지만, 네트워크 오류는 마지막 사용자를 보존하고 status로 접근을 제한합니다. 원 요청의 취소는 공유 Refresh를 취소하지 않습니다.
 
 로그인·로그아웃·Refresh 쿠키 변경은 탭 안에서 직렬화하며 Web Locks 지원 브라우저에서는 같은 origin의 탭 간에도 직렬화합니다. generation 검사와 Query signal 취소로 이전 /me·개인 API 결과가 새 계정이나 로그아웃 상태를 복구하지 못하게 합니다. 모든 탭의 Query 상태를 실시간 동기화하는 기능은 별도로 구현하지 않았습니다.
 

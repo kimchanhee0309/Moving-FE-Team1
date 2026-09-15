@@ -18,7 +18,7 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
   // 로그인에서는 가입 정책 변경 전의 비밀번호도 서버가 판정할 수 있도록 존재 여부만 검사합니다.
   if (mode === "signup") {
     if (!values.name.trim() || values.name.trim().length > 50) errors.name = "성함을 1~50자로 입력해 주세요.";
-    if (!/^01[016789]\d{7,8}$/.test(normalizePhone(values.phone))) {
+    if (!/^(?:010\d{8}|01[16789]\d{7,8})$/.test(normalizePhone(values.phone))) {
       errors.phone = "올바른 휴대전화 번호를 입력해 주세요.";
     }
     const password = values.password.trim();

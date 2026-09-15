@@ -46,7 +46,7 @@
 | `src/features/auth/components/AuthGuard.tsx` | 수정. Provider의 판정으로 이동 안내만 담당합니다. Refresh는 구현하지 않습니다. |
 | `src/features/auth/components/AuthCallback.tsx` | 수정. 최신 /auth/me 검증, 제한된 OAuth 오류 안내, 재시도 및 안전한 이동을 처리합니다. |
 | `src/features/auth/test.tsx`, `src/features/auth/components/test.tsx` | 삭제. 내용이 없고 import 사용처가 없는 파일이어서 실행 가능한 테스트로 교체했습니다. 화면 영향은 없습니다. |
-| `tests/auth/auth.test.ts`, `package.json` | 테스트 21개와 test:auth script를 추가했습니다. 기존 tsx와 Node test runner를 사용하고 의존성·lockfile은 변경하지 않았습니다. |
+| `tests/auth/auth.test.ts`, `package.json` | test:auth script를 추가하고 리뷰 회귀 검사 포함 테스트 25개를 구성했습니다. 기존 tsx와 Node test runner를 사용하고 의존성·lockfile은 변경하지 않았습니다. |
 | `src/features/auth/README.md`, `src/providers/README.md`, `docs/auth-integration.md` | 구조·공개 계약·연동 결과·남은 확인사항을 문서화했습니다. |
 
 이동·삭제 이유와 공통 API/Provider의 영향은 변경 전에 보고했습니다. 작업 과정의 별도 인증 세션 hook도 남기지 않았습니다.
@@ -70,7 +70,7 @@
 3. 가입 또는 로그인 후 profileCompleted=false이면 역할별 register로 이동합니다. 완료 CUSTOMER 기본 경로는 /mover-search, 완료 MOVER는 /mover-mypage입니다. 자기 역할/공개 경로의 안전한 redirect는 반영합니다.
 4. 비회원 보호 페이지 접근은 query를 포함한 목적지를 보존해서 역할별 로그인으로 이동합니다. 다른 역할은 접근 제한을 표시합니다. 프로필 미등록자는 역할 기능보다 register가 우선입니다. 등록 완료 사용자의 register 재진입은 정상 페이지로 이동합니다.
 5. Access TOKEN_MISSING/EXPIRED만 공통 client에서 갱신합니다. 동시 요청·갱신 중 요청·늦은 401은 Promise를 공유하고 각 원 요청은 최대 1번 재시도합니다. Refresh 자체는 재귀 갱신하지 않습니다.
-6. Refresh 실패는 사용자·개인 캐시를 정리하며, Refresh 쿠키 없음은 비회원, 위변조·유효하지 않은 인증은 인증 오류, 연결 실패는 네트워크 오류로 구분합니다.
+6. Refresh 실패는 개인 캐시를 정리하며, Refresh 쿠키 없음은 비회원, 위변조·유효하지 않은 인증은 인증 오류로 사용자도 비웁니다. 연결 실패는 마지막 사용자 표시를 유지하고 network-error로 접근을 제한합니다.
 7. logout은 서버 쿠키 삭제 성공 후 상태/캐시를 정리하고 홈으로 이동합니다. Query 취소와 세션 변경 기준으로 이전 /me 응답을 차단하고 역할 guard가 홈 이동을 덮지 않게 처리했습니다.
 8. Google/Kakao/Naver 시작 API에서 검증된 공급자 URL로 이동합니다. callback은 query의 성공 표시를 신뢰하지 않고 최신 /me와 역할·profileCompleted를 확인합니다. backend가 허용한 OAuth 오류만 안내하고 알 수 없는 코드는 일반 오류로 표시합니다.
 
@@ -83,7 +83,7 @@
 | `npm run lint` | 통과 |
 | `npx tsc --noEmit` | 통과 |
 | `npm run build` | 통과, 32개 페이지 생성 |
-| `npm run test:auth` | 21개 통과 |
+| `npm run test:auth` | PR 리뷰 수정 후 25개 통과 |
 | 백엔드 `npm test -- --runInBand tests/auth` | 기존 Auth 14 suites / 49 tests 통과 |
 | `git diff --check` | 통과 |
 | 범위 확인 | 백엔드 변경 없음, GNB/Input/Button/next.config.ts/package-lock.json/AGENTS.md 변경 없음, 기존 프로필 변경 해시 동일 |

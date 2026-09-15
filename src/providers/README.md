@@ -26,6 +26,7 @@ export function CardDeleteButton() {
         <button onClick={closeModal}>취소</button>
         <button onClick={() => {/* 삭제 로직 */ closeModal();}}>삭제하기</button>
       </div>,
+      { ariaLabel: "삭제 확인" },
     );
   };
 
@@ -33,7 +34,7 @@ export function CardDeleteButton() {
 }
 ```
 
-- `openModal(content)`는 인자 하나만 받습니다. 제목/닫기 버튼은 `content` 안에서 직접 그립니다.
+- `openModal(content, options?)`는 기존 한 인자 호출도 지원합니다. 제목/닫기 버튼은 `content` 안에서 직접 그립니다.
 - 새로고침하면 닫힙니다.
 
 ## 2. URL 기반 — 새로고침·링크 공유 후에도 열린 채 유지돼야 하는 모달
@@ -84,4 +85,14 @@ URL 기반 모달도 동일합니다 — 등록한 컴포넌트의 최상위 요
 
 ## 접근성 참고
 
-`BareModal`은 title을 소유하지 않아 `aria-labelledby`를 자동으로 걸어주지 않습니다. `content`(openModal에 넘기는 JSX, URL 모달 컴포넌트 모두)는 반드시 제목 역할을 하는 요소(`<h2>` 등)를 포함해야 스크린 리더 사용자가 모달 제목을 인식할 수 있습니다.
+`<h2>`를 포함하는 것만으로 dialog의 접근성 이름이 연결되지는 않습니다. state 기반 모달은 두 번째 인자에 `{ ariaLabel: "삭제 확인" }`을 지정하거나, 제목에 고유 ID를 부여하고 `{ ariaLabelledBy: 제목ID }`를 지정하세요. 두 옵션을 함께 전달하면 ariaLabelledBy가 우선하며 연결한 ID의 요소는 모달이 열린 동안 반드시 존재해야 합니다. 컴포넌트에서 `useId()`로 만든 ID를 사용하면 중복을 피할 수 있습니다.
+
+```tsx
+const titleId = useId();
+openModal(
+  <div><h2 id={titleId}>삭제 확인</h2><button onClick={closeModal}>닫기</button></div>,
+  { ariaLabelledBy: titleId },
+);
+```
+
+기존 한 인자 호출과 URL 기반 모달은 기본 `aria-label="알림"`을 사용합니다. URL registry는 현재 비어 있습니다. 구체적인 이름이 필요한 URL 모달을 추가할 때는 BareModal의 ariaLabel/ariaLabelledBy 옵션 연결도 함께 구현하세요. 기본 이름은 호환성을 위한 것이므로 새 state 모달에는 내용에 맞는 이름을 지정하세요.
