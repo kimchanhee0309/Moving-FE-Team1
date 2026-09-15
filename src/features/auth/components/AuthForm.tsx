@@ -11,7 +11,6 @@ import { ApiError } from "@/common/api/error";
 
 import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, SocialProvider } from "../auth.types";
 import { authHref, normalizePhone, validateAuthForm } from "../auth.utils";
-import styles from "./AuthScreen.module.css";
 
 interface AuthFormProps extends AuthScreenProps {
   /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
@@ -32,6 +31,10 @@ const SOCIAL_PROVIDERS: { provider: SocialProvider; label: string; image: string
 ];
 const FIELD_LABELS: Record<AuthField, string> = { name: "이름", email: "이메일", phone: "전화번호", password: "비밀번호", passwordConfirm: "비밀번호 확인" };
 const FIELD_PLACEHOLDERS: Record<AuthField, string> = { name: "성함을 입력해 주세요", email: "이메일을 입력해 주세요", phone: "숫자만 입력해 주세요", password: "비밀번호를 입력해 주세요", passwordConfirm: "비밀번호를 다시 한번 입력해 주세요" };
+
+// 오류 행을 항상 예약해 blur 후 다음 입력/버튼이 이동하지 않게 합니다.
+// !는 공통 Input의 크기 클래스와 전역 typography보다 Auth 인스턴스 값을 우선하며 공통 구현은 바꾸지 않습니다.
+const AUTH_FIELD_CLASS = "grid! max-w-none! gap-0! grid-rows-[auto_54px_minmax(20px,auto)] min-[744px]:grid-rows-[auto_54px_minmax(32px,auto)] after:content-[''] after:[grid-area:3/1] [&>p]:[grid-area:3/1] [&>p]:pt-1 [&>p]:text-xs! [&>p]:leading-4! min-[744px]:[&>p]:leading-5! [&>label]:mb-2 [&>label]:text-sm! [&>label]:leading-6! [&>label]:font-normal! min-[744px]:[&>label]:mb-4 min-[744px]:[&>label]:text-xl! min-[744px]:[&>label]:leading-8! [&>div]:h-[54px]!";
 
 /**
  * 공통 Input을 이용한 화면 검증/오류 focus/중복 제출 방지를 담당합니다.
@@ -93,9 +96,9 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
   }
 
   return (
-    <div className={styles.content}>
-      <form noValidate onSubmit={handleSubmit} aria-busy={isPending} className={styles.form}>
-        <div className={styles.fields}>
+    <div className="flex flex-col">
+      <form noValidate onSubmit={handleSubmit} aria-busy={isPending} className="flex flex-col gap-3 min-[744px]:gap-6">
+        <div className="flex flex-col gap-0">
           {fields.map((field) => {
             const isPassword = field === "password" || field === "passwordConfirm";
             return (
@@ -109,7 +112,8 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
                 autoComplete={isPassword ? (mode === "login" ? "current-password" : "new-password") : field === "phone" ? "tel" : field === "email" ? "email" : "name"}
                 inputMode={field === "phone" ? "tel" : field === "email" ? "email" : undefined}
                 inputSize="md"
-                containerClassName={styles.field}
+                containerClassName={AUTH_FIELD_CLASS}
+                className="text-base! min-[744px]:text-lg! placeholder:text-(--input-placeholder)!"
                 value={values[field]}
                 disabled={isPending}
                 placeholder={FIELD_PLACEHOLDERS[field]}
@@ -120,23 +124,23 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
             );
           })}
         </div>
-        <Button type="submit" size="md" fullWidth className={styles.submit} disabled={isIncomplete} isLoading={isPending}>
+        <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete} isLoading={isPending}>
           {mode === "login" ? "로그인" : "시작하기"}
         </Button>
       </form>
-      {submitError && <p className={styles.error} role="alert">{submitError}</p>}
-      <p className={styles.accountSwitch}>
+      {submitError && <p className="mt-4 text-sm leading-6 text-(--primary-400)" role="alert">{submitError}</p>}
+      <p className="mt-4 text-center text-xs leading-5 text-(--black-100) min-[744px]:mt-6 min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200) [&_a]:font-semibold [&_a]:text-(--primary-400) [&_a]:underline [&_a]:underline-offset-[3px]">
         {mode === "login" ? "아직 무빙 회원이 아니신가요?" : "이미 무빙 회원이신가요?"}{" "}
         <Link href={authHref(mode === "login" ? ROUTES.AUTH.SIGNUP[role] : ROUTES.AUTH.LOGIN[role], redirectTo)}>
           {mode === "login" ? "이메일로 회원가입하기" : "로그인"}
         </Link>
       </p>
-      <section className={styles.social} aria-label="SNS 로그인">
-        <p>SNS 계정으로 간편 가입하기</p>
-        <div className={styles.socialButtons}>
+      <section className="mt-12" aria-label="SNS 로그인">
+        <p className="text-center text-xs leading-[18px] text-(--black-100) min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200)">SNS 계정으로 간편 가입하기</p>
+        <div className="mt-6 flex items-center justify-center gap-6 min-[744px]:mt-8 min-[744px]:gap-8">
           {SOCIAL_PROVIDERS.map(({ provider, label, image }) => (
-            <button key={provider} type="button" aria-label={`${label}로 ${role === "CUSTOMER" ? "일반 유저" : "기사님"} 로그인`} disabled={isPending} onClick={() => void handleSocialLogin(provider)}>
-              <Image src={`/images/auth/${image}`} alt="" width={72} height={72} />
+            <button className="cursor-pointer rounded-full focus-visible:rounded focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-(--primary-400) disabled:cursor-not-allowed disabled:opacity-50" key={provider} type="button" aria-label={`${label}로 ${role === "CUSTOMER" ? "일반 유저" : "기사님"} 로그인`} disabled={isPending} onClick={() => void handleSocialLogin(provider)}>
+              <Image className="size-[54px] min-[744px]:size-[72px]" src={`/images/auth/${image}`} alt="" width={72} height={72} />
             </button>
           ))}
         </div>
