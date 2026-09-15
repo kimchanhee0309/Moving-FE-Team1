@@ -3,11 +3,17 @@ export interface ApiSuccessResponse<T> {
   data: T;
 }
 
+export interface ApiErrorDetail {
+  field: string;
+  reason: string;
+}
+
 export interface ApiErrorResponse {
   success: false;
   error: {
     code: string;
     message: string;
+    details?: ApiErrorDetail[];
   };
 }
 

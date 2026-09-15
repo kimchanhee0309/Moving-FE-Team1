@@ -2,29 +2,28 @@ import { ROUTES } from "@/common/constants/routes";
 
 import type { AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
 
-/** 한국 전화번호는 공백/하이픈만 제거합니다. 문자까지 제거해 잘못된 입력을 허용하지 않습니다. */
+/** 백엔드와 동일하게 앞뒤 공백과 하이픈만 제거합니다. 내부 문자/공백은 검증에서 거절합니다. */
 export function normalizePhone(phone: string): string {
-  return phone.replace(/[\s-]/g, "");
+  return phone.trim().replace(/-/g, "");
 }
 
 /** 화면용 검증입니다. 서버의 계정 존재 여부/중복/비밀번호 일치는 판단하지 않습니다. */
 export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFormErrors {
   const errors: AuthFormErrors = {};
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+  if (values.email.trim().length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
     errors.email = "올바른 이메일 형식을 입력해 주세요.";
   }
-  if (!values.password) errors.password = "비밀번호를 입력해 주세요.";
+  if (!values.password.trim()) errors.password = "비밀번호를 입력해 주세요.";
 
   // 로그인에서는 가입 정책 변경 전의 비밀번호도 서버가 판정할 수 있도록 존재 여부만 검사합니다.
   if (mode === "signup") {
-    if (!values.name.trim()) errors.name = "성함을 입력해 주세요.";
-    if (!/^(?:010\d{8}|01[16789]\d{7,8}|02\d{7,8}|0(?:[3-6][1-5]|70)\d{7,8})$/.test(normalizePhone(values.phone))) {
-      errors.phone = "올바른 전화번호를 입력해 주세요.";
+    if (!values.name.trim() || values.name.trim().length > 50) errors.name = "성함을 1~50자로 입력해 주세요.";
+    if (!/^01[016789]\d{7,8}$/.test(normalizePhone(values.phone))) {
+      errors.phone = "올바른 휴대전화 번호를 입력해 주세요.";
     }
-    if (values.password.length < 8 || !/[a-zA-Z]/.test(values.password) || !/\d/.test(values.password) || !/[^a-zA-Z0-9\s]/.test(values.password) || /\s/.test(values.password)) {
-      errors.password = /\s/.test(values.password)
-        ? "비밀번호에 공백을 사용할 수 없습니다."
-        : "8자 이상, 영문·숫자·특수문자가 필요합니다.";
+    const password = values.password.trim();
+    if (password.length < 8 || new TextEncoder().encode(password).length > 72 || !/[a-zA-Z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9\s]/.test(password)) {
+      errors.password = "8자 이상·72바이트 이하이며 영문·숫자·특수문자가 필요합니다.";
     }
     if (!values.passwordConfirm || values.password !== values.passwordConfirm) {
       errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
@@ -35,10 +34,10 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
 
 /** redirect 파라미터로 외부 URL/프로토콜 상대 URL/역슬래시 경로를 전달하지 못하게 합니다. */
 export function safeAuthRedirect(value: string | string[] | undefined): string | undefined {
-  if (typeof value !== "string" || !value.startsWith("/") || value.startsWith("//") || /[\\\u0000-\u0020]/.test(value)) return undefined;
+  if (typeof value !== "string" || value.length > 2048 || !value.startsWith("/") || value.startsWith("//") || /[\\\u0000-\u0020]/.test(value)) return undefined;
   try {
     const url = new URL(value, "https://moving.local");
-    return url.origin === "https://moving.local" ? `${url.pathname}${url.search}${url.hash}` : undefined;
+    return url.origin === "https://moving.local" && !/^\/(auth|login|signup)(\/|$)/.test(url.pathname) ? `${url.pathname}${url.search}${url.hash}` : undefined;
   } catch {
     return undefined;
   }
@@ -59,5 +58,14 @@ export function resolveAuthenticatedPath(user: AuthUser, redirectTo?: string): s
   }
 
   const target = safeAuthRedirect(redirectTo);
-  return target && !/^\/(auth|login|signup)(\/|$)/.test(target) ? target : ROUTES.HOME;
+  const defaultPath = user.role === "MOVER" ? ROUTES.MOVER.MY_PAGE : ROUTES.PUBLIC.MOVER_SEARCH;
+  if (!target) return defaultPath;
+  const pathname = new URL(target, "https://moving.local").pathname;
+  const ownPaths = user.role === "MOVER"
+    ? ["/mover-profile", "/mover-mypage", "/requests", "/mover-quote"]
+    : ["/customer-profile", "/move-request", "/customer-quote", "/favorite", "/review"];
+  const isPublic = pathname === ROUTES.HOME || pathname === ROUTES.PUBLIC.MOVER_SEARCH || pathname.startsWith(`${ROUTES.PUBLIC.MOVER_SEARCH}/`);
+  const isOwn = ownPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  const isRegister = pathname === ROUTES.CUSTOMER.PROFILE.REGISTER || pathname === ROUTES.MOVER.PROFILE.REGISTER;
+  return (isPublic || isOwn) && !isRegister ? target : defaultPath;
 }

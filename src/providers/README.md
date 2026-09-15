@@ -1,6 +1,12 @@
-# ModalProvider
+# Providers
 
-전역 모달 시스템. 두 가지 방식 중 상황에 맞는 쪽을 씁니다. 실제 화면은 두 방식 모두 이 provider 전용 최소 shell(`modal-provider.tsx`의 `BareModal`)을 씁니다 — 배경 딤/포커스 트랩/Esc·backdrop 닫기만 책임지고, 넘긴 content(JSX)가 제목·닫기 버튼까지 전부 그립니다. 다른 feature들이 쓰는 `title` 필수 공통 `Modal`(`src/common/components/MoverModal/Modal.tsx`)과는 별개이며 그 컴포넌트를 수정하거나 재사용하지 않습니다.
+루트는 `QueryProvider → AuthProvider → ModalProvider`로 구성합니다. 인증 Query·이메일 mutation·로그아웃·화면 인가 판정은 `AuthProvider.tsx` 한 곳에서 소유합니다. 사용자 사본을 Context state에 따로 저장하지 않습니다. 모달 안에서도 `@/common/auth/AuthContext`의 `useAuth`로 같은 전역 인증 상태와 명령을 소비할 수 있습니다.
+
+Provider 구현 파일은 `Providers.tsx`, `QueryProvider.tsx`, `AuthProvider.tsx`, `ModalProvider.tsx`입니다. 기존 `@/providers`와 `@/providers/modal-provider` 경로는 배럴/호환 파일로 유지합니다. 모달 내부 기능과 공개 인터페이스는 유지합니다.
+
+## ModalProvider
+
+전역 모달 시스템. 두 가지 방식 중 상황에 맞는 쪽을 씁니다. 실제 화면은 두 방식 모두 이 provider 전용 최소 shell(`ModalProvider.tsx`의 `BareModal`)을 씁니다 — 배경 딤/포커스 트랩/Esc·backdrop 닫기만 책임지고, 넘긴 content(JSX)가 제목·닫기 버튼까지 전부 그립니다. 다른 feature들이 쓰는 `title` 필수 공통 `Modal`(`src/common/components/MoverModal/Modal.tsx`)과는 별개이며 그 컴포넌트를 수정하거나 재사용하지 않습니다.
 
 ## 1. state 기반 — 확인창, 폼 입력 등 공유/새로고침 유지가 필요 없는 모달
 

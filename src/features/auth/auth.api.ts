@@ -1,37 +1,75 @@
 import { apiClient } from "@/common/api/client";
+import { changeAuthSession, isGuestFailure } from "@/common/api/auth-session";
 import { ApiError } from "@/common/api/error";
-import type { UserRole } from "@/common/auth/types";
-import type { AuthFormValues, AuthMode, AuthUser, SocialProvider } from "./auth.types";
+import type { AuthCredentialsRequest, AuthSession, AuthUser, UserRole } from "@/common/auth/types";
+import type { AuthFormValues, AuthMode, SocialProvider } from "./auth.types";
 
-let pending:Promise<unknown>=Promise.resolve();
-/** 같은 origin의 여러 탭에서도 쿠키 변경 요청을 직렬화합니다. 미지원 브라우저는 탭 안에서 직렬화합니다. */
-async function withAuthLock<T>(operation:()=>Promise<T>):Promise<T> {
-  if(typeof navigator!=="undefined"&&navigator.locks)return await navigator.locks.request("moving-auth-session",operation);
-  const result=pending.then(operation,operation);
-  pending=result.catch(()=>undefined);
-  return result;
+function readUser(data: unknown): AuthUser {
+  if (typeof data === "object" && data !== null && "user" in data) {
+    const user = data.user;
+    if (typeof user === "object" && user !== null && "id" in user && typeof user.id === "string" &&
+      "name" in user && typeof user.name === "string" && "email" in user && typeof user.email === "string" &&
+      "phone" in user && (user.phone === null || typeof user.phone === "string") &&
+      "role" in user && (user.role === "CUSTOMER" || user.role === "MOVER") &&
+      "profileCompleted" in user && typeof user.profileCompleted === "boolean") {
+      return { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, profileCompleted: user.profileCompleted };
+    }
+  }
+  throw new ApiError(200, "INVALID_RESPONSE", "사용자 응답 형식이 올바르지 않습니다.");
 }
 
-/** 가입 확인 비밀번호는 전송하지 않으며 role은 진입한 인증 화면에서 결정합니다. */
-export async function submitCredentials(mode:AuthMode,role:UserRole,values:AuthFormValues) {
-  const payload = {email:values.email.trim(),password:values.password,role,...(mode==="signup"?{name:values.name.trim(),phone:values.phone}:{})};
-  return withAuthLock(()=>apiClient<{user:AuthUser}>(`/auth/${mode}`,{method:"POST",body:JSON.stringify(payload)}));
+/** 화면 입력을 실제 DTO로 매핑하며 확인 비밀번호와 토큰은 전송하지 않습니다. */
+export async function submitCredentials(mode: AuthMode, role: UserRole, values: AuthFormValues): Promise<{ user: AuthUser }> {
+  const payload = { email: values.email.trim().toLowerCase(), password: values.password, role,
+    ...(mode === "signup" ? { name: values.name.trim(), phone: values.phone } : {}) };
+  return changeAuthSession(async () => ({ user: readUser(await apiClient<unknown>(`/auth/${mode}`, { method: "POST", body: JSON.stringify(payload) })) }));
 }
 
-// 여러 컴포넌트의 동시 조회에서도 refresh는 한 번만 실행합니다.
-let refreshRequest:Promise<{user:AuthUser}>|null=null;
-async function readSession():Promise<AuthUser|null> {
-  try {return (await apiClient<{user:AuthUser}>("/auth/me")).user;}
-  catch(error) {if(!(error instanceof ApiError)||error.status!==401)throw error;}
+export async function fetchSession(signal?: AbortSignal): Promise<AuthSession> {
   try {
-    refreshRequest ??= apiClient<{user:AuthUser}>("/auth/refresh",{method:"POST"}).finally(()=>{refreshRequest=null;});
-    return (await refreshRequest).user;
-  } catch(error) {if(error instanceof ApiError&&error.status===401)return null;throw error;}
+    return { user: readUser(await apiClient<unknown>("/auth/me", { signal, cache: "no-store" })), failure: null };
+  } catch (error) {
+    if (isGuestFailure(error)) return { user: null, failure: null };
+    if (error instanceof ApiError && error.status === 401) return { user: null, failure: error };
+    throw error;
+  }
 }
-export const fetchSession=()=>withAuthLock(readSession);
-export const logoutSession = () => withAuthLock(()=>apiClient<void>("/auth/logout",{method:"POST"}));
 
-/** 쿠키가 설정된 뒤 공급자 페이지로 이동합니다. 서버의 설정 오류도 현재 폼에서 안내합니다. */
-export function beginSocialLogin(provider:SocialProvider,role:UserRole,redirect?:string) {
-  return apiClient<{url:string}>(`/auth/oauth/${provider}`,{query:{role,redirect,format:"json"}});
+export const logoutSession = (): Promise<null> => changeAuthSession(() => apiClient<null>("/auth/logout", { method: "POST" }));
+
+/** 인증 쿠키가 실제로 전달되는지도 /me로 확인한 뒤 전역 사용자 상태에 반영합니다. */
+export async function authenticateCredentials(input: AuthCredentialsRequest): Promise<{ user: AuthUser }> {
+  await submitCredentials(input.mode, input.role, {
+    email: input.email,
+    password: input.password,
+    name: input.mode === "signup" ? input.name : "",
+    phone: input.mode === "signup" ? input.phone : "",
+    passwordConfirm: "",
+  });
+  const session = await fetchSession();
+  if (session.failure) throw session.failure;
+  if (!session.user) {
+    throw new ApiError(401, "AUTH_SESSION_UNAVAILABLE", input.mode === "signup"
+      ? "계정은 생성됐지만 로그인 쿠키를 확인하지 못했습니다. 쿠키 설정을 확인한 뒤 로그인해 주세요."
+      : "로그인 쿠키를 확인하지 못했습니다. 쿠키 설정을 확인해 주세요.");
+  }
+  return { user: session.user };
+}
+
+/** 공급자 Secret과 code 교환은 서버가 담당하고 이 함수는 시작 URL만 받습니다. */
+export async function beginSocialLogin(provider: SocialProvider, role: UserRole, redirect?: string): Promise<{ url: string }> {
+  const data = await apiClient<unknown>(`/auth/oauth/${provider}`, { query: { role, redirect, format: "json" }, cache: "no-store" });
+  if (typeof data !== "object" || data === null || !("url" in data) || typeof data.url !== "string") {
+    throw new ApiError(200, "INVALID_RESPONSE", "SNS 인증 시작 응답이 올바르지 않습니다.");
+  }
+  const allowedHosts: Record<SocialProvider, string> = {
+    google: "accounts.google.com", kakao: "kauth.kakao.com", naver: "nid.naver.com",
+  };
+  let url: URL;
+  try { url = new URL(data.url); }
+  catch { throw new ApiError(200, "INVALID_RESPONSE", "SNS 인증 주소가 올바르지 않습니다."); }
+  if (url.protocol !== "https:" || url.hostname !== allowedHosts[provider] || url.username || url.password) {
+    throw new ApiError(200, "INVALID_RESPONSE", "SNS 공급자의 인증 주소가 올바르지 않습니다.");
+  }
+  return { url: url.toString() };
 }
