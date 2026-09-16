@@ -15,3 +15,8 @@ export function getAuthAccess(
   if (!user.profileCompleted && !allowIncompleteProfile) return "profile-required";
   return "allowed";
 }
+
+/** 세션 재조회·Refresh로 달라질 수 있는 서버 판정만 자동 복구합니다. 역할과 프로필 거부는 제외합니다. */
+export function canRecoverAuthAccess(access: AuthAccess): boolean {
+  return access === "guest" || access === "unavailable";
+}

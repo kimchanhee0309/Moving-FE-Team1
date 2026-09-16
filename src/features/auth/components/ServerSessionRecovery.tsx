@@ -11,19 +11,22 @@ import { AuthGuard } from "./AuthGuard";
 interface ServerSessionRecoveryProps {
   role: UserRole;
   hasServerAccess: boolean;
+  /** guest/unavailable처럼 세션 재조회로 달라질 수 있는 서버 판정에만 true입니다. */
+  shouldRecoverSession: boolean;
   children?: ReactNode;
 }
 
 /**
- * 서버 조회가 실패하면 Provider Query로 한 번 확인한 뒤 router.refresh로 서버 렌더를 재요청합니다.
+ * 복구 가능한 서버 조회 실패만 Provider Query로 한 번 확인한 뒤 router.refresh로 서버 렌더를 재요청합니다.
+ * 역할 불일치와 프로필 미등록은 같은 사용자를 재조회해도 바뀌지 않으므로 자동 복구하지 않습니다.
  * Refresh를 직접 호출하거나 사용자 사본을 저장하지 않습니다. 자동 재조회는 마운트당 한 번만 합니다.
  * 서버 재조회에도 쿠키가 전달되지 않으면 수동 재시도를 안내해 무한 새로고침을 막습니다.
  */
-export function ServerSessionRecovery({ role, hasServerAccess, children }: ServerSessionRecoveryProps) {
+export function ServerSessionRecovery({ role, hasServerAccess, shouldRecoverSession, children }: ServerSessionRecoveryProps) {
   const { refetch } = useAuth();
   const router = useRouter();
   const [isTransitionPending, startTransition] = useTransition();
-  const [isChecking, setIsChecking] = useState(!hasServerAccess);
+  const [isChecking, setIsChecking] = useState(!hasServerAccess && shouldRecoverSession);
   const [error, setError] = useState<Error | null>(null);
   const attempted = useRef(false);
   const mounted = useRef(false);
@@ -48,12 +51,12 @@ export function ServerSessionRecovery({ role, hasServerAccess, children }: Serve
 
   useEffect(() => {
     mounted.current = true;
-    if (!hasServerAccess && !attempted.current) {
+    if (!hasServerAccess && shouldRecoverSession && !attempted.current) {
       attempted.current = true;
       void recover();
     }
     return () => { mounted.current = false; };
-  }, [hasServerAccess, recover]);
+  }, [hasServerAccess, recover, shouldRecoverSession]);
 
   if (!hasServerAccess && (isChecking || isTransitionPending)) {
     return <p role="status" className="p-8 text-center">로그인 정보를 다시 확인하고 있습니다.</p>;

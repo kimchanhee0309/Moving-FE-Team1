@@ -2,6 +2,7 @@ import "server-only";
 
 import type { ReactNode } from "react";
 
+import { canRecoverAuthAccess } from "@/common/auth/access";
 import { getServerAuthAccess } from "@/common/auth/server";
 import type { AuthUser, UserRole } from "@/common/auth/types";
 import { ServerSessionRecovery } from "./ServerSessionRecovery";
@@ -22,7 +23,8 @@ interface ServerAuthBoundaryProps {
 export async function ServerAuthBoundary({ role, allowIncompleteProfile = false, render }: ServerAuthBoundaryProps) {
   const session = await getServerAuthAccess(role, allowIncompleteProfile);
   const hasServerAccess = session.access === "allowed" && session.user !== null;
-  return <ServerSessionRecovery role={role} hasServerAccess={hasServerAccess}>
+  const shouldRecoverSession = canRecoverAuthAccess(session.access);
+  return <ServerSessionRecovery role={role} hasServerAccess={hasServerAccess} shouldRecoverSession={shouldRecoverSession}>
     {hasServerAccess && session.user ? await render(session.user) : null}
   </ServerSessionRecovery>;
 }

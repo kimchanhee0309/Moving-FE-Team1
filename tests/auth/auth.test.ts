@@ -3,7 +3,7 @@ import { after, afterEach, before, beforeEach, mock, test } from "node:test";
 import { QueryClient } from "@tanstack/react-query";
 import { changeAuthSession, subscribeAuthFailure } from "../../src/common/api/auth-session";
 import { ApiError } from "../../src/common/api/error";
-import { getAuthAccess } from "../../src/common/auth/access";
+import { canRecoverAuthAccess, getAuthAccess } from "../../src/common/auth/access";
 import { getAuthSessionState } from "../../src/common/auth/session";
 import { authHref, resolveAuthenticatedPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
@@ -288,6 +288,14 @@ test("Provider의 화면 인가는 비회원·역할·프로필·오류 상태�
     assert.equal(getAuthAccess(user, "authenticated", role, true), "allowed");
     assert.equal(getAuthAccess(user, "authenticated", role === "CUSTOMER" ? "MOVER" : "CUSTOMER", true), "role-mismatch");
     assert.equal(getAuthAccess({ ...user, profileCompleted: true }, "authenticated", role), "allowed");
+  }
+});
+
+test("서버 세션 자동 복구는 비회원·조회 오류에만 적용한다", () => {
+  assert.equal(canRecoverAuthAccess("guest"), true);
+  assert.equal(canRecoverAuthAccess("unavailable"), true);
+  for (const access of ["loading", "role-mismatch", "profile-required", "allowed"] as const) {
+    assert.equal(canRecoverAuthAccess(access), false);
   }
 });
 
