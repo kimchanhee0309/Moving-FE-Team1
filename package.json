@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:auth": "tsx --test tests/auth/*.test.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",
