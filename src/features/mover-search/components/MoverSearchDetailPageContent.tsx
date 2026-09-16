@@ -184,6 +184,7 @@ export function MoverSearchDetailPageContent({
         }}
       />
 
+      {/* Figma 배너 높이: 모바일 1:8197 122, 태블릿 1:7983 157, 데스크톱 1:8301 225. 데스크톱 에셋은 quote-detail-banner.svg(180)를 225에 사용합니다. */}
       <div
         aria-hidden="true"
         className="h-[122px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-mobile.png')] min-[744px]:hidden"
@@ -198,6 +199,7 @@ export function MoverSearchDetailPageContent({
       />
 
       <div className="mx-auto w-full max-w-[1200px] px-5 min-[744px]:px-[72px] min-[1200px]:px-0">
+        {/* overlap = 배너높이 − (GNB하단→프로필상단). 모바일 122−80=42, 태블릿 157−80=77, 데스크톱 1:8300 225−122=103. */}
         <div className="-mt-[42px] flex flex-col min-[744px]:-mt-[77px] min-[1200px]:-mt-[103px]">
           <div className="relative z-10 mb-[13px] flex size-16 items-center justify-center overflow-hidden rounded-xl bg-[var(--black-300)] p-0.5 min-[744px]:mb-[23px] min-[744px]:size-[100px] min-[744px]:p-1 min-[1200px]:mb-5 min-[1200px]:size-[134px] min-[1200px]:rounded-[12px] min-[1200px]:p-1.5">
             <Image
