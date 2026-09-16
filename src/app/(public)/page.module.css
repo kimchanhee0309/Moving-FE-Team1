@@ -54,6 +54,7 @@
   .request { max-width: 1402px; aspect-ratio: 1402 / 787; margin-bottom: 61px; }
   .requestTitle { top: 19.3139%; left: 53.6377%; right: auto; text-align: left; }
   .compare { aspect-ratio: 1920 / 1081; }
-  .compareTitle { top: 14.1845%; left: 21.7188%; }
+  /* Figma 1:6569의 중앙 기준 -543px 정렬을 유지해 1200px에서도 32px 제목이 축소된 카드와 겹치지 않게 합니다. */
+  .compareTitle { top: 14.1845%; left: max(32px, calc(50% - 543px)); }
   .footer { min-height: 355px; }
 }
