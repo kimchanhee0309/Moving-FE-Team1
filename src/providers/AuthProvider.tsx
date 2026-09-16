@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type PropsWithChildren } from "react";
+import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 
 import { isGuestFailure, subscribeAuthFailure } from "@/common/api/auth-session";
 import { AuthContext } from "@/common/auth/AuthContext";
@@ -33,6 +33,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     refetchOnWindowFocus: true,
     refetchInterval: (query) => query.state.data?.user ? 5 * 60_000 : false,
   });
+  const refetchSession = session.refetch;
 
   const removePrivateCaches = useCallback(() => {
     // 공개 표시가 없는 캐시는 계정 데이터일 수 있어 제거합니다. 진행 중 mutation의 상태는 보존합니다.
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       router.replace(ROUTES.HOME);
       router.refresh();
     },
-    onError: async () => { await session.refetch(); },
+    onError: async () => { await refetchSession(); },
     onSettled: () => { setIsChangingSession(false); },
   });
 
@@ -106,7 +107,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // 로그아웃 후 홈 이동이 완료되기 전 역할 guard가 로그인 화면으로 덮어 이동하지 못하게 합니다.
   const isPending = session.isPending || isChangingSession || (hasLoggedOut && pathname !== ROUTES.HOME);
   const { user, status, error, isAuthenticated } = getAuthSessionState(session.data, session.error, isPending);
-  const auth: AuthContextValue = {
+
+  // 프로필 API 담당자는 저장 성공 후 호출합니다. 서버와 클라이언트의 profileCompleted를 함께 갱신합니다.
+  const refetchUser = useCallback(async () => {
+    const result = await refetchSession();
+    const failure = result.error ?? result.data?.failure;
+    if (failure) throw failure;
+    router.refresh();
+    return result.data?.user ?? null;
+  }, [refetchSession, router]);
+
+  const checkAccess = useCallback(
+    (role: Parameters<AuthContextValue["checkAccess"]>[0], allowIncompleteProfile?: boolean) =>
+      getAuthAccess(user, status, role, allowIncompleteProfile),
+    [status, user],
+  );
+
+  // pathname 변화만으로 Context identity가 바뀌어 GNB·AuthGuard 전체가 다시 렌더되지 않도록 합니다.
+  const auth = useMemo<AuthContextValue>(() => ({
     user,
     status,
     isPending,
@@ -115,18 +133,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
     error,
     credentials,
     logout,
-    refetch: session.refetch,
-    // 프로필 API 담당자는 저장 성공 후 호출합니다. 서버의 최신 profileCompleted를 반영하고 조회 실패는 숨기지 않습니다.
-    refetchUser: async () => {
-      const result = await session.refetch();
-      const failure = result.error ?? result.data?.failure;
-      if (failure) throw failure;
-      // 프로필 저장 후 서버 컴포넌트의 profileCompleted 판정도 다시 읽습니다.
-      router.refresh();
-      return result.data?.user ?? null;
-    },
-    checkAccess: (role, allowIncompleteProfile) => getAuthAccess(user, status, role, allowIncompleteProfile),
-  };
+    refetch: refetchSession,
+    refetchUser,
+    checkAccess,
+  }), [checkAccess, credentials, error, isAuthenticated, isPending, logout, refetchSession, refetchUser, status, user]);
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }

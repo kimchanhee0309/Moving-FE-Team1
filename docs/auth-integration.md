@@ -46,7 +46,7 @@
 | `src/features/auth/components/AuthGuard.tsx` | 수정. Provider의 판정으로 이동 안내만 담당합니다. Refresh는 구현하지 않습니다. |
 | `src/features/auth/components/AuthCallback.tsx` | 수정. 최신 /auth/me 검증, 제한된 OAuth 오류 안내, 재시도 및 안전한 이동을 처리합니다. |
 | `src/features/auth/test.tsx`, `src/features/auth/components/test.tsx` | 삭제. 내용이 없고 import 사용처가 없는 파일이어서 실행 가능한 테스트로 교체했습니다. 화면 영향은 없습니다. |
-| `tests/auth/auth.test.ts`, `package.json` | test:auth script를 추가하고 리뷰 회귀 검사 포함 테스트 25개를 구성했습니다. 기존 tsx와 Node test runner를 사용하고 의존성·lockfile은 변경하지 않았습니다. |
+| `tests/auth/*.test.ts`, `package.json` | test:auth script를 추가하고 서버 세션·리뷰 회귀 검사 포함 테스트 34개를 구성했습니다. 기존 tsx와 Node test runner를 사용하고 의존성·lockfile은 변경하지 않았습니다. |
 | `src/features/auth/README.md`, `src/providers/README.md`, `docs/auth-integration.md` | 구조·공개 계약·연동 결과·남은 확인사항을 문서화했습니다. |
 
 이동·삭제 이유와 공통 API/Provider의 영향은 변경 전에 보고했습니다. 작업 과정의 별도 인증 세션 hook도 남기지 않았습니다.
@@ -83,7 +83,7 @@
 | `npm run lint` | 통과 |
 | `npx tsc --noEmit` | 통과 |
 | `npm run build` | 통과, 32개 페이지 생성 |
-| `npm run test:auth` | PR 리뷰 수정 후 25개 통과 |
+| `npm run test:auth` | 서버 세션·PR 리뷰 수정 후 34개 통과 |
 | 백엔드 `npm test -- --runInBand tests/auth` | 기존 Auth 14 suites / 49 tests 통과 |
 | `git diff --check` | 통과 |
 | 범위 확인 | 백엔드 변경 없음, GNB/Input/Button/next.config.ts/package-lock.json/AGENTS.md 변경 없음, 기존 프로필 변경 해시 동일 |
