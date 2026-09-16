@@ -4,14 +4,7 @@ export type AuthMode = "login" | "signup";
 export type SocialProvider = "google" | "kakao" | "naver";
 
 /** 백엔드 publicUser DTO. 토큰은 HttpOnly 쿠키에만 있고 이 모델에는 포함되지 않습니다. */
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string | null;
-  phone: string | null;
-  role: UserRole;
-  profileCompleted: boolean;
-}
+export type { AuthUser } from "@/common/auth/types";
 
 /** 화면 입력 모델입니다. auth.api에서 요청 DTO로 매핑하며 확인 비밀번호는 전송하지 않습니다. */
 export interface AuthFormValues {
