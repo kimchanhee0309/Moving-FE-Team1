@@ -116,3 +116,54 @@
 6. **OAuth 개발자 콘솔**: 공급자 callback은 백엔드 URL, 이후 이동은 프론트 /auth/callback입니다. Client Secret은 프론트에 추가하지 않았고 백엔드·콘솔에서만 관리합니다. 실제 설정값 원문을 출력하거나 변경하지 않았습니다.
 7. **공개 Query 분류와 여러 탭**: 공개 캐시 유지 규칙의 meta.public 적용은 팀 협의가 필요합니다. 쿠키 변경은 Web Locks 지원 환경에서 탭 간 직렬화하지만, 모든 탭의 Query 상태를 즉시 동기화하는 기능까지 구현하지는 않았습니다.
 8. **기존 mock 및 시각 검증**: 기사님 찾기·상세 등 Auth 이외 도메인의 기존 mock은 유지했습니다. Auth 요청에는 임시 사용자 서버나 우회를 사용하지 않습니다. 전체 화면 시각/키보드 확인은 추가 수동 QA가 필요합니다.
+# 서버 컴포넌트에서 인증 조회
+
+인증이 필요한 서버 page/component에서만 `@/common/auth/server`를 import합니다. 이 모듈은 `server-only` 경계가 있어 클라이언트에서 사용할 수 없습니다. 공개 페이지와 루트 레이아웃에 일괄 적용하지 않습니다.
+
+```tsx
+import { getServerAuthAccess } from "@/common/auth/server";
+
+// 보호 페이지에서 조회한 뒤 access에 따라 페이지의 이동 안내/오류 UI를 선택합니다.
+const { user, status, access } = await getServerAuthAccess("CUSTOMER");
+// 프로필 최초 등록 페이지는 getServerAuthAccess("CUSTOMER", true)를 사용합니다.
+```
+
+`getServerSession()`은 Next.js `cookies()`로 요청의 `accessToken`을 읽고, 기존 `apiClient`의 Cookie 헤더에 Access만 명시적으로 전달하여 GET `/auth/me`를 호출합니다. JWT를 프론트에서 해석하거나 Secret을 공유하지 않습니다. 응답은 클라이언트와 동일한 공개 DTO mapper로 검증합니다.
+
+- 쿠키 없음: `status: guest`. 요청을 생략합니다.
+- 성공: `user`, `isAuthenticated`, `status: authenticated`를 반환합니다.
+- 401: `status: auth-error`, `user: null`입니다.
+- 통신 장애: `status: network-error`. 서버에는 이전 사용자 캐시가 없습니다.
+- 다른 서버/응답 오류: `status: error`. 보호 접근은 `unavailable`입니다.
+- `access`: `guest`, `role-mismatch`, `profile-required`, `allowed`, `unavailable`로 기존 접근 규칙을 재사용합니다. 실제 데이터 인가는 백엔드가 담당합니다.
+
+사용자 조회는 `cache: no-store`이며 React `cache`는 같은 서버 렌더의 중복 호출만 공유합니다. 모듈 전역에 사용자나 토큰을 저장하지 않습니다. 클라이언트 AuthProvider는 기존 Query를 계속 관리하며 서버 조회 결과를 별도 전역 상태로 복사하지 않습니다. 로그인/로그아웃 이후 기존 서버 화면을 갱신해야 하는 소비자는 성공 시점에 `router.refresh()`를 호출합니다.
+
+요청 쿠키를 읽는 페이지는 동적 렌더링 대상입니다. 쿠키는 프론트 도메인/경로로 브라우저가 보낸 것만 읽을 수 있으므로, 서로 다른 도메인의 백엔드 전용 쿠키를 사용하는 배포 환경에서는 도메인 또는 게이트웨이 구성을 먼저 협의해야 합니다. 환경변수·쿠키 설정은 이번 작업에서 변경하지 않았습니다.
+
+Refresh 쿠키는 `/auth/refresh` 경로에 한정됩니다. 서버 컴포넌트는 쿠키를 설정할 수 없으므로 여기서 자동 Refresh하지 않습니다. 만료/쿠키 없음만으로 서버에서 즉시 로그인 페이지로 강제 이동하면 기존 클라이언트 갱신 기회를 없앨 수 있습니다. 아래 서버 인증 경계가 Provider의 Query 재조회 → 기존 apiClient의 갱신 → `router.refresh()`로 이 상황을 처리합니다. 다른 담당 페이지에는 일괄 적용하지 않았습니다.
+
+## 팀원용 서버 인증 경계와 갱신
+
+```tsx
+import { ServerAuthBoundary } from "@/features/auth/components/ServerAuthBoundary";
+
+export default function Page() {
+  return <ServerAuthBoundary role="CUSTOMER" render={async (user) => {
+    // 개인 데이터 API 조회와 UI 조합은 이 안에서 수행합니다.
+    return <p>{user.name}님</p>;
+  }} />;
+}
+```
+
+- 프로필 최초 등록은 `allowIncompleteProfile`을 전달합니다. 등록 이후 기능에서는 생략합니다.
+- 서버가 허용하기 전에는 `render`를 실행하지 않습니다. 보호 데이터 조회를 경계 바깥이나 미리 생성한 children에서 수행하지 않습니다.
+- 서버 개인 API도 `apiClient`를 사용하되 `await getServerAuthRequestOptions()` (`@/common/auth/server`)를 options에 전달해야 합니다. `credentials: include`만으로는 서버 요청에 인증 쿠키가 붙지 않습니다. 헤더/토큰은 클라이언트 props로 넘기지 않습니다.
+- 서버 실패 시 `ServerSessionRecovery`가 Provider의 `refetch({ cancelRefetch: false })`를 사용합니다. 여러 경계의 Query는 공유되며 만료 갱신 자체는 기존 apiClient의 단일 Refresh/1회 재시도를 재사용합니다. 가드에는 Refresh 구현을 추가하지 않습니다.
+- 브라우저 조회에 성공하면 서버 렌더를 다시 요청합니다. 서버에도 쿠키가 전달되어 인증이 허용되어야 보호 콘텐츠가 표시됩니다.
+- 자동 복구는 경계 마운트당 한 번입니다. 서버 재조회에도 실패하면 기존 역할별 로그인/프로필 안내 또는 수동 재시도를 표시합니다. 네트워크 오류에 캐시 user가 남아 있어도 복구 성공으로 처리하지 않습니다.
+- 로그아웃/계정 변경 중의 응답은 generation 검사로 거절하며 해제된 경계는 화면 갱신을 실행하지 않습니다. 사용자 상태는 계속 AuthProvider의 단일 Query가 관리합니다.
+- 로그인·로그아웃·`refetchUser()` 성공 시 AuthProvider가 서버 화면도 갱신합니다. 프로필 저장 소비자는 기존처럼 저장 성공 후 `await refetchUser()`를 호출합니다.
+- 기존 클라이언트 페이지와 `(customer)/(mover)` AuthGuard는 그대로 사용합니다. 서버 인증 경계는 서버에서 개인 데이터 조회가 필요한 페이지에만 적용합니다. 같은 페이지의 경계를 반복해서 중첩하지 않습니다.
+
+실제 로컬 점검: 두 서버를 `localhost`로 실행 → 로그인 → 서버 페이지 조회 → Access 쿠키 제거(Refresh 유지) → 경계의 갱신/서버 재조회 확인 → Refresh 제거/네트워크 중단/역할 변경/로그아웃 확인. `localhost`와 `127.0.0.1`을 혼용하지 않습니다. 이 흐름은 단위 테스트와 구분하여 실제 브라우저에서 확인해야 합니다.

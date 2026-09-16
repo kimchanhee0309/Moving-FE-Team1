@@ -1,4 +1,4 @@
-import type { QueryObserverResult, UseMutationResult } from "@tanstack/react-query";
+import type { QueryObserverResult, RefetchOptions, UseMutationResult } from "@tanstack/react-query";
 import type { UserRole } from "@/common/constants/domain";
 export type { UserRole } from "@/common/constants/domain";
 
@@ -40,7 +40,8 @@ export interface AuthContextValue {
   error: Error | null;
   logout: UseMutationResult<null, Error, void>;
   credentials: UseMutationResult<{ user: AuthUser }, Error, AuthCredentialsRequest>;
-  refetch: () => Promise<QueryObserverResult<AuthSession, Error>>;
+  /** 기존 무인자 호출을 유지하며 서버 복구는 cancelRefetch: false로 진행 중 Query를 공유합니다. */
+  refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<AuthSession, Error>>;
   refetchUser: () => Promise<AuthUser | null>;
   checkAccess: (role: UserRole, allowIncompleteProfile?: boolean) => AuthAccess;
 }

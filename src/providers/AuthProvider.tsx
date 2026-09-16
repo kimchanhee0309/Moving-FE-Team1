@@ -60,6 +60,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       await client.cancelQueries();
       removePrivateCaches();
       client.setQueryData<AuthSession>(authKeys.session(), { user, failure: null });
+      // 쿠키 변경 전의 서버 렌더가 남지 않도록 갱신합니다. 성공 후 목적지 이동은 기존 화면이 담당합니다.
+      router.refresh();
     },
     onSettled: () => { setIsChangingSession(false); },
   });
@@ -74,6 +76,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       removePrivateCaches();
       client.setQueryData<AuthSession>(authKeys.session(), { user: null, failure: null });
       router.replace(ROUTES.HOME);
+      router.refresh();
     },
     onError: async () => { await session.refetch(); },
     onSettled: () => { setIsChangingSession(false); },
@@ -118,6 +121,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const result = await session.refetch();
       const failure = result.error ?? result.data?.failure;
       if (failure) throw failure;
+      // 프로필 저장 후 서버 컴포넌트의 profileCompleted 판정도 다시 읽습니다.
+      router.refresh();
       return result.data?.user ?? null;
     },
     checkAccess: (role, allowIncompleteProfile) => getAuthAccess(user, status, role, allowIncompleteProfile),
