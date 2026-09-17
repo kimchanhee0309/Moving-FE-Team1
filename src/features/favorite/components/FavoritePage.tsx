@@ -119,8 +119,11 @@ export function FavoritePage() {
     const idsToRemove = [...activeSelectedIds];
 
     removeMutation.mutate(idsToRemove, {
+      // 삭제 중 새로 고른 항목은 유지하고, 요청에 포함된 id만 제거합니다.
       onSuccess: () => {
-        setSelectedIds([]);
+        setSelectedIds((previousIds) =>
+          previousIds.filter((id) => !idsToRemove.includes(id)),
+        );
       },
       onError: (error) => {
         const message =
