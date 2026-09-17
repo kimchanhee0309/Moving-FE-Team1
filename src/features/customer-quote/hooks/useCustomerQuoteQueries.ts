@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 
 import {
   getActiveMoveRequest,
@@ -11,23 +11,38 @@ import {
 } from "../api/customer-quote.api";
 import { customerQuoteQueryKeys } from "../api/customer-quote.keys";
 import {
-  groupHistoryQuotes,
   mapActiveMoveRequest,
   mapQuoteDetail,
   mapQuoteListItem,
 } from "../api/customer-quote.mapper";
 
+const LIST_PAGE_SIZE = 50;
+
+function getNextCursor(pagination: {
+  hasNext: boolean;
+  nextCursor: string | null;
+}) {
+  if (!pagination.hasNext || !pagination.nextCursor) {
+    return undefined;
+  }
+  return pagination.nextCursor;
+}
+
 export function useReceivedQuotesQuery() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: customerQuoteQueryKeys.pendingList(),
-    queryFn: async () => {
-      const result = await getReceivedQuotes({ limit: 50 });
+    queryFn: async ({ pageParam }) => {
+      const result = await getReceivedQuotes({
+        limit: LIST_PAGE_SIZE,
+        cursor: pageParam,
+      });
       return {
         items: result.items.map(mapQuoteListItem),
         pagination: result.pagination,
-        rawItems: result.items,
       };
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => getNextCursor(lastPage.pagination),
   });
 }
 
@@ -56,15 +71,20 @@ export function useReceivedQuoteDetailQuery(quoteId: string) {
 }
 
 export function useReceivedQuoteHistoryQuery() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: customerQuoteQueryKeys.historyList(),
-    queryFn: async () => {
-      const result = await getReceivedQuoteHistory({ limit: 50 });
+    queryFn: async ({ pageParam }) => {
+      const result = await getReceivedQuoteHistory({
+        limit: LIST_PAGE_SIZE,
+        cursor: pageParam,
+      });
       return {
-        groups: groupHistoryQuotes(result.items),
+        items: result.items,
         pagination: result.pagination,
       };
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => getNextCursor(lastPage.pagination),
   });
 }
 

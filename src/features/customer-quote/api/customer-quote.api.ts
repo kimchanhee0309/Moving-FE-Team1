@@ -1,4 +1,5 @@
 import { apiClient } from "@/common/api/client";
+import type { ApiRequestOptions } from "@/common/api/client";
 
 import type {
   ApiActiveMoveRequestResult,
@@ -57,25 +58,31 @@ export function getReceivedQuoteHistory(
 }
 
 /** GET /customers/me/quotes/:quoteId — 대기 견적 상세 */
-export function getReceivedQuoteDetail(quoteId: string) {
+export function getReceivedQuoteDetail(
+  quoteId: string,
+  options: ApiRequestOptions = {},
+) {
   return apiClient<ApiReceivedQuoteDetailResult>(
     `/customers/me/quotes/${quoteId}`,
-    { method: "GET" },
+    { ...options, method: "GET" },
   );
 }
 
 /** GET /customers/me/quotes/history/:quoteId — 확정 견적 상세 */
-export function getReceivedQuoteHistoryDetail(quoteId: string) {
+export function getReceivedQuoteHistoryDetail(
+  quoteId: string,
+  options: ApiRequestOptions = {},
+) {
   return apiClient<ApiReceivedQuoteDetailResult>(
     `/customers/me/quotes/history/${quoteId}`,
-    { method: "GET" },
+    { ...options, method: "GET" },
   );
 }
 
 /** GET /customers/me/move-requests/active — SubHeader용 활성 이사 요청 */
-export function getActiveMoveRequest() {
+export function getActiveMoveRequest(options: ApiRequestOptions = {}) {
   return apiClient<ApiActiveMoveRequestResult>(
     "/customers/me/move-requests/active",
-    { method: "GET" },
+    { ...options, method: "GET" },
   );
 }

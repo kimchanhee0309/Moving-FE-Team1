@@ -1,3 +1,7 @@
+import { HydrationBoundary } from "@tanstack/react-query";
+
+import { prefetchReceivedQuoteHistoryDetail } from "@/features/customer-quote/api/customer-quote.server";
+
 import { CustomerQuoteHistoryDetailContainer } from "./_components/CustomerQuoteHistoryDetailContainer";
 
 interface CustomerQuoteHistoryDetailPageProps {
@@ -8,6 +12,11 @@ export default async function CustomerQuoteHistoryDetailPage({
   params,
 }: CustomerQuoteHistoryDetailPageProps) {
   const { quoteId } = await params;
+  const dehydratedState = await prefetchReceivedQuoteHistoryDetail(quoteId);
 
-  return <CustomerQuoteHistoryDetailContainer quoteId={quoteId} />;
+  return (
+    <HydrationBoundary state={dehydratedState}>
+      <CustomerQuoteHistoryDetailContainer quoteId={quoteId} />
+    </HydrationBoundary>
+  );
 }

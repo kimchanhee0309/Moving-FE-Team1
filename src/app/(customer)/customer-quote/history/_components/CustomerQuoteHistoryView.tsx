@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { FilterDropdown } from "@/common/components/Dropdown";
 import { EmptyState } from "@/common/components/page-state";
@@ -11,8 +11,10 @@ import { Tabs } from "@/common/components/Tabs";
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
-import { QuoteHistoryCard } from "@/features/customer-quote/components";
+import { groupHistoryQuotes } from "@/features/customer-quote/api/customer-quote.mapper";
 import type { CustomerQuoteHistoryGroupView } from "@/features/customer-quote/api/customer-quote.types";
+import { QuoteHistoryCard } from "@/features/customer-quote/components";
+import { useCustomerQuoteLoadMoreSentinel } from "@/features/customer-quote/hooks/useCustomerQuoteLoadMoreSentinel";
 import { useReceivedQuoteHistoryQuery } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
 import { SERVICE_TYPE_LABEL } from "@/features/customer-quote/model/customer-quote.model";
 
@@ -169,7 +171,23 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
 
 export function CustomerQuoteHistoryView() {
   const historyQuery = useReceivedQuoteHistoryQuery();
-  const groups = historyQuery.data?.groups ?? [];
+
+  const groups = useMemo(() => {
+    const items =
+      historyQuery.data?.pages.flatMap((page) => page.items) ?? [];
+    return groupHistoryQuotes(items);
+  }, [historyQuery.data]);
+
+  const handleLoadMore = useCallback(() => {
+    if (historyQuery.hasNextPage && !historyQuery.isFetchingNextPage) {
+      void historyQuery.fetchNextPage();
+    }
+  }, [historyQuery]);
+
+  const sentinelRef = useCustomerQuoteLoadMoreSentinel(
+    handleLoadMore,
+    Boolean(historyQuery.hasNextPage) && !historyQuery.isFetchingNextPage,
+  );
 
   return (
     <main className="min-h-screen bg-[var(--background-100)]">
@@ -223,11 +241,21 @@ export function CustomerQuoteHistoryView() {
 
         {!historyQuery.isLoading &&
         !historyQuery.isError &&
-        groups.length > 0
-          ? groups.map((group) => (
+        groups.length > 0 ? (
+          <>
+            {groups.map((group) => (
               <HistoryRequestCard key={group.id} group={group} />
-            ))
-          : null}
+            ))}
+
+            <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />
+
+            {historyQuery.isFetchingNextPage ? (
+              <p className="text-md-regular text-center text-[var(--content-muted)]">
+                견적을 더 불러오는 중...
+              </p>
+            ) : null}
+          </>
+        ) : null}
       </section>
     </main>
   );
