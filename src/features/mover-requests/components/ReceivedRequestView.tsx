@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * 기사님의 받은 요청 페이지를 구성하는 Client Component
+ *
+ * 담당 기능:
+ * - 검색,서비스 유형,지정 요청,정렬 조건 관리
+ * - 받은 요청 Infinite Query 실행
+ * - 견적 보내기/반려 모달 열기
+ * - loading,error,empty,pagination 상태 렌더링
+ *
+ * API 호출과 응답 변환은 hooks/API 파일에 위임
+ */
 import { useDeferredValue, useMemo, useState } from "react";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
@@ -67,6 +78,13 @@ interface SendQuoteModalContentProps {
   onClose: () => void;
 }
 
+/**
+ * 견적 보내기 모달과 mutation을 연결하는 컨테이너
+ *
+ * 전역 ModalProvider에는 ReactNode가 저장되므로,
+ * mutation 상태를 이 컴포넌트 내부에서 관리해야 isSubmitting과
+ * serverError가 변경될 때 모달이 다시 렌더링됨
+ */
 function SendQuoteModalContent({
   request,
   onClose,
@@ -108,6 +126,9 @@ interface RejectRequestModalContentProps {
   onClose: () => void;
 }
 
+/**
+ * 반려 모달과 반려 mutation을 연결하는 컨테이너
+ */
 function RejectRequestModalContent({
   request,
   onClose,
@@ -156,6 +177,10 @@ export function ReceivedRequestsView() {
     useState<ReceivedRequestSort>("REQUESTED_AT_DESC");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
+  /**
+   * 입력값을 바로 API Query에 넣지 않고 deferred 값을 사용
+   * 연속 입력 중 불필요한 화면 갱신을 줄이면서 최신 검색어를 조회
+   */
   const deferredKeyword = useDeferredValue(searchKeyword.trim());
 
   const query = useMemo(
@@ -171,6 +196,10 @@ export function ReceivedRequestsView() {
 
   const receivedRequestsQuery = useReceivedRequests(query);
 
+  /**
+   * useInfiniteQuery가 페이지 단위로 보관한 items를
+   * 카드 목록에서 사용할 하나의 배열로 합침
+   */
   const requests =
     receivedRequestsQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
