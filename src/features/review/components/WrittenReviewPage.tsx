@@ -1,46 +1,73 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
+import { ApiError } from "@/common/api/error";
 import { Pagination } from "@/common/components/Pagination";
 import { ROUTES } from "@/common/constants/routes";
 
-import {
-  MOCK_WRITTEN_REVIEWS,
-  WRITTEN_REVIEW_PAGE_SIZE,
-  type WrittenReviewItem,
-} from "../review.mock";
+import { useWrittenReviews } from "../hooks/useCustomerReviews";
 import { EmptyReview } from "./EmptyReview";
 import { ReviewTabs } from "./ReviewTabs";
 import { WrittenReviewCard } from "./WrittenReviewCard";
 
 /**
  * 내가 작성한 리뷰 페이지입니다.
- * mock 목록·pagination·empty(CTA → 작성 가능)만 담당하고 API는 연동하지 않습니다.
+ * GET type=WRITTEN 목록·pagination·empty(CTA → 작성 가능)만 담당합니다.
  */
 export function WrittenReviewPage() {
-  const [reviews] = useState<WrittenReviewItem[]>(MOCK_WRITTEN_REVIEWS);
   const [currentPage, setCurrentPage] = useState(1);
+  const reviewsQuery = useWrittenReviews(currentPage);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(reviews.length / WRITTEN_REVIEW_PAGE_SIZE),
-  );
-  const safePage = Math.min(currentPage, totalPages);
+  const reviews = reviewsQuery.data?.items ?? [];
+  const pagination = reviewsQuery.data?.pagination;
+  const totalPages = pagination?.totalPages ?? 0;
+  const totalCount = pagination?.totalCount ?? 0;
+  const isEmpty =
+    !reviewsQuery.isPending && !reviewsQuery.isError && totalCount === 0;
 
-  const pageReviews = useMemo(() => {
-    const start = (safePage - 1) * WRITTEN_REVIEW_PAGE_SIZE;
-    return reviews.slice(start, start + WRITTEN_REVIEW_PAGE_SIZE);
-  }, [reviews, safePage]);
-
-  const isEmpty = reviews.length === 0;
+  const listErrorMessage =
+    reviewsQuery.error instanceof ApiError
+      ? reviewsQuery.error.message
+      : "작성한 리뷰를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
   return (
     <>
       <ReviewTabs value="written" />
 
       <main className="min-h-[calc(100vh-108px)] bg-[#fafafa] min-[1200px]:min-h-[calc(100vh-168px)]">
-        {isEmpty ? (
+        {reviewsQuery.isPending ? (
+          <p
+            role="status"
+            className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]"
+          >
+            작성한 리뷰를 불러오는 중입니다.
+          </p>
+        ) : reviewsQuery.isError ? (
+          <section
+            className="flex w-full flex-col items-center justify-center gap-4 px-6 py-20"
+            role="alert"
+          >
+            <p className="text-lg-regular text-center text-[var(--input-placeholder)] min-[744px]:text-2xl-regular">
+              {listErrorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void reviewsQuery.refetch();
+              }}
+              className={[
+                "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! px-4",
+                "text-lg-semibold text-[var(--gray-50)]!",
+                "min-[744px]:h-16 min-[744px]:rounded-2xl min-[744px]:text-2lg-semibold",
+                "transition-opacity hover:opacity-90",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+              ].join(" ")}
+            >
+              다시 시도
+            </button>
+          </section>
+        ) : isEmpty ? (
           // Figma empty: CTA 노출 → 작성 가능 리뷰로 이동
           <section
             className={[
@@ -67,7 +94,7 @@ export function WrittenReviewPage() {
             ].join(" ")}
           >
             <ul className="flex flex-col gap-5">
-              {pageReviews.map((review) => (
+              {reviews.map((review) => (
                 <li key={review.id}>
                   <WrittenReviewCard
                     moverName={review.moverName}
@@ -88,10 +115,11 @@ export function WrittenReviewPage() {
 
             <div className="mt-10 flex justify-center min-[744px]:mt-12">
               <Pagination
-                currentPage={safePage}
+                currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 size="lg"
+                isLoading={reviewsQuery.isFetching}
                 ariaLabel="내가 작성한 리뷰 페이지"
               />
             </div>

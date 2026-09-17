@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
+import { ApiError } from "@/common/api/error";
 import { Pagination } from "@/common/components/Pagination";
 
 import {
-  MOCK_WRITABLE_REVIEWS,
-  WRITABLE_REVIEW_PAGE_SIZE,
-  type WritableReviewItem,
-} from "../review.mock";
+  useCreateReview,
+  useWritableReviews,
+} from "../hooks/useCustomerReviews";
+import type { WritableReviewItem } from "../review.types";
 import { EmptyReview } from "./EmptyReview";
 import { ReviewableCard } from "./ReviewableCard";
 import { ReviewTabs } from "./ReviewTabs";
@@ -20,59 +21,108 @@ interface ModalDraft {
   content: string;
 }
 
+/**
+ * 작성 가능한 리뷰 페이지입니다.
+ * GET type=WRITABLE 목록·POST /reviews 작성·pagination·empty만 담당합니다.
+ */
 export function WritableReviewPage() {
-  const [reviews, setReviews] = useState<WritableReviewItem[]>(
-    MOCK_WRITABLE_REVIEWS,
-  );
   const [currentPage, setCurrentPage] = useState(1);
   const [draft, setDraft] = useState<ModalDraft | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(reviews.length / WRITABLE_REVIEW_PAGE_SIZE),
-  );
-  const safePage = Math.min(currentPage, totalPages);
+  const reviewsQuery = useWritableReviews(currentPage);
+  const createMutation = useCreateReview();
 
-  const pageReviews = useMemo(() => {
-    const start = (safePage - 1) * WRITABLE_REVIEW_PAGE_SIZE;
-    return reviews.slice(start, start + WRITABLE_REVIEW_PAGE_SIZE);
-  }, [reviews, safePage]);
+  const reviews = reviewsQuery.data?.items ?? [];
+  const pagination = reviewsQuery.data?.pagination;
+  const totalPages = pagination?.totalPages ?? 0;
+  const totalCount = pagination?.totalCount ?? 0;
+  const isEmpty =
+    !reviewsQuery.isPending && !reviewsQuery.isError && totalCount === 0;
+  const isSubmitting = createMutation.isPending;
 
   const handleOpenWrite = (review: WritableReviewItem) => {
+    setSubmitError(null);
     setDraft({ review, rating: 0, content: "" });
   };
 
   const handleCloseModal = () => {
     if (isSubmitting) return;
+    setSubmitError(null);
     setDraft(null);
   };
 
   const handleSubmit = () => {
-    if (!draft) return;
-    setIsSubmitting(true);
+    if (!draft || isSubmitting) return;
 
-    const submittedId = draft.review.id;
-    const nextReviews = reviews.filter((item) => item.id !== submittedId);
-    const nextTotalPages = Math.max(
-      1,
-      Math.ceil(nextReviews.length / WRITABLE_REVIEW_PAGE_SIZE),
+    setSubmitError(null);
+    createMutation.mutate(
+      {
+        moveRequestId: draft.review.moveRequestId,
+        rating: draft.rating,
+        content: draft.content,
+      },
+      {
+        onSuccess: () => {
+          setDraft(null);
+          // 현재 페이지 마지막 1건을 작성하면 이전 페이지로 맞춥니다.
+          if (reviews.length === 1 && currentPage > 1) {
+            setCurrentPage((page) => page - 1);
+          }
+        },
+        onError: (error) => {
+          const message =
+            error instanceof ApiError
+              ? error.message
+              : "리뷰 작성에 실패했습니다. 다시 시도해 주세요.";
+          setSubmitError(message);
+        },
+      },
     );
-
-    setReviews(nextReviews);
-    setCurrentPage((page) => Math.min(page, nextTotalPages));
-    setDraft(null);
-    setIsSubmitting(false);
   };
 
-  const isEmpty = reviews.length === 0;
+  const listErrorMessage =
+    reviewsQuery.error instanceof ApiError
+      ? reviewsQuery.error.message
+      : "작성 가능한 리뷰를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
   return (
     <>
       <ReviewTabs value="writable" />
 
       <main className="min-h-[calc(100vh-108px)] bg-[#fafafa] min-[1200px]:min-h-[calc(100vh-168px)]">
-        {isEmpty ? (
+        {reviewsQuery.isPending ? (
+          <p
+            role="status"
+            className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]"
+          >
+            작성 가능한 리뷰를 불러오는 중입니다.
+          </p>
+        ) : reviewsQuery.isError ? (
+          <section
+            className="flex w-full flex-col items-center justify-center gap-4 px-6 py-20"
+            role="alert"
+          >
+            <p className="text-lg-regular text-center text-[var(--input-placeholder)] min-[744px]:text-2xl-regular">
+              {listErrorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void reviewsQuery.refetch();
+              }}
+              className={[
+                "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! px-4",
+                "text-lg-semibold text-[var(--gray-50)]!",
+                "min-[744px]:h-16 min-[744px]:rounded-2xl min-[744px]:text-2lg-semibold",
+                "transition-opacity hover:opacity-90",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+              ].join(" ")}
+            >
+              다시 시도
+            </button>
+          </section>
+        ) : isEmpty ? (
           // min-h만 있는 flex 부모의 flex-1은 높이가 확정되지 않아 중앙 정렬이 깨짐.
           // empty 섹션에 같은 뷰포트 높이를 직접 주고 가로·세로 중앙에 둡니다.
           <section
@@ -96,7 +146,7 @@ export function WritableReviewPage() {
             ].join(" ")}
           >
             <ul className="flex flex-col gap-5">
-              {pageReviews.map((review) => (
+              {reviews.map((review) => (
                 <li key={review.id}>
                   <ReviewableCard
                     moverName={review.moverName}
@@ -116,10 +166,11 @@ export function WritableReviewPage() {
 
             <div className="mt-10 flex justify-center min-[744px]:mt-12">
               <Pagination
-                currentPage={safePage}
+                currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
                 size="lg"
+                isLoading={reviewsQuery.isFetching}
                 ariaLabel="작성 가능한 리뷰 페이지"
               />
             </div>
@@ -149,6 +200,15 @@ export function WritableReviewPage() {
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />
+      ) : null}
+
+      {submitError ? (
+        <p
+          role="alert"
+          className="fixed bottom-6 left-1/2 z-50 max-w-[min(90vw,420px)] -translate-x-1/2 rounded-xl bg-[var(--black-400)] px-4 py-3 text-center text-md-regular text-[var(--gray-50)]"
+        >
+          {submitError}
+        </p>
       ) : null}
     </>
   );

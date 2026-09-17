@@ -3,6 +3,8 @@ import Image from "next/image";
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
+import { toDisplayRegionAddress } from "../review.utils";
+
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
   [SERVICE_TYPE.HOME]: "가정이사",
@@ -216,7 +218,7 @@ function ChipGroup({
 
 function MoveInfoItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col items-start">
+    <div className="flex min-w-0 flex-1 flex-col items-start">
       <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[744px]:text-md-regular">
         {label}
       </span>
@@ -351,10 +353,10 @@ export function WrittenReviewCard({
         aria-hidden="true"
       />
 
-      <div className="flex w-full items-center gap-4 min-[744px]:gap-5">
-        <MoveInfoItem label="출발지" value={departure} />
+      <div className="flex w-full min-w-0 items-center gap-4 min-[744px]:gap-5">
+        <MoveInfoItem label="출발지" value={toDisplayRegionAddress(departure)} />
         <MoveInfoDivider />
-        <MoveInfoItem label="도착지" value={arrival} />
+        <MoveInfoItem label="도착지" value={toDisplayRegionAddress(arrival)} />
         <MoveInfoDivider />
         <MoveInfoItem label="이사일" value={moveDateLabel} />
       </div>

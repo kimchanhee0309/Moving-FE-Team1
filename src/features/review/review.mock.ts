@@ -1,21 +1,18 @@
-import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+import { SERVICE_TYPE } from "@/common/constants/domain";
 
-export const WRITABLE_REVIEW_PAGE_SIZE = 4;
+import type { WritableReviewItem, WrittenReviewItem } from "./review.types";
 
-export interface WritableReviewItem {
-  id: string;
-  moverName: string;
-  moverIntroduction: string;
-  profileImageUrl?: string | null;
-  serviceType: ServiceType;
-  isDesignatedRequest?: boolean;
-  departure: string;
-  arrival: string;
-  movedAt: string;
-  price: number;
-}
+export {
+  WRITABLE_REVIEW_PAGE_SIZE,
+  WRITTEN_REVIEW_PAGE_SIZE,
+} from "./review.constants";
+export type { WritableReviewItem, WrittenReviewItem } from "./review.types";
 
-const BASE_ITEMS: Omit<WritableReviewItem, "id">[] = [
+/**
+ * API 연동 전 로컬 확인용 mock입니다.
+ * Writable/Written 페이지는 GET /customers/me/reviews를 사용합니다.
+ */
+const BASE_ITEMS: Omit<WritableReviewItem, "id" | "moveRequestId">[] = [
   {
     moverName: "김코드",
     moverIntroduction:
@@ -57,37 +54,19 @@ const BASE_ITEMS: Omit<WritableReviewItem, "id">[] = [
   },
 ];
 
-// pageSize 4 기준 1페이지 + 여분 1건 → pagination·empty 둘 다 빠르게 확인
 export const MOCK_WRITABLE_REVIEWS: WritableReviewItem[] = Array.from(
   { length: 5 },
   (_, index) => {
     const base = BASE_ITEMS[index % BASE_ITEMS.length]!;
+    const moveRequestId = `writable-review-${index + 1}`;
     return {
       ...base,
-      id: `writable-review-${index + 1}`,
+      id: moveRequestId,
+      moveRequestId,
       moverName: `${base.moverName}${index >= BASE_ITEMS.length ? ` ${Math.floor(index / BASE_ITEMS.length) + 1}` : ""}`,
     };
   },
 );
-
-/** Figma Desktop/Mobile 목록 프레임 기준 페이지당 3건 */
-export const WRITTEN_REVIEW_PAGE_SIZE = 3;
-
-export interface WrittenReviewItem {
-  id: string;
-  moverName: string;
-  moverIntroduction: string;
-  profileImageUrl?: string | null;
-  serviceType: ServiceType;
-  isDesignatedRequest?: boolean;
-  departure: string;
-  arrival: string;
-  movedAt: string;
-  rating: number;
-  content: string;
-  /** 리뷰 작성일 — 카드 모바일에서만 표시 */
-  writtenAt: string;
-}
 
 const WRITTEN_BASE: Omit<WrittenReviewItem, "id">[] = [
   {
@@ -97,7 +76,6 @@ const WRITTEN_BASE: Omit<WrittenReviewItem, "id">[] = [
     serviceType: SERVICE_TYPE.SMALL,
     departure: "서울시 중구",
     arrival: "경기도 수원시",
-    // 날짜만 쓰면 UTC로 파싱되어 서쪽 타임존에서 하루 밀림 → 로컬 자정 명시
     movedAt: "2024-07-01T00:00:00",
     rating: 5,
     content:
@@ -142,7 +120,6 @@ const WRITTEN_BASE: Omit<WrittenReviewItem, "id">[] = [
   },
 ];
 
-/** mock 5건 — pageSize 3이면 2페이지로 pagination 확인 가능 */
 export const MOCK_WRITTEN_REVIEWS: WrittenReviewItem[] = Array.from(
   { length: 5 },
   (_, index) => {
