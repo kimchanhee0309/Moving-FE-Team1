@@ -191,12 +191,14 @@ export function WritableReviewPage() {
           movedAt={draft.review.movedAt}
           rating={draft.rating}
           content={draft.content}
-          onRatingChange={(rating) =>
-            setDraft((prev) => (prev ? { ...prev, rating } : prev))
-          }
-          onContentChange={(content) =>
-            setDraft((prev) => (prev ? { ...prev, content } : prev))
-          }
+          onRatingChange={(rating) => {
+            setSubmitError(null);
+            setDraft((prev) => (prev ? { ...prev, rating } : prev));
+          }}
+          onContentChange={(content) => {
+            setSubmitError(null);
+            setDraft((prev) => (prev ? { ...prev, content } : prev));
+          }}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
         />

@@ -121,6 +121,9 @@ function readWrittenItem(value: unknown): WrittenReviewDto {
     typeof value.moveRequestId !== "string" ||
     typeof value.moverId !== "string" ||
     typeof value.rating !== "number" ||
+    !Number.isInteger(value.rating) ||
+    value.rating < 1 ||
+    value.rating > 5 ||
     typeof value.content !== "string" ||
     typeof value.createdAt !== "string"
   ) {
@@ -144,7 +147,15 @@ function readWrittenItem(value: unknown): WrittenReviewDto {
 }
 
 function toServiceType(value: string): ServiceType {
-  return isServiceType(value) ? value : SERVICE_TYPE.SMALL;
+  if (!isServiceType(value)) {
+    throw new ApiError(
+      200,
+      "INVALID_RESPONSE",
+      "지원하지 않는 이사 서비스 유형입니다.",
+    );
+  }
+
+  return value;
 }
 
 export function mapWritableReviewToItem(
