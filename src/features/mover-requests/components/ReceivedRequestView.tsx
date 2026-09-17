@@ -1,18 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
-import { SortDropdown } from "@/common/components/Dropdown/SortDropdown";
-import { SearchInput } from "@/common/components/Input/SearchInput";
+import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { Button } from "@/common/components/button";
+import { SortDropdown } from "@/common/components/Dropdown";
+import { SearchInput } from "@/common/components/Input";
 import {
   EmptyState,
   ErrorState,
   LoadingState,
 } from "@/common/components/page-state";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
-import { useModal } from "@/providers/modal-provider";
+import { useModal } from "@/providers/ModalProvider";
 
-import type { ReceivedRequestViewModel } from "../mover-requests.types";
+import {
+  useReceivedRequests,
+  useRejectReceivedRequestMutation,
+  useSendQuoteMutation,
+} from "../mover-requests.hooks";
+import type {
+  ReceivedRequestSort,
+  ReceivedRequestViewModel,
+  RejectRequestFormValue,
+  SendQuoteFormValue,
+} from "../mover-requests.types";
 import { ReceivedRequestCard } from "./ReceivedRequestCard";
 import { RejectRequestModal } from "./RejectRequestModal";
 import { SendQuoteModal } from "./SendQuoteModal";
@@ -46,19 +58,93 @@ const SORT_OPTIONS = [
   },
 ] as const;
 
-interface ReceivedRequestsViewProps {
-  requests: ReceivedRequestViewModel[];
-  isLoading?: boolean;
-  error?: string;
-  onRetry?: () => void;
+function isReceivedRequestSort(value: string): value is ReceivedRequestSort {
+  return SORT_OPTIONS.some((option) => option.value === value);
 }
 
-export function ReceivedRequestsView({
-  requests,
-  isLoading = false,
-  error,
-  onRetry,
-}: ReceivedRequestsViewProps) {
+interface SendQuoteModalContentProps {
+  request: ReceivedRequestViewModel;
+  onClose: () => void;
+}
+
+function SendQuoteModalContent({
+  request,
+  onClose,
+}: SendQuoteModalContentProps) {
+  const mutation = useSendQuoteMutation();
+
+  const handleSubmit = (value: SendQuoteFormValue) => {
+    mutation.mutate(
+      {
+        requestId: request.requestId,
+        value,
+      },
+      {
+        onSuccess: onClose,
+      },
+    );
+  };
+
+  return (
+    <SendQuoteModal
+      request={request}
+      isSubmitting={mutation.isPending}
+      serverError={
+        mutation.error
+          ? getApiErrorMessage(
+              mutation.error,
+              "견적을 보내지 못했습니다. 다시 시도해 주세요.",
+            )
+          : undefined
+      }
+      onClose={onClose}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+interface RejectRequestModalContentProps {
+  request: ReceivedRequestViewModel;
+  onClose: () => void;
+}
+
+function RejectRequestModalContent({
+  request,
+  onClose,
+}: RejectRequestModalContentProps) {
+  const mutation = useRejectReceivedRequestMutation();
+
+  const handleSubmit = (value: RejectRequestFormValue) => {
+    mutation.mutate(
+      {
+        requestId: request.requestId,
+        value,
+      },
+      {
+        onSuccess: onClose,
+      },
+    );
+  };
+
+  return (
+    <RejectRequestModal
+      request={request}
+      isSubmitting={mutation.isPending}
+      serverError={
+        mutation.error
+          ? getApiErrorMessage(
+              mutation.error,
+              "요청을 반려하지 못했습니다. 다시 시도해 주세요.",
+            )
+          : undefined
+      }
+      onClose={onClose}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+export function ReceivedRequestsView() {
   const { openModal, closeModal } = useModal();
 
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -66,79 +152,75 @@ export function ReceivedRequestsView({
     null,
   );
   const [designatedOnly, setDesignatedOnly] = useState(false);
-  const [sortValue, setSortValue] = useState("REQUESTED_AT_DESC");
+  const [sortValue, setSortValue] =
+    useState<ReceivedRequestSort>("REQUESTED_AT_DESC");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const filteredRequests = useMemo(() => {
-    const keyword = searchKeyword.trim().toLowerCase();
+  const deferredKeyword = useDeferredValue(searchKeyword.trim());
 
-    return requests
-      .filter((request) => {
-        const matchesKeyword =
-          keyword.length === 0 ||
-          request.customerName.toLowerCase().includes(keyword);
+  const query = useMemo(
+    () => ({
+      keyword: deferredKeyword.length > 0 ? deferredKeyword : undefined,
+      serviceType: selectedService ?? undefined,
+      isDesignated: designatedOnly ? true : undefined,
+      sort: sortValue,
+      limit: 10,
+    }),
+    [deferredKeyword, designatedOnly, selectedService, sortValue],
+  );
 
-        const matchesService =
-          selectedService === null || request.serviceType === selectedService;
+  const receivedRequestsQuery = useReceivedRequests(query);
 
-        const matchesDesignated = !designatedOnly || request.isDesignated;
-
-        return matchesKeyword && matchesService && matchesDesignated;
-      })
-      .sort((firstRequest, secondRequest) => {
-        if (sortValue === "REQUESTED_AT_DESC") {
-          return (
-            new Date(secondRequest.requestedAt).getTime() -
-            new Date(firstRequest.requestedAt).getTime()
-          );
-        }
-
-        return (
-          new Date(firstRequest.moveDate).getTime() -
-          new Date(secondRequest.moveDate).getTime()
-        );
-      });
-  }, [designatedOnly, requests, searchKeyword, selectedService, sortValue]);
-
-  const findRequest = (requestId: string) =>
-    requests.find((request) => request.requestId === requestId);
+  const requests =
+    receivedRequestsQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
   const handleOpenSendQuote = (requestId: string) => {
-    const request = findRequest(requestId);
+    const request = requests.find((item) => item.requestId === requestId);
 
     if (!request) {
       return;
     }
 
     openModal(
-      <SendQuoteModal
-        request={request}
-        onClose={closeModal}
-        onSubmit={closeModal}
-      />,
+      <SendQuoteModalContent request={request} onClose={closeModal} />,
+      {
+        ariaLabel: "견적 보내기",
+      },
     );
   };
 
   const handleOpenRejectRequest = (requestId: string) => {
-    const request = findRequest(requestId);
+    const request = requests.find((item) => item.requestId === requestId);
 
     if (!request) {
       return;
     }
 
     openModal(
-      <RejectRequestModal
-        request={request}
-        onClose={closeModal}
-        onSubmit={closeModal}
-      />,
+      <RejectRequestModalContent request={request} onClose={closeModal} />,
+      {
+        ariaLabel: "반려 요청",
+      },
     );
+  };
+
+  const handleSortChange = (value: string) => {
+    if (isReceivedRequestSort(value)) {
+      setSortValue(value);
+    }
   };
 
   const hasActiveFilter =
     searchKeyword.trim().length > 0 ||
     selectedService !== null ||
     designatedOnly;
+
+  const errorMessage = receivedRequestsQuery.error
+    ? getApiErrorMessage(
+        receivedRequestsQuery.error,
+        "받은 요청을 불러오지 못했습니다.",
+      )
+    : undefined;
 
   return (
     <>
@@ -158,7 +240,6 @@ export function ReceivedRequestsView({
               inputSize="md"
               placeholder="어떤 고객님을 찾고 계세요?"
               value={searchKeyword}
-              isLoading={isLoading}
               onChange={(event) => setSearchKeyword(event.target.value)}
               onClear={() => setSearchKeyword("")}
               containerClassName="!max-w-none"
@@ -181,7 +262,7 @@ export function ReceivedRequestsView({
                     "focus-visible:outline-[var(--primary-400)]",
                     isSelected
                       ? "border-[var(--primary-400)] bg-[var(--primary-100)] font-medium text-[var(--primary-400)]"
-                      : "border-[var(--gray-300)] bg-[var(--backgroud-100)] text-[var(--black-400)]",
+                      : "border-[var(--gray-300)] bg-[var(--background-100)] text-[var(--black-400)]",
                   ].join(" ")}
                   onClick={() =>
                     setSelectedService(isSelected ? null : service.value)
@@ -197,7 +278,8 @@ export function ReceivedRequestsView({
         <section className="flex flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
             <strong className="text-[18px] font-semibold max-[743px]:text-[13px]">
-              전체 {filteredRequests.length}건
+              받은 요청 {requests.length}
+              {receivedRequestsQuery.hasNextPage ? "건 이상" : "건"}
             </strong>
 
             <div className="flex items-center gap-3">
@@ -217,22 +299,24 @@ export function ReceivedRequestsView({
                 value={sortValue}
                 isOpen={isSortOpen}
                 size="md"
-                disabled={isLoading}
-                onChange={setSortValue}
+                disabled={receivedRequestsQuery.isPending}
+                onChange={handleSortChange}
                 onOpenChange={setIsSortOpen}
               />
             </div>
           </div>
 
-          {isLoading ? (
-            <LoadingState message="받은 요청을 불러오는 중이에요." />
-          ) : error ? (
+          {receivedRequestsQuery.isPending ? (
+            <LoadingState message="받은 요청을 불러오는 중이에요" />
+          ) : errorMessage ? (
             <ErrorState
               title="받은 요청을 불러오지 못했어요."
-              description={error}
-              onRetry={onRetry}
+              description={errorMessage}
+              onRetry={() => {
+                void receivedRequestsQuery.refetch();
+              }}
             />
-          ) : filteredRequests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <EmptyState
               title={
                 hasActiveFilter
@@ -246,16 +330,34 @@ export function ReceivedRequestsView({
               }
             />
           ) : (
-            <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
-              {filteredRequests.map((request) => (
-                <ReceivedRequestCard
-                  key={request.requestId}
-                  request={request}
-                  onSendQuote={handleOpenSendQuote}
-                  onReject={handleOpenRejectRequest}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
+                {requests.map((request) => (
+                  <ReceivedRequestCard
+                    key={request.requestId}
+                    request={request}
+                    onSendQuote={handleOpenSendQuote}
+                    onReject={handleOpenRejectRequest}
+                  />
+                ))}
+              </div>
+
+              {receivedRequestsQuery.hasNextPage ? (
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outlined"
+                    isLoading={receivedRequestsQuery.isFetchingNextPage}
+                    onClick={() => {
+                      void receivedRequestsQuery.fetchNextPage();
+                    }}
+                  >
+                    더 보기
+                  </Button>
+                </div>
+              ) : null}
+            </>
           )}
         </section>
       </main>
