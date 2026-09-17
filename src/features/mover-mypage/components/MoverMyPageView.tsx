@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 
 import { Pagination } from "@/common/components/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/common/components/page-state";
@@ -10,58 +9,36 @@ import { ReviewListCard } from "@/common/components/ReviewListCard";
 import { ReviewProgressBar } from "@/common/components/ReviewProgressBar";
 import { ROUTES } from "@/common/constants/routes";
 
-import type { MoverMyPageData, MoverMyPageViewState } from "../mover-mypage.types";
+import type { MoverMyPageData, MoverReviewPage } from "../mover-mypage.types";
 
 interface MoverMyPageViewProps {
   data: MoverMyPageData;
-  viewState?: MoverMyPageViewState;
+  reviews?: MoverReviewPage;
+  currentPage: number;
+  isReviewsLoading?: boolean;
+  reviewError?: string;
+  onPageChange: (page: number) => void;
+  onRetryReviews: () => void;
 }
-
-const REVIEWS_PER_PAGE = 5;
 
 /**
  * 기사님 마이페이지의 프로필 요약·평점 분포·페이지 단위 리뷰를 조합합니다.
  * 조회 DTO가 확정되면 mapper가 MoverMyPageData로 변환하며 이 컴포넌트는 API와 인증 훅을 직접 호출하지 않습니다.
  */
-export function MoverMyPageView({ data, viewState = "ready" }: MoverMyPageViewProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-
-  if (viewState === "loading") {
-    return <LoadingState message="기사님 프로필과 리뷰를 불러오는 중이에요." />;
-  }
-
-  if (viewState === "error") {
-    return (
-      <ErrorState
-        title="마이페이지를 불러오지 못했어요."
-        description="잠시 후 다시 시도해 주세요."
-      />
-    );
-  }
-
-  if (viewState === "empty") {
-    return (
-      <EmptyState
-        title="등록된 기사님 프로필이 없어요."
-        description="프로필을 등록하면 고객에게 서비스와 경력을 소개할 수 있어요."
-        action={
-          <Link
-            href={ROUTES.MOVER.PROFILE.REGISTER}
-            className="text-lg-semibold inline-flex min-h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)] px-6 text-[var(--gray-50)]"
-          >
-            프로필 등록하기
-          </Link>
-        }
-      />
-    );
-  }
-
+export function MoverMyPageView({
+  data,
+  reviews,
+  currentPage,
+  isReviewsLoading = false,
+  reviewError,
+  onPageChange,
+  onRetryReviews,
+}: MoverMyPageViewProps) {
   const maxRatingCount = Math.max(...data.ratingCounts.map(({ count }) => count), 0);
-  const totalPages = Math.max(Math.ceil(data.reviewCount / 20), 1);
-  const currentReviews = data.reviews.slice(
-    (currentPage - 1) * REVIEWS_PER_PAGE,
-    currentPage * REVIEWS_PER_PAGE,
-  );
+  const totalPages = reviews?.pagination.totalPages ?? 0;
+  const currentReviews = reviews?.items ?? [];
+  const displayedRating = reviews?.summary.averageRating ?? data.rating;
+  const displayedReviewCount = reviews?.summary.reviewCount ?? data.reviewCount;
 
   return (
     <main className="min-h-screen bg-[var(--gray-50)] pb-20">
@@ -86,6 +63,7 @@ export function MoverMyPageView({ data, viewState = "ready" }: MoverMyPageViewPr
                   sizes="(min-width: 1200px) 80px, 64px"
                   priority
                   className="scale-125 object-cover"
+                  unoptimized={/^https?:\/\//.test(data.profileImageUrl)}
                 />
               </div>
               <div className="min-w-0 pt-1">
@@ -113,7 +91,7 @@ export function MoverMyPageView({ data, viewState = "ready" }: MoverMyPageViewPr
             <h3 className="text-lg-semibold mb-3 text-[var(--black-300)]">활동 현황</h3>
             <dl className="grid grid-cols-3 rounded-2xl border border-[var(--line-100)] bg-[var(--background-100)] px-2 py-5 text-center shadow-[2px_2px_8px_rgb(224_224_224_/_20%)] min-[1200px]:py-8">
               <div><dt className="text-md-medium text-[var(--black-300)]">진행</dt><dd className="text-xl-bold mt-1 text-[var(--primary-400)]">{data.confirmedCount}건</dd></div>
-              <div><dt className="text-md-medium text-[var(--black-300)]">리뷰</dt><dd className="text-xl-bold mt-1 text-[var(--primary-400)]">{data.rating.toFixed(1)}</dd></div>
+              <div><dt className="text-md-medium text-[var(--black-300)]">리뷰</dt><dd className="text-xl-bold mt-1 text-[var(--primary-400)]">{displayedRating.toFixed(1)}</dd></div>
               <div><dt className="text-md-medium text-[var(--black-300)]">총 경력</dt><dd className="text-xl-bold mt-1 text-[var(--primary-400)]">{data.careerYears}년</dd></div>
             </dl>
 
@@ -128,10 +106,10 @@ export function MoverMyPageView({ data, viewState = "ready" }: MoverMyPageViewPr
           <h2 id="rating-heading" className="text-lg-semibold mb-4 text-[var(--black-300)] min-[1200px]:text-xl-bold">리뷰</h2>
           <div className="grid gap-6 min-[1200px]:grid-cols-[360px_284px] min-[1200px]:gap-x-[98px]">
             <div className="flex items-center gap-4">
-              <strong className="text-[40px] font-medium leading-[52px] text-[var(--black-400)]">{data.rating.toFixed(1)}</strong>
+              <strong className="text-[40px] font-medium leading-[52px] text-[var(--black-400)]">{displayedRating.toFixed(1)}</strong>
               <div>
                 <p className="tracking-wider text-[var(--secondary-yellow-100)]" aria-hidden="true">★★★★★</p>
-                <p className="text-md-regular text-[var(--gray-400)]">{data.reviewCount}개의 리뷰</p>
+                <p className="text-md-regular text-[var(--gray-400)]">{displayedReviewCount}개의 리뷰</p>
               </div>
             </div>
             <div className="flex flex-col gap-1">
@@ -141,14 +119,18 @@ export function MoverMyPageView({ data, viewState = "ready" }: MoverMyPageViewPr
             </div>
           </div>
 
-          {currentReviews.length > 0 ? (
+          {reviewError ? (
+            <ErrorState title="리뷰를 불러오지 못했어요." description={reviewError} onRetry={onRetryReviews} />
+          ) : isReviewsLoading && !reviews ? (
+            <LoadingState message="받은 리뷰를 불러오는 중이에요." />
+          ) : currentReviews.length > 0 ? (
             <>
               <div className="mt-6 min-[1200px]:mt-8">
                 {currentReviews.map((review) => (
                   <ReviewListCard key={review.id} {...review} size="lg" className="max-w-full" />
                 ))}
               </div>
-              <Pagination currentPage={currentPage} totalPages={totalPages} size="sm" className="mt-8 justify-center" ariaLabel="받은 리뷰 페이지 이동" onPageChange={setCurrentPage} />
+              <Pagination currentPage={currentPage} totalPages={totalPages} size="sm" isLoading={isReviewsLoading} className="mt-8 justify-center" ariaLabel="받은 리뷰 페이지 이동" onPageChange={onPageChange} />
             </>
           ) : (
             <EmptyState title="아직 받은 리뷰가 없어요." description="이사를 완료하면 고객의 리뷰가 여기에 표시됩니다." />

@@ -9,6 +9,10 @@ export interface MoverMyPageReview {
 }
 
 export interface MoverMyPageData {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
   nickname: string;
   profileImageUrl: string;
   shortIntroduction: string;
@@ -21,10 +25,21 @@ export interface MoverMyPageData {
   serviceLabels: string[];
   regionLabels: string[];
   ratingCounts: ReadonlyArray<{ score: ReviewScore; count: number }>;
-  reviews: MoverMyPageReview[];
 }
 
-export type MoverMyPageViewState = "ready" | "loading" | "error" | "empty";
+export interface MoverReviewPage {
+  items: MoverMyPageReview[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+  summary: {
+    reviewCount: number;
+    averageRating: number | null;
+  };
+}
 
 export interface MoverBasicInfoFormValues {
   name: string;
@@ -36,8 +51,8 @@ export interface MoverBasicInfoFormValues {
 }
 
 export interface MoverBasicInfoFormProps {
-  initialValues?: Pick<MoverBasicInfoFormValues, "name" | "email" | "phone">;
+  initialValues: Pick<MoverBasicInfoFormValues, "name" | "email" | "phone">;
   isPending?: boolean;
   submissionError?: string;
-  onSubmit?: (values: MoverBasicInfoFormValues) => Promise<void>;
+  onSubmit: (values: MoverBasicInfoFormValues) => Promise<void>;
 }

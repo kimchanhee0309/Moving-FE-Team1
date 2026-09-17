@@ -1,5 +1,5 @@
-import { MoverBasicInfoForm } from "@/features/mover-mypage/components";
+import { MoverBasicInfoContent } from "@/features/mover-mypage/components";
 
 export default function MoverBasicInfoEditPage() {
-  return <MoverBasicInfoForm />;
+  return <MoverBasicInfoContent />;
 }

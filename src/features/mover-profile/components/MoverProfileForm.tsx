@@ -17,6 +17,8 @@ interface MoverTextValues {
   description: string;
 }
 
+type MoverTextField = keyof MoverTextValues;
+
 const EMPTY_TEXT_VALUES: MoverTextValues = {
   nickname: "",
   careerYears: "",
@@ -24,18 +26,24 @@ const EMPTY_TEXT_VALUES: MoverTextValues = {
   description: "",
 };
 
+function haveSameValues<T extends string>(left: readonly T[], right: readonly T[]) {
+  return left.length === right.length && left.every((value) => right.includes(value));
+}
+
 function getMoverTextErrors(values: MoverTextValues) {
   return {
-    nickname: !values.nickname.trim() ? "별명을 입력해 주세요." : undefined,
-    careerYears: !/^\d+$/.test(values.careerYears.trim())
-      ? "경력은 0 이상의 숫자로 입력해 주세요."
+    nickname: !values.nickname.trim()
+      ? "별명을 입력해 주세요."
+      : values.nickname.trim().length > 50 ? "별명은 50자 이하여야 합니다." : undefined,
+    careerYears: !/^\d+$/.test(values.careerYears.trim()) || Number(values.careerYears) > 50
+      ? "경력은 0~50 사이의 정수로 입력해 주세요."
       : undefined,
     shortIntroduction: !values.shortIntroduction.trim()
       ? "한 줄 소개를 입력해 주세요."
-      : undefined,
+      : values.shortIntroduction.trim().length > 255 ? "한 줄 소개는 255자 이하여야 합니다." : undefined,
     description: !values.description.trim()
       ? "상세 설명을 입력해 주세요."
-      : undefined,
+      : values.description.trim().length > 1000 ? "상세 설명은 1,000자 이하여야 합니다." : undefined,
   };
 }
 
@@ -51,6 +59,7 @@ export function MoverProfileForm({
   onSubmit,
 }: MoverProfileFormProps) {
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImageError, setProfileImageError] = useState<string | null>(null);
   const [textValues, setTextValues] = useState<MoverTextValues>(
     initialValues
       ? {
@@ -61,6 +70,7 @@ export function MoverProfileForm({
         }
       : EMPTY_TEXT_VALUES,
   );
+  const [touched, setTouched] = useState<Partial<Record<MoverTextField, boolean>>>({});
   const [serviceTypeIds, setServiceTypeIds] = useState(initialValues?.serviceTypeIds ?? []);
   const [regions, setRegions] = useState(initialValues?.regions ?? []);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -68,14 +78,27 @@ export function MoverProfileForm({
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isLoading || isSubmitting;
   const rawFieldErrors = getMoverTextErrors(textValues);
+  const hasTextError = Object.values(rawFieldErrors).some(Boolean);
   const hasServiceError = hasSubmitted && serviceTypeIds.length === 0;
   const hasRegionError = hasSubmitted && regions.length === 0;
   const isIncomplete =
     Object.values(textValues).some((value) => !value.trim()) ||
     serviceTypeIds.length === 0 ||
-    regions.length === 0;
+    regions.length === 0 ||
+    Boolean(profileImageError);
+  const hasChanges =
+    mode === "register" ||
+    !initialValues ||
+    profileImage !== null ||
+    textValues.nickname.trim() !== initialValues.nickname.trim() ||
+    textValues.careerYears.trim() !== initialValues.careerYears.trim() ||
+    textValues.shortIntroduction.trim() !== initialValues.shortIntroduction.trim() ||
+    textValues.description.trim() !== initialValues.description.trim() ||
+    !haveSameValues(serviceTypeIds, initialValues.serviceTypeIds) ||
+    !haveSameValues(regions, initialValues.regions);
 
-  const updateTextValue = (field: keyof MoverTextValues, value: string) => {
+  const updateTextValue = (field: MoverTextField, value: string) => {
+    setTouched((current) => ({ ...current, [field]: true }));
     setTextValues((current) => ({ ...current, [field]: value }));
     setStatusMessage("");
   };
@@ -85,7 +108,7 @@ export function MoverProfileForm({
     setHasSubmitted(true);
     setStatusMessage("");
 
-    if (isIncomplete || Object.values(rawFieldErrors).some(Boolean) || isBusy) return;
+    if (!hasChanges || isIncomplete || profileImageError || hasTextError || isBusy) return;
 
     const values: MoverProfileFormValues = {
       profileImage,
@@ -97,15 +120,13 @@ export function MoverProfileForm({
       regions,
     };
 
-    if (!onSubmit) {
-      setStatusMessage("입력 내용을 확인했습니다. API 연결 후 실제 프로필에 저장됩니다.");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await onSubmit(values);
+      setProfileImage(null);
       setStatusMessage(mode === "register" ? "기사님 프로필이 등록되었습니다." : "기사님 프로필이 수정되었습니다.");
+    } catch {
+      // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
     } finally {
       setIsSubmitting(false);
     }
@@ -143,7 +164,11 @@ export function MoverProfileForm({
               initialImageUrl={initialValues?.profileImageUrl}
               disabled={isBusy}
               isLoading={isLoading}
-              onFileChange={setProfileImage}
+              onFileChange={(file) => {
+                setProfileImage(file);
+                setStatusMessage("");
+              }}
+              onValidationErrorChange={setProfileImageError}
             />
 
             <div className={sectionClass}>
@@ -154,8 +179,9 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 placeholder="사이트에 노출될 별명을 입력해 주세요"
                 value={textValues.nickname}
-                error={hasSubmitted ? rawFieldErrors.nickname : undefined}
+                error={touched.nickname ? rawFieldErrors.nickname : undefined}
                 disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, nickname: true }))}
                 onChange={(event) => updateTextValue("nickname", event.target.value)}
               />
             </div>
@@ -167,11 +193,13 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 type="number"
                 min="0"
+                max="50"
                 inputMode="numeric"
                 placeholder="기사님의 경력을 입력해 주세요"
                 value={textValues.careerYears}
-                error={hasSubmitted ? rawFieldErrors.careerYears : undefined}
+                error={touched.careerYears ? rawFieldErrors.careerYears : undefined}
                 disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, careerYears: true }))}
                 onChange={(event) => updateTextValue("careerYears", event.target.value)}
               />
             </div>
@@ -183,8 +211,9 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 placeholder="한 줄 소개를 입력해 주세요"
                 value={textValues.shortIntroduction}
-                error={hasSubmitted ? rawFieldErrors.shortIntroduction : undefined}
+                error={touched.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined}
                 disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, shortIntroduction: true }))}
                 onChange={(event) => updateTextValue("shortIntroduction", event.target.value)}
               />
             </div>
@@ -199,8 +228,9 @@ export function MoverProfileForm({
                 containerClassName="max-w-none min-[1200px]:[&>div]:px-6"
                 placeholder="상세 내용을 입력해 주세요"
                 value={textValues.description}
-                error={hasSubmitted ? rawFieldErrors.description : undefined}
+                error={touched.description ? rawFieldErrors.description : undefined}
                 disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, description: true }))}
                 onChange={(event) => updateTextValue("description", event.target.value)}
               />
             </div>
@@ -217,7 +247,10 @@ export function MoverProfileForm({
                 isInvalid={hasServiceError}
                 ariaLabel="제공 서비스 선택"
                 ariaDescribedBy={hasServiceError ? "mover-service-error" : undefined}
-                onValuesChange={setServiceTypeIds}
+                onValuesChange={(nextValues) => {
+                  setServiceTypeIds(nextValues);
+                  setStatusMessage("");
+                }}
               />
               {hasServiceError ? (
                 <p id="mover-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">
@@ -238,7 +271,10 @@ export function MoverProfileForm({
                 isInvalid={hasRegionError}
                 ariaLabel="서비스 가능 지역 선택"
                 ariaDescribedBy={hasRegionError ? "mover-region-error" : undefined}
-                onValuesChange={setRegions}
+                onValuesChange={(nextValues) => {
+                  setRegions(nextValues);
+                  setStatusMessage("");
+                }}
               />
               {hasRegionError ? (
                 <p id="mover-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">
@@ -259,12 +295,12 @@ export function MoverProfileForm({
             ) : null}
 
             {mode === "register" ? (
-              <Button type="submit" size="sm" fullWidth disabled={isIncomplete || isBusy} isLoading={isBusy} className={responsiveButtonClass}>
+              <Button type="submit" size="sm" fullWidth disabled={isIncomplete || hasTextError || isBusy} isLoading={isBusy} className={responsiveButtonClass}>
                 시작하기
               </Button>
             ) : (
               <div className="flex flex-col gap-2 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
-                <Button type="submit" size="sm" fullWidth disabled={isIncomplete || isBusy} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
+                <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isIncomplete || hasTextError || isBusy} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
                   수정하기
                 </Button>
                 <Button type="button" size="sm" variant="outlined" fullWidth className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => window.history.back()}>

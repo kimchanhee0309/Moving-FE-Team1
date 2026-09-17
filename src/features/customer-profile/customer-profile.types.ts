@@ -7,14 +7,26 @@ export interface CustomerProfileFormValues {
   region: ProfileRegion | null;
 }
 
+export interface CustomerProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  profileImageUrl: string | null;
+  serviceTypes: ServiceType[];
+  region: ProfileRegion;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CustomerProfileFormProps {
   mode: "register" | "edit";
   initialValues?: Omit<CustomerProfileFormValues, "profileImage"> & {
-    profileImageUrl?: string;
+    profileImageUrl?: string | null;
   };
   isLoading?: boolean;
   submissionError?: string;
-  onSubmit?: (values: CustomerProfileFormValues) => Promise<void>;
+  onSubmit: (values: CustomerProfileFormValues) => Promise<void>;
 }
 
 export interface CustomerProfileEditFormValues extends CustomerProfileFormValues {
@@ -28,9 +40,9 @@ export interface CustomerProfileEditFormValues extends CustomerProfileFormValues
 
 export interface CustomerProfileEditFormProps {
   initialValues: Omit<CustomerProfileEditFormValues, "profileImage"> & {
-    profileImageUrl?: string;
+    profileImageUrl?: string | null;
   };
   isPending?: boolean;
   submissionError?: string;
-  onSubmit?: (values: CustomerProfileEditFormValues) => Promise<void>;
+  onSubmit: (values: CustomerProfileEditFormValues) => Promise<void>;
 }

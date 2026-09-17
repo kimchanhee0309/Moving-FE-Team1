@@ -1,12 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useId, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
+
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 interface ProfileImageInputProps {
   file: File | null;
   onFileChange: (file: File | null) => void;
-  initialImageUrl?: string;
+  onValidationErrorChange?: (error: string | null) => void;
+  initialImageUrl?: string | null;
   error?: string;
   disabled?: boolean;
   isLoading?: boolean;
@@ -20,6 +24,7 @@ interface ProfileImageInputProps {
 export function ProfileImageInput({
   file,
   onFileChange,
+  onValidationErrorChange,
   initialImageUrl,
   error,
   disabled = false,
@@ -28,6 +33,7 @@ export function ProfileImageInput({
 }: ProfileImageInputProps) {
   const inputId = useId();
   const messageId = `${inputId}-message`;
+  const inputRef = useRef<HTMLInputElement>(null);
   const [selectedPreviewUrl, setSelectedPreviewUrl] = useState<string>();
   const [fileTypeError, setFileTypeError] = useState("");
   const isInteractionDisabled = disabled || isLoading;
@@ -44,8 +50,20 @@ export function ProfileImageInput({
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.currentTarget.files?.[0] ?? null;
 
-    if (selectedFile && !selectedFile.type.startsWith("image/")) {
-      setFileTypeError("이미지 파일만 선택해 주세요.");
+    if (selectedFile && !ALLOWED_IMAGE_TYPES.has(selectedFile.type)) {
+      const validationError = "JPG, PNG, WebP 이미지만 선택해 주세요.";
+      setFileTypeError(validationError);
+      onValidationErrorChange?.(validationError);
+      setSelectedPreviewUrl(undefined);
+      onFileChange(null);
+      event.currentTarget.value = "";
+      return;
+    }
+
+    if (selectedFile && selectedFile.size > MAX_IMAGE_SIZE_BYTES) {
+      const validationError = "프로필 이미지는 5MB 이하여야 합니다.";
+      setFileTypeError(validationError);
+      onValidationErrorChange?.(validationError);
       setSelectedPreviewUrl(undefined);
       onFileChange(null);
       event.currentTarget.value = "";
@@ -53,8 +71,17 @@ export function ProfileImageInput({
     }
 
     setFileTypeError("");
+    onValidationErrorChange?.(null);
     setSelectedPreviewUrl(selectedFile ? URL.createObjectURL(selectedFile) : undefined);
     onFileChange(selectedFile);
+  };
+
+  const clearSelectedFile = () => {
+    if (inputRef.current) inputRef.current.value = "";
+    setFileTypeError("");
+    setSelectedPreviewUrl(undefined);
+    onValidationErrorChange?.(null);
+    onFileChange(null);
   };
 
   return (
@@ -73,7 +100,7 @@ export function ProfileImageInput({
             fill
             sizes="(min-width: 1200px) 160px, 100px"
             className="scale-110 object-cover"
-            unoptimized={previewUrl.startsWith("blob:")}
+            unoptimized={previewUrl.startsWith("blob:") || /^https?:\/\//.test(previewUrl)}
           />
         ) : (
           <svg
@@ -90,9 +117,10 @@ export function ProfileImageInput({
           </svg>
         )}
         <input
+          ref={inputRef}
           id={inputId}
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           className="sr-only"
           disabled={isInteractionDisabled}
           aria-describedby={message ? messageId : undefined}
@@ -104,6 +132,16 @@ export function ProfileImageInput({
         <p id={messageId} role="alert" className="text-xs-medium text-[var(--primary-400)]">
           {message}
         </p>
+      ) : null}
+      {file || fileTypeError ? (
+        <button
+          type="button"
+          className="w-fit text-xs-medium text-[var(--gray-500)] underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isInteractionDisabled}
+          onClick={clearSelectedFile}
+        >
+          이미지 선택 취소
+        </button>
       ) : null}
     </div>
   );

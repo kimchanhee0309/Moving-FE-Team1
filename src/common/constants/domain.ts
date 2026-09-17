@@ -13,6 +13,10 @@ export const SERVICE_TYPE = {
 
 export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
 
+export function isServiceType(value: unknown): value is ServiceType {
+  return value === SERVICE_TYPE.SMALL || value === SERVICE_TYPE.HOME || value === SERVICE_TYPE.OFFICE;
+}
+
 export const QUOTE_STATUS = {
   PENDING: "PROPOSED",
   CONFIRMED: "CONFIRMED",
