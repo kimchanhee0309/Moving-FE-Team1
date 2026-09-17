@@ -4,17 +4,17 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { FilterDropdown } from "@/common/components/Dropdown";
+import { EmptyState } from "@/common/components/page-state";
+import { ErrorState } from "@/common/components/page-state";
+import { LoadingState } from "@/common/components/page-state";
 import { Tabs } from "@/common/components/Tabs";
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
 import { QuoteHistoryCard } from "@/features/customer-quote/components";
-
-import { SERVICE_TYPE_LABEL } from "../../_lib/customerQuoteDetail";
-import {
-  MOCK_HISTORY_GROUPS,
-  type HistoryRequestGroup,
-} from "../_data/mockHistoryGroups";
+import type { CustomerQuoteHistoryGroupView } from "@/features/customer-quote/api/customer-quote.types";
+import { useReceivedQuoteHistoryQuery } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
+import { SERVICE_TYPE_LABEL } from "@/features/customer-quote/model/customer-quote.model";
 
 type QuoteFilterValue = "all" | QuoteStatus;
 
@@ -36,7 +36,7 @@ function QuoteInfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function HistoryRequestCard({ group }: { group: HistoryRequestGroup }) {
+function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView }) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filter, setFilter] = useState<QuoteFilterValue>("all");
 
@@ -145,6 +145,7 @@ function HistoryRequestCard({ group }: { group: HistoryRequestGroup }) {
                       isDesignated={quote.isDesignated}
                       message={quote.message}
                       moverName={quote.moverName}
+                      moverProfileImageUrl={quote.moverProfileImageUrl}
                       price={quote.price}
                       rating={quote.rating}
                       reviewCount={quote.reviewCount}
@@ -167,6 +168,9 @@ function HistoryRequestCard({ group }: { group: HistoryRequestGroup }) {
 }
 
 export function CustomerQuoteHistoryView() {
+  const historyQuery = useReceivedQuoteHistoryQuery();
+  const groups = historyQuery.data?.groups ?? [];
+
   return (
     <main className="min-h-screen bg-[var(--background-100)]">
       <h1 className="sr-only">받았던 견적</h1>
@@ -194,9 +198,36 @@ export function CustomerQuoteHistoryView() {
           "min-[1200px]:px-[clamp(72px,18.75vw,400px)] min-[1200px]:py-16",
         ].join(" ")}
       >
-        {MOCK_HISTORY_GROUPS.map((group) => (
-          <HistoryRequestCard key={group.id} group={group} />
-        ))}
+        {historyQuery.isLoading ? (
+          <LoadingState message="받았던 견적을 불러오는 중..." />
+        ) : null}
+
+        {historyQuery.isError ? (
+          <ErrorState
+            title="받았던 견적을 불러오지 못했습니다"
+            description="잠시 후 다시 시도해 주세요."
+            onRetry={() => {
+              void historyQuery.refetch();
+            }}
+          />
+        ) : null}
+
+        {!historyQuery.isLoading &&
+        !historyQuery.isError &&
+        groups.length === 0 ? (
+          <EmptyState
+            title="받았던 견적이 없습니다"
+            description="확정한 견적이 생기면 여기에 표시됩니다."
+          />
+        ) : null}
+
+        {!historyQuery.isLoading &&
+        !historyQuery.isError &&
+        groups.length > 0
+          ? groups.map((group) => (
+              <HistoryRequestCard key={group.id} group={group} />
+            ))
+          : null}
       </section>
     </main>
   );
