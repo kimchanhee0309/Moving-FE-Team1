@@ -14,7 +14,7 @@ export const SERVICE_TYPE = {
 export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
 
 export const QUOTE_STATUS = {
-  PENDING: "PENDING",
+  PENDING: "PROPOSED",
   CONFIRMED: "CONFIRMED",
   REJECTED: "REJECTED",
 } as const;
