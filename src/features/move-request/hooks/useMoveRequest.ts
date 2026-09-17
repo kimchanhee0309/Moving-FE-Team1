@@ -2,6 +2,8 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { ApiError } from "@/common/api/error";
+
 import { moveRequestKeys } from "../constants/move-request.constants";
 import { createMoveRequest, fetchActiveMoveRequest } from "../move-request.api";
 import type { CreateMoveRequestPayload } from "../move-request.types";
@@ -32,6 +34,13 @@ export function useCreateMoveRequest() {
       // queryFn(fetchActiveMoveRequest)과 같은 raw 응답 shape(`{ moveRequest }`)을 그대로 캐시에 넣는다 —
       // useActiveMoveRequest의 `select`가 이 shape을 전제로 `.moveRequest`를 꺼내 쓴다.
       queryClient.setQueryData(moveRequestKeys.active(), data);
+    },
+    onError: (error) => {
+      // 캐시엔 활성 요청이 없다고 남아있는데 서버가 409(이미 진행 중)를 반환하면, 다시 조회해서
+      // MoveRequestPage가 MoveRequestBlockedState로 전환되게 한다.
+      if (error instanceof ApiError && error.status === 409) {
+        return queryClient.invalidateQueries({ queryKey: moveRequestKeys.active() });
+      }
     },
   });
 }
