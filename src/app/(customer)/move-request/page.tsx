@@ -1,14 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
+import { ApiError } from "@/common/api/error";
 import { AddressSearchModal } from "@/common/components/AddressSearchModal";
 import type { AddressResult } from "@/common/components/AddressCard";
 import { DateDropdown } from "@/common/components/Dropdown";
+import { ErrorState, LoadingState } from "@/common/components/page-state";
+import { ROUTES } from "@/common/constants/routes";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { MoveDateCalendar } from "@/features/move-request/components/MoveDateCalendar";
 import { MoveTypeCard } from "@/features/move-request/components/MoveTypeCard";
 import { useAddressSearch } from "@/features/move-request/hooks/useAddressSearch";
+import { useActiveMoveRequest, useCreateMoveRequest } from "@/features/move-request/hooks/useMoveRequest";
+import { formatAddressForApi, formatMoveDateForApi } from "@/features/move-request/move-request.utils";
 
 import { MoveRequestBlockedState } from "./_components/MoveRequestBlockedState";
 
@@ -155,6 +161,8 @@ interface MobileMoveRequestWizardProps {
   toAddress: AddressResult | null;
   onOpenAddressModal: (slot: AddressSlot) => void;
   onSubmit: () => void;
+  /** `POST /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
+  isSubmitting: boolean;
 }
 
 /**
@@ -177,6 +185,7 @@ function MobileMoveRequestWizard({
   toAddress,
   onOpenAddressModal,
   onSubmit,
+  isSubmitting,
 }: MobileMoveRequestWizardProps) {
   const { title, subtitle } = STEP_COPY[step];
 
@@ -254,11 +263,11 @@ function MobileMoveRequestWizard({
             ) : (
               <button
                 type="button"
-                disabled={!canSubmitStep3}
+                disabled={!canSubmitStep3 || isSubmitting}
                 onClick={onSubmit}
                 className="flex h-[54px] flex-1 items-center justify-center rounded-xl bg-(--primary-400) text-lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
               >
-                견적 요청하기
+                {isSubmitting ? "요청 중..." : "견적 요청하기"}
               </button>
             )}
           </>
@@ -280,6 +289,8 @@ interface DesktopMoveRequestFormProps {
   onOpenAddressModal: (slot: AddressSlot) => void;
   canSubmit: boolean;
   onSubmit: () => void;
+  /** `POST /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
+  isSubmitting: boolean;
 }
 
 /**
@@ -307,6 +318,7 @@ function DesktopMoveRequestForm({
   onOpenAddressModal,
   canSubmit,
   onSubmit,
+  isSubmitting,
 }: DesktopMoveRequestFormProps) {
   return (
     <div className="hidden min-[744px]:block">
@@ -386,11 +398,11 @@ function DesktopMoveRequestForm({
           <div className="mt-14 flex justify-end">
             <button
               type="button"
-              disabled={!canSubmit}
+              disabled={!canSubmit || isSubmitting}
               onClick={onSubmit}
               className="flex h-16 w-[200px] items-center justify-center rounded-2xl bg-(--primary-400) text-2lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
             >
-              견적 요청하기
+              {isSubmitting ? "요청 중..." : "견적 요청하기"}
             </button>
           </div>
         </div>
@@ -399,20 +411,35 @@ function DesktopMoveRequestForm({
   );
 }
 
-// TODO(feature-implementer): 활성 견적 요청 존재 여부를 확인하는 API/쿼리 계약이 아직 없어
-// 임시로 항상 false로 고정한다("한 customer는 동시에 하나의 활성 견적 요청만 가질 수 있다",
-// AGENTS.md 12번). 실제 연동 시 이 값을 TanStack Query 결과로 교체한다 — 그 전까지 화면으로
-// 직접 확인하려면 `ROUTES.PUBLIC.MOVE_REQUEST_BLOCKED_EXAMPLE` preview 경로를 사용한다.
-const HAS_ACTIVE_MOVE_REQUEST = false;
-
 /**
- * 견적 요청 페이지 진입점입니다. 활성 견적 요청이 이미 있으면 폼 대신
- * `MoveRequestBlockedState`(Figma `견적요청_disabled`)만 보여주고, 없으면 실제 입력 폼
- * (`MoveRequestForm`)을 보여준다. 두 화면은 서로 다른 상태를 다루므로 분기를 이 얇은
- * 컴포넌트에서만 하고 폼의 로컬 state는 `MoveRequestForm`에만 두었다.
+ * 견적 요청 페이지 진입점입니다. `GET /customers/me/move-requests/active` 조회 결과로
+ * 활성 견적 요청이 있으면 폼 대신 `MoveRequestBlockedState`(Figma `견적요청_disabled`)만
+ * 보여주고, 없으면 실제 입력 폼(`MoveRequestForm`)을 보여준다. 두 화면은 서로 다른 상태를
+ * 다루므로 분기를 이 얇은 컴포넌트에서만 하고 폼의 로컬 state는 `MoveRequestForm`에만 두었다.
  */
 export default function MoveRequestPage() {
-  if (HAS_ACTIVE_MOVE_REQUEST) {
+  const { data: activeMoveRequest, isPending, isError, refetch } = useActiveMoveRequest();
+
+  if (isPending) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-(--background-100)">
+        <LoadingState message="견적 요청 상태를 불러오는 중이에요." />
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-(--background-100)">
+        <ErrorState
+          title="견적 요청 상태를 불러오지 못했어요."
+          onRetry={() => void refetch()}
+        />
+      </main>
+    );
+  }
+
+  if (activeMoveRequest) {
     return <MoveRequestBlockedState />;
   }
 
@@ -487,16 +514,43 @@ function MoveRequestForm() {
   const canSubmit =
     serviceType !== null && moveDate !== null && fromAddress !== null && toAddress !== null;
 
-  // TODO(feature-implementer): `POST /move-request` 계약이 확정되면 TanStack Query mutation으로
-  // 교체한다. 지금은 정적 마크업 단계라 실제 제출 로직이 없다.
-  const handleSubmit = () => {
-    if (!canSubmit) {
+  const router = useRouter();
+  const createMoveRequestMutation = useCreateMoveRequest();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    if (!canSubmit || !serviceType || !moveDate || !fromAddress || !toAddress) {
       return;
+    }
+
+    setSubmitError(null);
+
+    try {
+      await createMoveRequestMutation.mutateAsync({
+        serviceType,
+        moveDate: formatMoveDateForApi(moveDate),
+        // 상세주소(동/호수) 입력칸이 아직 없어 지금은 검색 결과만으로 조합한다(move-request.utils.ts 참고).
+        fromAddress: formatAddressForApi(fromAddress),
+        toAddress: formatAddressForApi(toAddress),
+      });
+      router.push(ROUTES.CUSTOMER.QUOTE.PENDING);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        setSubmitError("이미 진행 중인 견적 요청이 있어요. 완료 후 다시 시도해주세요.");
+        return;
+      }
+      setSubmitError("견적 요청에 실패했어요. 잠시 후 다시 시도해주세요.");
     }
   };
 
   return (
     <main className="min-h-screen bg-(--background-100)">
+      {submitError ? (
+        <p role="alert" className="px-6 pt-4 text-center text-sm-medium text-(--secondary-red-200)">
+          {submitError}
+        </p>
+      ) : null}
+
       <MobileMoveRequestWizard
         step={step}
         onStepChange={setStep}
@@ -508,6 +562,7 @@ function MoveRequestForm() {
         toAddress={toAddress}
         onOpenAddressModal={openAddressModal}
         onSubmit={handleSubmit}
+        isSubmitting={createMoveRequestMutation.isPending}
       />
 
       <DesktopMoveRequestForm
@@ -522,6 +577,7 @@ function MoveRequestForm() {
         onOpenAddressModal={openAddressModal}
         canSubmit={canSubmit}
         onSubmit={handleSubmit}
+        isSubmitting={createMoveRequestMutation.isPending}
       />
 
       <AddressSearchModal
