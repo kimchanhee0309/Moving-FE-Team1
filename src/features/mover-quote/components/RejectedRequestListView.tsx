@@ -8,7 +8,7 @@ import {
   LoadingState,
 } from "@/common/components/page-state";
 
-import { useRejectedRequests } from "../mover-quote-hooks";
+import { useRejectedRequests } from "../mover-quote.hooks";
 import { MoverQuoteTabs } from "./MoverQuoteTabs";
 import { RejectedRequestCard } from "./RejectedRequestCard";
 

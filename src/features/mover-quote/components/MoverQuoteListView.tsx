@@ -11,7 +11,7 @@ import {
 } from "@/common/components/page-state";
 import { ROUTES } from "@/common/constants/routes";
 
-import { useMoverQuotes } from "../mover-quote-hooks";
+import { useMoverQuotes } from "../mover-quote.hooks";
 import { MoverQuoteCard } from "./MoverQuoteCard";
 import { MoverQuoteTabs } from "./MoverQuoteTabs";
 

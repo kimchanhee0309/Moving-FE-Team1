@@ -174,7 +174,7 @@ function readRejectedRequestItem(value: unknown): RejectedRequestApiItem {
     ),
     toAddress: readString(item.toAddress, "도착지 정보가 올바르지 않습니다."),
     moveDate: readDateString(item.moveDate, "이사일 정보가 올바르지 않습니다."),
-    reason: readString(item.reason, "반려 사유가 올바르지 않습ㅂ니다."),
+    reason: readString(item.reason, "반려 사유가 올바르지 않습니다."),
     rejectedAt: readDateString(
       item.rejectedAt,
       "반려 날짜가 올바르지 않습니다.",

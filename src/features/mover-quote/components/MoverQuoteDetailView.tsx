@@ -3,7 +3,7 @@
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
-import { useMoverQuoteDetail } from "../mover-quote-hooks";
+import { useMoverQuoteDetail } from "../mover-quote.hooks";
 import { MoverQuoteDetail } from "./MoverQuoteDetail";
 
 interface MoverQuoteDetailViewProps {
