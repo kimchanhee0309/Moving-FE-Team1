@@ -1,4 +1,4 @@
-import { ServiceType } from "@/common/constants/domain";
+import type { ServiceType } from "@/common/constants/domain";
 
 /**
  * 받은 요청 목록에서 BE가 지원하는 정렬 방식
