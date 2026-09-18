@@ -5,16 +5,16 @@ import {
   mapFavoriteListToMovers,
   readFavoriteList,
 } from "./favorite.mapper";
-import type { FavoriteListParams, FavoriteMover } from "./favorite.types";
+import type { FavoriteListParams, FavoriteListResult } from "./favorite.types";
 
 /**
  * GET /favorites — 로그인한 CUSTOMER의 찜 목록을 최신순으로 조회합니다.
- * 화면에서 pagination이 없어 pageSize 상한으로 한 번 조회합니다.
+ * page/pageSize 기반이며, 무한 스크롤에서 pageParam으로 이어 받습니다.
  */
 export async function fetchFavoriteMovers(
   params: FavoriteListParams = {},
   signal?: AbortSignal,
-): Promise<FavoriteMover[]> {
+): Promise<FavoriteListResult> {
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? FAVORITE_LIST_PAGE_SIZE;
   const data = await apiClient<unknown>("/favorites", {
@@ -23,7 +23,11 @@ export async function fetchFavoriteMovers(
     cache: "no-store",
   });
 
-  return mapFavoriteListToMovers(readFavoriteList(data));
+  const list = readFavoriteList(data);
+  return {
+    items: mapFavoriteListToMovers(list),
+    pagination: list.pagination,
+  };
 }
 
 /**

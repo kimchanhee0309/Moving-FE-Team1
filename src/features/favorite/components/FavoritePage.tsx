@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { ApiError } from "@/common/api/error";
 import { MoverSearchCard } from "@/common/components/MoverSearch";
@@ -11,9 +11,7 @@ import {
   useFavoriteMovers,
   useRemoveFavoriteMovers,
 } from "../hooks/useFavoriteMovers";
-import type { FavoriteMover } from "../favorite.types";
-
-const EMPTY_MOVERS: FavoriteMover[] = [];
+import { useLoadMoreSentinel } from "../hooks/useLoadMoreSentinel";
 
 const CHECKBOX_BOX_CLASS = [
   "pointer-events-none flex size-5 shrink-0 items-center justify-center rounded-[4px]",
@@ -76,7 +74,8 @@ function FavoriteCheckbox({
 
 /**
  * 찜한 기사님 페이지입니다.
- * GET /favorites 목록·DELETE 선택 삭제만 담당하며 기사님 찾기 찜 토글은 연동하지 않습니다.
+ * GET /favorites 무한 스크롤 목록·DELETE 선택 삭제만 담당하며
+ * 기사님 찾기 찜 토글은 연동하지 않습니다.
  */
 export function FavoritePage() {
   const favoritesQuery = useFavoriteMovers();
@@ -84,15 +83,51 @@ export function FavoritePage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const movers = favoritesQuery.data ?? EMPTY_MOVERS;
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = favoritesQuery;
+
+  const movers = useMemo(() => {
+    const pages = data?.pages ?? [];
+    const flattened = pages.flatMap((page) => page.items);
+    // 페이지 경계 중복 id는 한 번만 노출합니다.
+    const seen = new Set<string>();
+    return flattened.filter((mover) => {
+      if (seen.has(mover.id)) return false;
+      seen.add(mover.id);
+      return true;
+    });
+  }, [data?.pages]);
+
+  const serverTotalCount = data?.pages[0]?.pagination.totalCount ?? 0;
   const moverIdSet = new Set(movers.map((mover) => mover.id));
   // 목록 갱신 후 사라진 id는 선택 카운트에서 제외합니다.
   const activeSelectedIds = selectedIds.filter((id) => moverIdSet.has(id));
-  const totalCount = movers.length;
+  // 전체선택은 현재까지 로드된 목록 기준입니다.
+  const loadedCount = movers.length;
   const selectedCount = activeSelectedIds.length;
-  const isAllSelected = totalCount > 0 && selectedCount === totalCount;
+  const isAllSelected = loadedCount > 0 && selectedCount === loadedCount;
   const hasSelection = selectedCount > 0;
   const isBusy = removeMutation.isPending;
+  const isEmpty = !isPending && !isError && serverTotalCount === 0;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const sentinelRef = useLoadMoreSentinel(
+    handleLoadMore,
+    Boolean(hasNextPage) && !isFetchingNextPage && !isEmpty,
+  );
 
   const handleToggleSelectAll = () => {
     if (isAllSelected) {
@@ -125,10 +160,10 @@ export function FavoritePage() {
           previousIds.filter((id) => !idsToRemove.includes(id)),
         );
       },
-      onError: (error) => {
+      onError: (mutationError) => {
         const message =
-          error instanceof ApiError
-            ? error.message
+          mutationError instanceof ApiError
+            ? mutationError.message
             : "선택한 찜을 삭제하지 못했습니다. 다시 시도해 주세요.";
         setActionError(message);
       },
@@ -136,8 +171,8 @@ export function FavoritePage() {
   };
 
   const listErrorMessage =
-    favoritesQuery.error instanceof ApiError
-      ? favoritesQuery.error.message
+    error instanceof ApiError
+      ? error.message
       : "찜 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
   return (
@@ -154,15 +189,15 @@ export function FavoritePage() {
         <div className="flex h-9 w-full items-center justify-between">
           <div className="group flex items-center gap-1">
             <FavoriteCheckbox
-              checked={isAllSelected && totalCount > 0}
-              disabled={totalCount === 0 || isBusy || favoritesQuery.isPending}
+              checked={isAllSelected && loadedCount > 0}
+              disabled={loadedCount === 0 || isBusy || isPending}
               onChange={handleToggleSelectAll}
               aria-label="전체선택"
             />
             <button
               type="button"
               onClick={handleToggleSelectAll}
-              disabled={totalCount === 0 || isBusy || favoritesQuery.isPending}
+              disabled={loadedCount === 0 || isBusy || isPending}
               className={[
                 "text-lg-regular whitespace-nowrap text-[var(--black-300)]",
                 "max-[743px]:text-md-regular",
@@ -171,7 +206,7 @@ export function FavoritePage() {
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
               ].join(" ")}
             >
-              전체선택({selectedCount}/{totalCount})
+              전체선택({selectedCount}/{loadedCount})
             </button>
           </div>
 
@@ -198,11 +233,14 @@ export function FavoritePage() {
           </p>
         ) : null}
 
-        {favoritesQuery.isPending ? (
-          <p role="status" className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]">
+        {isPending ? (
+          <p
+            role="status"
+            className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]"
+          >
             찜한 기사님을 불러오는 중입니다.
           </p>
-        ) : favoritesQuery.isError ? (
+        ) : isError ? (
           <section
             className="flex flex-col items-center justify-center gap-4 py-20"
             role="alert"
@@ -213,7 +251,7 @@ export function FavoritePage() {
             <button
               type="button"
               onClick={() => {
-                void favoritesQuery.refetch();
+                void refetch();
               }}
               className={[
                 "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! px-4",
@@ -226,7 +264,7 @@ export function FavoritePage() {
               다시 시도
             </button>
           </section>
-        ) : totalCount === 0 ? (
+        ) : isEmpty ? (
           <section
             className="flex flex-col items-center justify-center gap-4 py-20"
             aria-live="polite"
@@ -248,33 +286,42 @@ export function FavoritePage() {
             </Link>
           </section>
         ) : (
-          <ul className="flex flex-col gap-5">
-            {movers.map((mover) => (
-              <li
-                key={mover.id}
-                className="flex w-full justify-center min-[744px]:block"
-              >
-                <MoverSearchCard
-                  serviceType={mover.serviceType}
-                  moverName={mover.moverName}
-                  introduction={mover.introduction}
-                  description={mover.description}
-                  profileImageUrl={mover.profileImageUrl}
-                  rating={mover.rating}
-                  reviewCount={mover.reviewCount}
-                  careerYears={mover.careerYears}
-                  confirmedCount={mover.confirmedCount}
-                  favoriteCount={mover.favoriteCount}
-                  selectable
-                  isSelected={selectedIds.includes(mover.id)}
-                  onSelectChange={(isSelected) =>
-                    handleSelectChange(mover.id, isSelected)
-                  }
-                  className="min-[744px]:w-full!"
-                />
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="flex flex-col gap-5">
+              {movers.map((mover) => (
+                <li
+                  key={mover.id}
+                  className="flex w-full justify-center min-[744px]:block"
+                >
+                  <MoverSearchCard
+                    serviceType={mover.serviceType}
+                    moverName={mover.moverName}
+                    introduction={mover.introduction}
+                    description={mover.description}
+                    profileImageUrl={mover.profileImageUrl}
+                    rating={mover.rating}
+                    reviewCount={mover.reviewCount}
+                    careerYears={mover.careerYears}
+                    confirmedCount={mover.confirmedCount}
+                    favoriteCount={mover.favoriteCount}
+                    selectable
+                    isSelected={selectedIds.includes(mover.id)}
+                    onSelectChange={(isSelected) =>
+                      handleSelectChange(mover.id, isSelected)
+                    }
+                    className="min-[744px]:w-full!"
+                  />
+                </li>
+              ))}
+            </ul>
+
+            <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
+            {isFetchingNextPage ? (
+              <p className="text-md-regular py-4 text-center text-[var(--gray-400)]">
+                더 불러오는 중이에요.
+              </p>
+            ) : null}
+          </>
         )}
       </div>
     </div>

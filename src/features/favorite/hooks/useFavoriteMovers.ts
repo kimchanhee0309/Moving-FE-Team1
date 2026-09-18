@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { ApiError } from "@/common/api/error";
 
@@ -8,16 +8,27 @@ import { fetchFavoriteMovers, removeFavoriteMover } from "../favorite.api";
 import { FAVORITE_LIST_PAGE_SIZE } from "../favorite.constants";
 import { favoriteKeys } from "../favorite.keys";
 
-const LIST_PARAMS = { page: 1, pageSize: FAVORITE_LIST_PAGE_SIZE } as const;
+/** 무한 스크롤 query key에는 page를 넣지 않습니다. */
+const LIST_PARAMS = { pageSize: FAVORITE_LIST_PAGE_SIZE } as const;
 
 /**
- * 찜한 기사님 목록 Query입니다.
+ * 찜한 기사님 목록 Infinite Query입니다.
+ * Favorite API는 page/pageSize 기반이라 커서 대신 page를 pageParam으로 사용합니다.
  * FavoritePage 전용이며 기사님 찾기 사이드바 찜과는 캐시를 공유하지 않습니다.
  */
 export function useFavoriteMovers() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: favoriteKeys.list(LIST_PARAMS),
-    queryFn: ({ signal }) => fetchFavoriteMovers(LIST_PARAMS, signal),
+    queryFn: ({ pageParam, signal }) =>
+      fetchFavoriteMovers(
+        { page: pageParam, pageSize: LIST_PARAMS.pageSize },
+        signal,
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
+    },
   });
 }
 

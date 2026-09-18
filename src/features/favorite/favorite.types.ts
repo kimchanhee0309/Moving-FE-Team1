@@ -33,6 +33,12 @@ export interface FavoriteListParams {
   pageSize?: number;
 }
 
+/** GET /favorites 한 페이지 조회 결과입니다. */
+export interface FavoriteListResult {
+  items: FavoriteMover[];
+  pagination: Pagination;
+}
+
 /**
  * 찜 목록 화면용 뷰 모델입니다.
  * MoverSearchCard props에 맞추며, API에 없는 confirmedCount는 0으로 둡니다.
