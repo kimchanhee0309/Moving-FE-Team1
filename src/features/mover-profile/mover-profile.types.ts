@@ -11,12 +11,25 @@ export interface MoverProfileFormValues {
   regions: ProfileRegion[];
 }
 
+export interface MoverProfile {
+  id: string;
+  profileImageUrl: string | null;
+  nickname: string;
+  careerYears: number;
+  shortIntroduction: string;
+  description: string;
+  serviceTypes: ServiceType[];
+  regions: ProfileRegion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MoverProfileFormProps {
   mode: "register" | "edit";
   initialValues?: Omit<MoverProfileFormValues, "profileImage"> & {
-    profileImageUrl?: string;
+    profileImageUrl?: string | null;
   };
   isLoading?: boolean;
   submissionError?: string;
-  onSubmit?: (values: MoverProfileFormValues) => Promise<void>;
+  onSubmit: (values: MoverProfileFormValues) => Promise<void>;
 }

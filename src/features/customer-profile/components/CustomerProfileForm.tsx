@@ -27,6 +27,7 @@ export function CustomerProfileForm({
   onSubmit,
 }: CustomerProfileFormProps) {
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profileImageError, setProfileImageError] = useState<string | null>(null);
   const [serviceTypeIds, setServiceTypeIds] = useState(initialValues?.serviceTypeIds ?? []);
   const [region, setRegion] = useState(initialValues?.region ?? null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
@@ -35,14 +36,14 @@ export function CustomerProfileForm({
   const isBusy = isLoading || isSubmitting;
   const hasServiceError = hasSubmitted && serviceTypeIds.length === 0;
   const hasRegionError = hasSubmitted && region === null;
-  const isIncomplete = serviceTypeIds.length === 0 || region === null;
+  const isIncomplete = serviceTypeIds.length === 0 || region === null || Boolean(profileImageError);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setHasSubmitted(true);
     setStatusMessage("");
 
-    if (isIncomplete || isBusy) return;
+    if (isIncomplete || profileImageError || isBusy) return;
 
     const values: CustomerProfileFormValues = {
       profileImage,
@@ -50,15 +51,12 @@ export function CustomerProfileForm({
       region,
     };
 
-    if (!onSubmit) {
-      setStatusMessage("입력 내용을 확인했습니다. API 연결 후 실제 프로필에 저장됩니다.");
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       await onSubmit(values);
       setStatusMessage(mode === "register" ? "프로필이 등록되었습니다." : "프로필이 수정되었습니다.");
+    } catch {
+      // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
     } finally {
       setIsSubmitting(false);
     }
@@ -93,6 +91,7 @@ export function CustomerProfileForm({
               disabled={isBusy}
               isLoading={isLoading}
               onFileChange={setProfileImage}
+              onValidationErrorChange={setProfileImageError}
             />
 
             <hr className="w-full border-0 border-t border-[var(--line-100)]" />

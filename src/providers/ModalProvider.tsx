@@ -1,6 +1,14 @@
 "use client";
 
-import { Suspense, createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  Suspense,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -9,18 +17,37 @@ import { MODAL_COMPONENTS } from "./modal-registry";
 interface ModalNameOptions {
   /** 내용의 제목 요소 ID. 지정하면 ariaLabel보다 우선합니다. */
   ariaLabelledBy?: string;
-  /** 제목 ID를 연결하지 않을 때 사용하는 구체적인 모달 이름. */
+
+  /** 제목 ID를 연결하지 않을 때 사용하는 구체적인 모달 이름입니다. */
   ariaLabel?: string;
 }
 
 interface ModalContextValue {
   isOpen: boolean;
+
   /**
-   * JSX를 그대로 받아 모달로 띄운다(state 기반). 넘긴 `content`가 제목·닫기 버튼까지 전부
-   * 책임진다. 새로고침하면 사라진다 — 확인창, 폼 입력처럼 공유/재접속이 필요 없는 모달에 쓴다.
+   * JSX를 그대로 받아 state 기반 모달로 엽니다.
+   *
+   * 전달한 content가 제목과 닫기 버튼을 포함한 모달 내용을 책임집니다.
+   * 새로고침하면 사라지는 폼, 확인창 등에 사용합니다.
    */
   openModal: (content: ReactNode, options?: ModalNameOptions) => void;
+
+  /**
+   * 모달을 즉시 닫습니다.
+   *
+   * Escape와 backdrop 닫기 정책과 관계없이 동작하기 때문에
+   * mutation 성공 후 모달을 닫는 용도로 사용할 수 있습니다.
+   */
   closeModal: () => void;
+
+  /**
+   * Escape와 backdrop을 통한 모달 닫기 허용 여부를 변경합니다.
+   *
+   * API 요청 중 false로 설정하면 사용자가 모달을 닫은 뒤
+   * 동일 요청을 다시 제출하는 문제를 방지할 수 있습니다.
+   */
+  setModalDismissible: (isDismissible: boolean) => void;
 }
 
 const ModalContext = createContext<ModalContextValue | null>(null);
@@ -34,31 +61,37 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
 
+interface BareModalProps extends ModalNameOptions {
+  isOpen: boolean;
+  children: ReactNode;
+
+  /**
+   * 사용자가 Escape 또는 backdrop으로 닫기를 요청했을 때 실행됩니다.
+   *
+   * 실제로 닫을 수 있는지는 ModalProvider에서 판단합니다.
+   */
+  onDismissRequest: () => void;
+}
+
 /**
- * 전역 모달 시스템 전용 최소 모달 shell입니다. 제목/닫기 버튼 같은 chrome이 없고 배경 딤,
- * 포커스 트랩, Esc/backdrop 닫기, 열려 있는 동안 body 스크롤 잠금만 책임집니다 — 넘겨받은
- * `children`이 모달 내용 전체(제목, 닫기 버튼 포함)를 직접 그립니다.
+ * 전역 모달 시스템의 최소 shell입니다.
  *
- * 너비/높이를 강제하지 않는다 — dialog wrapper에 `w-*`/`max-w-*`가 없어 `children`이 자기
- * 크기를 그대로 정한다. 작은 확인창은 아무 너비도 안 주면 내용 크기만큼만 좁게 나오고, 화면을
- * 절반만 덮는 모달은 `className="w-[50vw]"`, 꽉 차는 모달은 `className="w-[calc(100vw-48px)]"`
- * 처럼 content 최상위 요소에 원하는 너비를 직접 주면 된다(`max-h-[calc(100dvh-48px)]`만 항상
- * 유지되어 뷰포트를 넘치지 않는다).
+ * 담당:
+ * - backdrop
+ * - body 스크롤 잠금
+ * - 포커스 이동과 복귀
+ * - 포커스 트랩
+ * - Escape/backdrop 닫기 요청 전달
  *
- * `src/common/components/MoverModal/Modal.tsx`(다른 feature들이 쓰는 title 필수 모달)와는
- * 별개입니다 — 그 컴포넌트를 수정하거나 재사용하지 않고, 전역 모달 전용으로 여기서만 씁니다.
+ * 제목, 닫기 버튼, 폼과 같은 실제 콘텐츠는 children이 담당합니다.
  */
 function BareModal({
   isOpen,
-  onClose,
+  onDismissRequest,
   children,
   ariaLabel,
   ariaLabelledBy,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  children: ReactNode;
-} & ModalNameOptions) {
+}: BareModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -67,18 +100,26 @@ function BareModal({
     }
 
     const previouslyFocusedElement =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+
     const previousOverflow = document.body.style.overflow;
+
     document.body.style.overflow = "hidden";
 
     const dialog = dialogRef.current;
-    const firstFocusableElement = dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+    const firstFocusableElement =
+      dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+
     (firstFocusableElement ?? dialog)?.focus();
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+
+        // 실제 닫기 가능 여부는 Provider의 dismissal 정책이 결정합니다.
+        onDismissRequest();
         return;
       }
 
@@ -115,7 +156,7 @@ function BareModal({
       document.body.style.overflow = previousOverflow;
       previouslyFocusedElement?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onDismissRequest]);
 
   if (!isOpen) {
     return null;
@@ -123,7 +164,7 @@ function BareModal({
 
   const handleBackdropMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
     if (event.target === event.currentTarget) {
-      onClose();
+      onDismissRequest();
     }
   };
 
@@ -148,11 +189,9 @@ function BareModal({
 }
 
 /**
- * URL의 `?modal=` 쿼리를 읽어 `MODAL_COMPONENTS`(modal-registry)에 등록된 컴포넌트를 연다.
- * `useSearchParams`를 쓰므로 `ModalProvider`에서 `Suspense`로 감싼다.
+ * URL의 ?modal= 쿼리를 읽어 modal-registry에 등록된 모달을 엽니다.
  *
- * state 기반 모달(`openModal`)과 이 URL 기반 모달은 서로 독립적으로 동작한다 — 동시에 둘 다
- * 열려 있는 상태도 기술적으로는 가능하니, 한 트리거에서 두 방식을 같이 쓰지 않는다.
+ * URL 기반 모달은 현재 state 기반 폼 모달의 제출 상태와 독립적으로 동작합니다.
  */
 function UrlModal() {
   const router = useRouter();
@@ -162,59 +201,104 @@ function UrlModal() {
   const modalName = searchParams.get("modal");
   const ModalComponent = modalName ? MODAL_COMPONENTS[modalName] : undefined;
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     const params = new URLSearchParams(searchParams);
+
     params.delete("modal");
+
     const query = params.toString();
-    // 뒤로가기 히스토리를 쌓지 않도록 push 대신 replace를 쓴다 — 그래야 모달을 여러 번 여닫아도
-    // 뒤로가기 한 번에 모달이 열려 있던 이전 페이지로 튀지 않는다.
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  };
+
+    // 모달을 여러 번 열고 닫아도 불필요한 브라우저 히스토리가
+    // 쌓이지 않도록 push 대신 replace를 사용합니다.
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+  }, [pathname, router, searchParams]);
 
   if (!ModalComponent) {
     return null;
   }
 
   return (
-    <BareModal isOpen onClose={closeModal}>
+    <BareModal isOpen onDismissRequest={closeModal}>
       <ModalComponent onClose={closeModal} />
     </BareModal>
   );
 }
 
 /**
- * 전역 모달 시스템입니다. 두 가지 방식을 함께 제공하며, 상황에 맞는 쪽을 선택해서 씁니다.
+ * 애플리케이션 전역 모달 시스템입니다.
  *
- * 1. state 기반(`useModal().openModal(content)`): 컴포넌트가 JSX를 직접 넘겨서 연다.
- *    새로고침하면 닫힌다 — 확인창, 폼 입력처럼 공유/재접속이 필요 없는 모달에 쓴다.
- * 2. URL 기반(`<Link href="?modal=이름">`): `modal-registry.ts`(`MODAL_COMPONENTS`)에 등록된
- *    컴포넌트를 `?modal=이름` 쿼리로 연다. 새로고침·링크 공유 후에도 같은 모달이 열린 채로
- *    유지돼야 하는 경우에만 쓴다(AGENTS.md 어디에도 아직 이런 요구가 없어 registry는 비어 있다).
+ * state 기반 모달:
+ * - useModal().openModal(content)
+ * - 폼, 확인창처럼 새로고침 유지가 필요 없는 모달
  *
- * 두 방식 모두 배경 딤/포커스 트랩/Esc·backdrop 닫기만 책임지는 `BareModal`(이 파일 전용, 아래
- * 정의)을 쓴다 — 다른 feature들이 쓰는 `MoverModal/Modal.tsx`(title 필수)는 건드리지 않는다.
+ * URL 기반 모달:
+ * - ?modal=이름
+ * - modal-registry에 등록된 모달
  */
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [modalContent, setModalContent] = useState<ReactNode>(null);
   const [modalName, setModalName] = useState<ModalNameOptions>({});
 
-  const openModal = (content: ReactNode, options: ModalNameOptions = {}) => {
-    setModalContent(content);
-    setModalName(options);
-    setIsOpen(true);
-  };
+  /**
+   * Escape와 backdrop으로 state 기반 모달을 닫을 수 있는지를 관리합니다.
+   *
+   * 새 모달은 항상 닫을 수 있는 상태로 시작합니다.
+   */
+  const [isModalDismissible, setModalDismissible] = useState(true);
 
-  const closeModal = () => {
+  const openModal = useCallback(
+    (content: ReactNode, options: ModalNameOptions = {}) => {
+      setModalContent(content);
+      setModalName(options);
+      setModalDismissible(true);
+      setIsOpen(true);
+    },
+    [],
+  );
+
+  /**
+   * mutation 성공처럼 애플리케이션이 명시적으로 닫는 경우에는
+   * dismissal 제한과 관계없이 모달을 닫습니다.
+   */
+  const closeModal = useCallback(() => {
     setIsOpen(false);
     setModalContent(null);
-  };
+    setModalName({});
+    setModalDismissible(true);
+  }, []);
+
+  /**
+   * Escape와 backdrop에서만 사용하는 닫기 요청 handler입니다.
+   *
+   * API 요청 중에는 isModalDismissible이 false이므로 닫히지 않습니다.
+   */
+  const handleDismissRequest = useCallback(() => {
+    if (!isModalDismissible) {
+      return;
+    }
+
+    closeModal();
+  }, [closeModal, isModalDismissible]);
 
   return (
-    <ModalContext.Provider value={{ isOpen, openModal, closeModal }}>
+    <ModalContext.Provider
+      value={{
+        isOpen,
+        openModal,
+        closeModal,
+        setModalDismissible,
+      }}
+    >
       {children}
 
-      <BareModal isOpen={isOpen} onClose={closeModal} {...modalName}>
+      <BareModal
+        isOpen={isOpen}
+        onDismissRequest={handleDismissRequest}
+        {...modalName}
+      >
         {modalContent}
       </BareModal>
 
@@ -226,26 +310,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * `ModalProvider` 하위에서만 호출할 수 있다. `Providers`(src/providers/Providers.tsx)가 루트
- * layout에서 이미 감싸고 있으므로 일반적으로는 항상 사용 가능하다.
- *
- * @example
- * function MyComponent() {
- *   const { openModal, closeModal } = useModal();
- *
- *   const handleClick = () => {
- *     openModal(
- *       <div>
- *         <h2>제목</h2>
- *         <p>내용</p>
- *         <button onClick={closeModal}>닫기</button>
- *       </div>,
- *       { ariaLabel: "제목" },
- *     );
- *   };
- *
- *   return <button onClick={handleClick}>모달 열기</button>;
- * }
+ * ModalProvider 하위에서만 사용할 수 있는 전역 모달 hook입니다.
  */
 export function useModal(): ModalContextValue {
   const context = useContext(ModalContext);

@@ -1,10 +1,8 @@
-import { notFound } from "next/navigation";
+import { HydrationBoundary } from "@tanstack/react-query";
 
-import { CustomerQuoteDetailView } from "../../[quoteId]/_components/CustomerQuoteDetailView";
-import {
-  findHistoryQuoteById,
-  toCustomerQuoteDetail,
-} from "../_data/mockHistoryGroups";
+import { prefetchReceivedQuoteHistoryDetail } from "@/features/customer-quote/api/customer-quote.server";
+
+import { CustomerQuoteHistoryDetailContainer } from "./_components/CustomerQuoteHistoryDetailContainer";
 
 interface CustomerQuoteHistoryDetailPageProps {
   params: Promise<{ quoteId: string }>;
@@ -14,16 +12,11 @@ export default async function CustomerQuoteHistoryDetailPage({
   params,
 }: CustomerQuoteHistoryDetailPageProps) {
   const { quoteId } = await params;
-  const found = findHistoryQuoteById(quoteId);
-
-  if (!found) {
-    notFound();
-  }
+  const dehydratedState = await prefetchReceivedQuoteHistoryDetail(quoteId);
 
   return (
-    <CustomerQuoteDetailView
-      quote={toCustomerQuoteDetail(found)}
-      variant="history"
-    />
+    <HydrationBoundary state={dehydratedState}>
+      <CustomerQuoteHistoryDetailContainer quoteId={quoteId} />
+    </HydrationBoundary>
   );
 }

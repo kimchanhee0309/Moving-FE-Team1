@@ -1,4 +1,5 @@
 import { ROUTES } from "@/common/constants/routes";
+import { getNewPasswordError } from "@/common/validation/password";
 
 import type { AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
 
@@ -22,9 +23,8 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
       errors.phone = "올바른 휴대전화 번호를 입력해 주세요.";
     }
     const password = values.password.trim();
-    if (password.length < 8 || new TextEncoder().encode(password).length > 72 || !/[a-zA-Z]/.test(password) || !/\d/.test(password) || !/[^a-zA-Z0-9\s]/.test(password)) {
-      errors.password = "8자 이상·72바이트 이하이며 영문·숫자·특수문자가 필요합니다.";
-    }
+    const passwordError = getNewPasswordError(password);
+    if (passwordError) errors.password = passwordError;
     if (!values.passwordConfirm || values.password !== values.passwordConfirm) {
       errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
     }
@@ -52,9 +52,10 @@ export function authHref(path: string, redirectTo?: string): string {
 /** 인증 성공 뒤 프로필 미등록 사용자를 역할별 등록 화면으로 먼저 보냅니다. */
 export function resolveAuthenticatedPath(user: AuthUser, redirectTo?: string): string {
   if (!user.profileCompleted) {
-    return user.role === "MOVER"
+    const registerPath = user.role === "MOVER"
       ? ROUTES.MOVER.PROFILE.REGISTER
       : ROUTES.CUSTOMER.PROFILE.REGISTER;
+    return authHref(registerPath, redirectTo);
   }
 
   const target = safeAuthRedirect(redirectTo);
