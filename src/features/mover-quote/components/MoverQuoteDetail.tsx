@@ -17,6 +17,11 @@ interface MoverQuoteDetailProps {
 export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
   const isConfirmed = quote.quoteStatus === QUOTE_STATUS.CONFIRMED;
 
+  const priceLabel =
+    quote.price === null
+      ? "견적 금액 없음"
+      : `${quote.price.toLocaleString("ko-KR")}원`;
+
   return (
     <>
       <header className="border-b border-[var(--line-100)] bg-white">
@@ -75,7 +80,7 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
             </span>
 
             <strong className="text-[24px] font-bold leading-8 text-[var(--black-400)]">
-              {quote.price.toLocaleString("ko-KR")}원
+              {priceLabel}
             </strong>
           </div>
 

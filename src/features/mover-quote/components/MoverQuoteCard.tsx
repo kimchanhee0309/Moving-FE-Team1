@@ -20,6 +20,11 @@ export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
 
   const isCompleted = quote.moveRequestStatus === MOVE_REQUEST_STATUS.COMPLETED;
 
+  const priceLabel =
+    quote.price === null
+      ? "견적 금액 없음"
+      : `${quote.price.toLocaleString("ko-KR")}원`;
+
   return (
     <article className="relative min-h-[326px] w-full max-w-[588px] overflow-hidden rounded-[20px] border border-[var(--line-100)] bg-white p-8 shadow-[2px_2px_10px_rgb(220_220_220/20%)] max-[743px]:min-h-[284px] max-[743px]:max-w-[328px] max-[743px]:p-5">
       <div className="flex items-start justify-between gap-4">
@@ -100,7 +105,7 @@ export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
         </span>
 
         <strong className="text-[24px] font-bold leading-8 text-[var(--black-400)] max-[743px]:text-[18px]">
-          {quote.price.toLocaleString("ko-KR")}원
+          {priceLabel}
         </strong>
       </div>
 
