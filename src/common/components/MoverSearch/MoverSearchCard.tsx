@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { useLayoutEffect, useRef, useState } from "react";
 
-import type { ServiceType } from "@/common/constants/domain";
-import { SERVICE_TYPE } from "@/common/constants/domain";
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
+import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
@@ -28,6 +28,7 @@ export type MoverSearchCardSize = "sm";
 
 export interface MoverSearchCardProps {
   serviceType: ServiceType;
+  serviceTypes?: ServiceType[];
   moverName: string;
   introduction: string;
   description: string;
@@ -173,6 +174,7 @@ function MoverAvatar({
         fill
         sizes="140px"
         className="object-cover"
+        unoptimized={isRemoteAssetUrl(src)}
       />
     </div>
   );
@@ -389,6 +391,7 @@ function MoverStatsRow({
 
 export function MoverSearchCard({
   serviceType,
+  serviceTypes,
   moverName,
   introduction,
   description,
@@ -410,6 +413,8 @@ export function MoverSearchCard({
   const isSm = size === "sm";
   const avatarAlt = `${moverName} 기사님 프로필`;
   const checkboxLabel = selectLabel ?? `${moverName} 기사님 선택`;
+  const chipTypes =
+    serviceTypes && serviceTypes.length > 0 ? serviceTypes : [serviceType];
 
   return (
     <article
@@ -427,15 +432,19 @@ export function MoverSearchCard({
         .filter(Boolean)
         .join(" ")}
     >
-      <div
-        className={[
-          "flex w-full items-center justify-between",
-          !isSm && "min-[744px]:h-[34px]",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <ServiceTypeChip serviceType={serviceType} isSm={isSm} />
+      <div className="flex w-full items-start justify-between gap-2">
+        <div
+          className={[
+            "flex min-w-0 flex-1 flex-wrap items-center gap-1",
+            !isSm && "min-[744px]:gap-2",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          {chipTypes.map((type) => (
+            <ServiceTypeChip key={type} serviceType={type} isSm={isSm} />
+          ))}
+        </div>
         {selectable && (
           <SelectCheckbox
             isSelected={isSelected}

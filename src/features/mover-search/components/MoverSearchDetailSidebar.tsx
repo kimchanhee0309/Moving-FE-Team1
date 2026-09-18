@@ -70,7 +70,7 @@ export function MoverSearchDetailSidebar({
           disabled={!canToggleFavorite}
           aria-pressed={isFavorite}
           aria-label={isFavorite ? "기사님 찜 해제" : "기사님 찜하기"}
-          className="text-2lg-semibold flex h-[54px] w-full items-center justify-center gap-2.5 rounded-2xl border border-[var(--line-200)] bg-[var(--gray-50)] text-[var(--black-500)] disabled:cursor-not-allowed disabled:opacity-40"
+          className="text-2lg-semibold flex h-[54px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-[var(--line-200)] bg-[var(--gray-50)] text-[var(--black-500)] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Image
             src="/icons/button/like-sm.svg"
@@ -112,7 +112,7 @@ export function MoverSearchDetailCompactShare({
         <IconButton
           kind="kakao"
           size="xs"
-          aria-label="카카오로 공유"
+          aria-label="기사님 공유하기"
           onClick={onShareKakao}
         />
         <IconButton
@@ -180,7 +180,7 @@ function MoverSearchDetailShare({
         <IconButton
           kind="kakao"
           size="md"
-          aria-label="카카오로 공유"
+          aria-label="기사님 공유하기"
           onClick={onShareKakao}
         />
         <IconButton

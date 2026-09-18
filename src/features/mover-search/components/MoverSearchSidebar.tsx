@@ -55,6 +55,7 @@ export function MoverSearchSidebar({
                     <MoverSearchCard
                       size="sm"
                       serviceType={mover.serviceType}
+                      serviceTypes={mover.serviceTypes}
                       moverName={mover.moverName}
                       introduction={mover.introduction}
                       description={mover.description}

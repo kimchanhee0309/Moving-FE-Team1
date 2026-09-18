@@ -124,12 +124,18 @@ export function readFavoriteList(data: unknown): FavoriteListDto {
  * serviceTypes가 비거나 알 수 없으면 SMALL로 두고, confirmedCount는 API에 없어 0입니다.
  */
 export function mapFavoriteMoverToCard(mover: FavoriteMoverDto): FavoriteMover {
-  const serviceType =
-    mover.serviceTypes.find(isServiceType) ?? SERVICE_TYPE.SMALL;
+  const owned = new Set(mover.serviceTypes.filter(isServiceType));
+  const serviceTypes = [
+    SERVICE_TYPE.SMALL,
+    SERVICE_TYPE.HOME,
+    SERVICE_TYPE.OFFICE,
+  ].filter((serviceType) => owned.has(serviceType));
+  const serviceType = serviceTypes[0] ?? SERVICE_TYPE.SMALL;
 
   return {
     id: mover.id,
     serviceType,
+    serviceTypes: serviceTypes.length > 0 ? serviceTypes : [serviceType],
     moverName: mover.nickname,
     introduction: mover.shortIntroduction,
     // API에 상세 소개가 없어 한줄 소개를 재사용합니다.

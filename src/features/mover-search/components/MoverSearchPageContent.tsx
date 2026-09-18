@@ -227,6 +227,7 @@ export function MoverSearchPageContent() {
                   >
                     <MoverSearchCard
                       serviceType={mover.serviceType}
+                      serviceTypes={mover.serviceTypes}
                       moverName={mover.moverName}
                       introduction={mover.introduction}
                       description={mover.description}
