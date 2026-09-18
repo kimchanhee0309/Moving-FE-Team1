@@ -1,9 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
+import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { EmptyState } from "@/common/components/page-state";
 import { ErrorState } from "@/common/components/page-state";
 import { LoadingState } from "@/common/components/page-state";
-import { useReceivedQuoteDetailQuery } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
+import { ROUTES } from "@/common/constants/routes";
+import {
+  useConfirmReceivedQuoteMutation,
+  useReceivedQuoteDetailQuery,
+} from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
 
 import { CustomerQuoteDetailView } from "./CustomerQuoteDetailView";
 
@@ -14,7 +21,9 @@ interface CustomerQuoteDetailContainerProps {
 export function CustomerQuoteDetailContainer({
   quoteId,
 }: CustomerQuoteDetailContainerProps) {
+  const router = useRouter();
   const detailQuery = useReceivedQuoteDetailQuery(quoteId);
+  const confirmMutation = useConfirmReceivedQuoteMutation();
 
   if (detailQuery.isLoading) {
     return (
@@ -49,5 +58,26 @@ export function CustomerQuoteDetailContainer({
     );
   }
 
-  return <CustomerQuoteDetailView quote={detailQuery.data} variant="pending" />;
+  return (
+    <CustomerQuoteDetailView
+      quote={detailQuery.data}
+      variant="pending"
+      isConfirmPending={confirmMutation.isPending}
+      confirmError={
+        confirmMutation.error
+          ? getApiErrorMessage(
+              confirmMutation.error,
+              "견적을 확정하지 못했습니다. 다시 시도해 주세요.",
+            )
+          : null
+      }
+      onConfirm={() => {
+        confirmMutation.mutate(quoteId, {
+          onSuccess: (quote) => {
+            router.replace(ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id));
+          },
+        });
+      }}
+    />
+  );
 }

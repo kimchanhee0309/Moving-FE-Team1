@@ -1,8 +1,14 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import {
+  confirmReceivedQuote,
   getActiveMoveRequest,
   getReceivedQuoteDetail,
   getReceivedQuoteHistory,
@@ -113,5 +119,40 @@ export function useReceivedQuoteHistoryDetailQuery(quoteId: string) {
       return mapQuoteDetail(result.quote);
     },
     enabled: Boolean(quoteId),
+  });
+}
+
+/**
+ * 대기 견적 확정 mutation.
+ * 성공 시 이력 상세 캐시를 채우고 대기·이력·활성 요청 쿼리를 무효화합니다.
+ */
+export function useConfirmReceivedQuoteMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (quoteId: string) => {
+      const result = await confirmReceivedQuote(quoteId);
+      return mapQuoteDetail(result.quote);
+    },
+    onSuccess: async (quote) => {
+      queryClient.setQueryData(
+        customerQuoteQueryKeys.historyDetail(quote.id),
+        quote,
+      );
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: customerQuoteQueryKeys.pendingList(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: customerQuoteQueryKeys.pendingDetail(quote.id),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: customerQuoteQueryKeys.historyList(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: customerQuoteQueryKeys.activeMoveRequest(),
+        }),
+      ]);
+    },
   });
 }

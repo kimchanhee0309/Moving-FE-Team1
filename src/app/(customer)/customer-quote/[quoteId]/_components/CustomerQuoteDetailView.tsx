@@ -18,6 +18,9 @@ interface CustomerQuoteDetailViewProps {
    * `history`는 받았던 견적 상세(조회만). 뱃지는 `quote.status`를 따릅니다.
    */
   variant?: "pending" | "history";
+  onConfirm?: () => void;
+  isConfirmPending?: boolean;
+  confirmError?: string | null;
 }
 
 function MovingBadge() {
@@ -121,6 +124,9 @@ function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
 export function CustomerQuoteDetailView({
   quote,
   variant = "pending",
+  onConfirm,
+  isConfirmPending = false,
+  confirmError = null,
 }: CustomerQuoteDetailViewProps) {
   const isConfirmed = quote.status === QUOTE_STATUS.CONFIRMED;
   const canConfirm = variant === "pending";
@@ -319,14 +325,25 @@ export function CustomerQuoteDetailView({
                 </div>
                 <button
                   type="button"
+                  onClick={onConfirm}
+                  disabled={isConfirmPending || !onConfirm}
                   className={[
                     "mt-[29px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
                     "text-2lg-semibold text-[var(--gray-50)]",
                     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
                   ].join(" ")}
                 >
-                  견적 확정하기
+                  {isConfirmPending ? "확정 중..." : "견적 확정하기"}
                 </button>
+                {confirmError ? (
+                  <p
+                    role="alert"
+                    className="text-md-regular mt-3 text-[var(--secondary-red-200)]"
+                  >
+                    {confirmError}
+                  </p>
+                ) : null}
                 <div className="mt-10 h-px w-full bg-[var(--line-200)]" />
               </>
             ) : null}
