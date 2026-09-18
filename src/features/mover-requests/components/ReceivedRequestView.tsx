@@ -1,17 +1,17 @@
 "use client";
 
 /**
- * 기사님의 받은 요청 페이지를 구성하는 Client Component
+ * 기사님의 받은 요청 페이지를 구성하는 Client Component입니다.
  *
  * 담당 기능:
- * - 검색,서비스 유형,지정 요청,정렬 조건 관리
+ * - 검색, 서비스 유형, 지정 요청, 정렬 조건 관리
  * - 받은 요청 Infinite Query 실행
  * - 견적 보내기/반려 모달 열기
- * - loading,error,empty,pagination 상태 렌더링
+ * - loading, error, empty, pagination 상태 렌더링
  *
- * API 호출과 응답 변환은 hooks/API 파일에 위임
+ * API 호출과 응답 변환은 hooks/API 파일에 위임합니다.
  */
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { Button } from "@/common/components/button";
@@ -79,19 +79,39 @@ interface SendQuoteModalContentProps {
 }
 
 /**
- * 견적 보내기 모달과 mutation을 연결하는 컨테이너
+ * 견적 보내기 모달과 mutation을 연결하는 컨테이너입니다.
  *
- * 전역 ModalProvider에는 ReactNode가 저장되므로,
- * mutation 상태를 이 컴포넌트 내부에서 관리해야 isSubmitting과
- * serverError가 변경될 때 모달이 다시 렌더링됨
+ * 전역 ModalProvider에는 ReactNode가 저장되므로 mutation 상태를 이
+ * 컴포넌트 내부에서 관리해야 isSubmitting과 serverError가 변경될 때
+ * 모달이 다시 렌더링됩니다.
  */
 function SendQuoteModalContent({
   request,
   onClose,
 }: SendQuoteModalContentProps) {
   const mutation = useSendQuoteMutation();
+  const { setModalDismissible } = useModal();
+
+  /**
+   * 요청을 전송하는 동안에는 닫기 버튼뿐만 아니라 Escape와 backdrop
+   * 클릭도 막습니다. 요청 성공 시 호출하는 onClose는 dismissal 정책과
+   * 관계없이 모달을 닫을 수 있습니다.
+   */
+  useEffect(() => {
+    setModalDismissible(!mutation.isPending);
+
+    return () => {
+      // 모달이 닫히거나 다른 모달로 교체될 때 다음 모달의 닫기 정책이
+      // 잠긴 상태로 남지 않도록 기본값을 복구합니다.
+      setModalDismissible(true);
+    };
+  }, [mutation.isPending, setModalDismissible]);
 
   const handleSubmit = (value: SendQuoteFormValue) => {
+    if (mutation.isPending) {
+      return;
+    }
+
     mutation.mutate(
       {
         requestId: request.requestId,
@@ -127,15 +147,31 @@ interface RejectRequestModalContentProps {
 }
 
 /**
- * 반려 모달과 반려 mutation을 연결하는 컨테이너
+ * 반려 요청 모달과 mutation을 연결하는 컨테이너입니다.
  */
 function RejectRequestModalContent({
   request,
   onClose,
 }: RejectRequestModalContentProps) {
   const mutation = useRejectReceivedRequestMutation();
+  const { setModalDismissible } = useModal();
+
+  /**
+   * 반려 요청이 진행되는 동안 Escape와 backdrop 닫기를 막습니다.
+   */
+  useEffect(() => {
+    setModalDismissible(!mutation.isPending);
+
+    return () => {
+      setModalDismissible(true);
+    };
+  }, [mutation.isPending, setModalDismissible]);
 
   const handleSubmit = (value: RejectRequestFormValue) => {
+    if (mutation.isPending) {
+      return;
+    }
+
     mutation.mutate(
       {
         requestId: request.requestId,
@@ -178,8 +214,8 @@ export function ReceivedRequestsView() {
   const [isSortOpen, setIsSortOpen] = useState(false);
 
   /**
-   * 입력값을 바로 API Query에 넣지 않고 deferred 값을 사용
-   * 연속 입력 중 불필요한 화면 갱신을 줄이면서 최신 검색어를 조회
+   * 입력값을 바로 API query에 넣지 않고 deferred 값을 사용합니다.
+   * 연속 입력 중 화면 갱신 우선순위를 낮추면서 최신 검색어를 조회합니다.
    */
   const deferredKeyword = useDeferredValue(searchKeyword.trim());
 
@@ -197,8 +233,8 @@ export function ReceivedRequestsView() {
   const receivedRequestsQuery = useReceivedRequests(query);
 
   /**
-   * useInfiniteQuery가 페이지 단위로 보관한 items를
-   * 카드 목록에서 사용할 하나의 배열로 합침
+   * useInfiniteQuery가 페이지 단위로 보관한 items를 카드에서 사용할
+   * 하나의 배열로 합칩니다.
    */
   const requests =
     receivedRequestsQuery.data?.pages.flatMap((page) => page.items) ?? [];
@@ -244,12 +280,35 @@ export function ReceivedRequestsView() {
     selectedService !== null ||
     designatedOnly;
 
-  const errorMessage = receivedRequestsQuery.error
-    ? getApiErrorMessage(
-        receivedRequestsQuery.error,
-        "받은 요청을 불러오지 못했습니다.",
-      )
-    : undefined;
+  const hasLoadedRequests = requests.length > 0;
+
+  /**
+   * 첫 조회가 실패해 표시할 기존 카드가 없을 때만 전체 ErrorState를
+   * 보여줍니다. 이미 받은 페이지가 있다면 오류가 발생해도 기존 카드를
+   * 숨기지 않습니다.
+   */
+  const initialErrorMessage =
+    receivedRequestsQuery.isError &&
+    !hasLoadedRequests &&
+    receivedRequestsQuery.error
+      ? getApiErrorMessage(
+          receivedRequestsQuery.error,
+          "받은 요청을 불러오지 못했습니다.",
+        )
+      : undefined;
+
+  /**
+   * 추가 페이지 조회 실패는 기존 목록을 유지한 채 목록 아래에 표시합니다.
+   * useInfiniteQuery는 fetchNextPage 실패 후에도 기존 pages를 캐시에
+   * 보존하므로 이를 전체 ErrorState로 덮지 않아야 합니다.
+   */
+  const loadMoreErrorMessage =
+    receivedRequestsQuery.isFetchNextPageError && receivedRequestsQuery.error
+      ? getApiErrorMessage(
+          receivedRequestsQuery.error,
+          "추가 요청을 불러오지 못했습니다. 다시 시도해 주세요.",
+        )
+      : undefined;
 
   return (
     <>
@@ -337,10 +396,10 @@ export function ReceivedRequestsView() {
 
           {receivedRequestsQuery.isPending ? (
             <LoadingState message="받은 요청을 불러오는 중이에요" />
-          ) : errorMessage ? (
+          ) : initialErrorMessage ? (
             <ErrorState
               title="받은 요청을 불러오지 못했어요."
-              description={errorMessage}
+              description={initialErrorMessage}
               onRetry={() => {
                 void receivedRequestsQuery.refetch();
               }}
@@ -371,7 +430,28 @@ export function ReceivedRequestsView() {
                 ))}
               </div>
 
-              {receivedRequestsQuery.hasNextPage ? (
+              {loadMoreErrorMessage ? (
+                <div
+                  role="alert"
+                  className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--primary-200)] bg-[var(--primary-100)] px-6 py-5 text-center"
+                >
+                  <p className="text-[14px] font-medium leading-6 text-[var(--primary-400)]">
+                    {loadMoreErrorMessage}
+                  </p>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outlined"
+                    isLoading={receivedRequestsQuery.isFetchingNextPage}
+                    onClick={() => {
+                      void receivedRequestsQuery.fetchNextPage();
+                    }}
+                  >
+                    다시 시도
+                  </Button>
+                </div>
+              ) : receivedRequestsQuery.hasNextPage ? (
                 <div className="flex justify-center">
                   <Button
                     type="button"

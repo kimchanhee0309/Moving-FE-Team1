@@ -71,7 +71,7 @@ export interface ReceivedRequestViewModel {
 /** ViewModel로 변환된 받은 요청 한 페이지 */
 export interface ReceivedRequestPage {
   items: ReceivedRequestViewModel[];
-  paginateion: CursorPagination;
+  pagination: CursorPagination;
 }
 
 /** 견적 보내기 모달의 입력값 */

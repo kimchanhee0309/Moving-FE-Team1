@@ -97,12 +97,12 @@ function readServiceType(value: unknown): ServiceType {
 }
 
 function readPagination(value: unknown): CursorPagination {
-  const paginateion = readObject(
+  const pagination = readObject(
     value,
     "받은 요청 페이지 정보가 올바르지 않습니다.",
   );
 
-  const nextCursorValue = paginateion.nextCursor;
+  const nextCursorValue = pagination.nextCursor;
 
   if (nextCursorValue !== null && typeof nextCursorValue !== "string") {
     return invalidResponse("받은 요청의 다음 페이지 정보가 올바르지 않습니다.");
@@ -111,7 +111,7 @@ function readPagination(value: unknown): CursorPagination {
   return {
     nextCursor: nextCursorValue,
     hasNext: readBoolean(
-      paginateion.hasNext,
+      pagination.hasNext,
       "받은 요청의 다음 페이지 여부가 올바르지 않습니다.",
     ),
   };
@@ -240,7 +240,7 @@ function readReceivedRequestPage(value: unknown): ReceivedRequestPage {
     items: data.items
       .map(readReceivedRequestItem)
       .map(toReceivedRequestViewModel),
-    paginateion: readPagination(data.paginateion),
+    pagination: readPagination(data.pagination),
   };
 }
 
@@ -278,7 +278,7 @@ function readCreatedRejection(value: unknown): CreatedRequestRejection {
   const data = readObject(value, "반려 응답이 올바르지 않습니다.");
 
   const rejection = readObject(
-    data.rejcetion,
+    data.rejection,
     "생성된 반려 정보가 올바르지 않습니다.",
   );
 
