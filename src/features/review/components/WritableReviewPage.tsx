@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { ApiError } from "@/common/api/error";
 import { Pagination } from "@/common/components/Pagination";
+import { ErrorState, LoadingState } from "@/common/components/page-state";
 
 import {
   useCreateReview,
@@ -81,47 +82,25 @@ export function WritableReviewPage() {
     );
   };
 
-  const listErrorMessage =
-    reviewsQuery.error instanceof ApiError
-      ? reviewsQuery.error.message
-      : "작성 가능한 리뷰를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-
   return (
     <>
       <ReviewTabs value="writable" />
 
       <main className="min-h-[calc(100vh-108px)] bg-[#fafafa] min-[1200px]:min-h-[calc(100vh-168px)]">
         {reviewsQuery.isPending ? (
-          <p
-            role="status"
-            className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]"
-          >
-            작성 가능한 리뷰를 불러오는 중입니다.
-          </p>
+          <LoadingState message="작성 가능한 리뷰를 불러오는 중이에요." />
         ) : reviewsQuery.isError ? (
-          <section
-            className="flex w-full flex-col items-center justify-center gap-4 px-6 py-20"
-            role="alert"
-          >
-            <p className="text-lg-regular text-center text-[var(--input-placeholder)] min-[744px]:text-2xl-regular">
-              {listErrorMessage}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                void reviewsQuery.refetch();
-              }}
-              className={[
-                "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! px-4",
-                "text-lg-semibold text-[var(--gray-50)]!",
-                "min-[744px]:h-16 min-[744px]:rounded-2xl min-[744px]:text-2lg-semibold",
-                "transition-opacity hover:opacity-90",
-                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
-              ].join(" ")}
-            >
-              다시 시도
-            </button>
-          </section>
+          <ErrorState
+            title="작성 가능한 리뷰를 불러오지 못했어요."
+            description={
+              reviewsQuery.error instanceof ApiError
+                ? reviewsQuery.error.message
+                : undefined
+            }
+            onRetry={() => {
+              void reviewsQuery.refetch();
+            }}
+          />
         ) : isEmpty ? (
           // min-h만 있는 flex 부모의 flex-1은 높이가 확정되지 않아 중앙 정렬이 깨짐.
           // empty 섹션에 같은 뷰포트 높이를 직접 주고 가로·세로 중앙에 둡니다.

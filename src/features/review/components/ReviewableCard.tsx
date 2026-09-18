@@ -192,7 +192,10 @@ function MoveInfoItem({ label, value }: MoveInfoItemProps) {
       <span className="text-[14px]/[24px] font-normal text-(--gray-500)">
         {label}
       </span>
-      <span className="text-[14px]/[24px] font-normal whitespace-nowrap text-(--black-500) min-[744px]:text-[16px]/[26px]">
+      <span
+        className="w-full truncate text-[14px]/[24px] font-normal text-(--black-500) min-[744px]:text-[16px]/[26px]"
+        title={value}
+      >
         {value}
       </span>
     </div>
