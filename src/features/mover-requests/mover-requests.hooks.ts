@@ -57,7 +57,7 @@ export function useReceivedRequests(query: ReceivedRequestsQuery) {
     initialPageParam: null as string | null,
 
     getNextPageParam: (lastPage) =>
-      lastPage.paginateion.hasNext ? lastPage.paginateion.nextCursor : null,
+      lastPage.pagination.hasNext ? lastPage.pagination.nextCursor : null,
   });
 }
 
