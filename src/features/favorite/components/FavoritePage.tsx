@@ -120,7 +120,8 @@ export function FavoritePage() {
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
-      void fetchNextPage();
+      // sentinel이 연속으로 호출돼도 진행 중 요청을 취소·재시작하지 않습니다.
+      void fetchNextPage({ cancelRefetch: false });
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
