@@ -42,6 +42,15 @@ export function WritableReviewPage() {
     !reviewsQuery.isPending && !reviewsQuery.isError && totalCount === 0;
   const isSubmitting = createMutation.isPending;
 
+  // 목록 갱신으로 totalPages가 줄면 유효 범위를 벗어난 currentPage를 보정합니다.
+  if (
+    reviewsQuery.isSuccess &&
+    totalPages > 0 &&
+    currentPage > totalPages
+  ) {
+    setCurrentPage(totalPages);
+  }
+
   const handleOpenWrite = (review: WritableReviewItem) => {
     setSubmitError(null);
     setDraft({ review, rating: 0, content: "" });

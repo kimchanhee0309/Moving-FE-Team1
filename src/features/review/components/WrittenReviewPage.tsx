@@ -27,6 +27,15 @@ export function WrittenReviewPage() {
   const isEmpty =
     !reviewsQuery.isPending && !reviewsQuery.isError && totalCount === 0;
 
+  // 목록 갱신으로 totalPages가 줄면 유효 범위를 벗어난 currentPage를 보정합니다.
+  if (
+    reviewsQuery.isSuccess &&
+    totalPages > 0 &&
+    currentPage > totalPages
+  ) {
+    setCurrentPage(totalPages);
+  }
+
   return (
     <>
       <ReviewTabs value="written" />
