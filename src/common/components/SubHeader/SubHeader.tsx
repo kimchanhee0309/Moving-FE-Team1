@@ -42,6 +42,11 @@ export function SubHeader({
         .join(" ")}
       aria-label="이사 정보"
     >
+      {/*
+        긴 실주소에서 제목이 flex로 짓눌려 세로로 깨지지 않도록(1200+) 제목은 shrink-0,
+        주소 영역은 min-w-0으로 남은 폭을 쓰며 줄바꿈합니다.
+        744px에서는 주소·이사일 행이 넘치지 않도록 wrap을 허용합니다.
+      */}
       <div
         className={[
           "flex w-full flex-col gap-5",
@@ -53,7 +58,7 @@ export function SubHeader({
           className={[
             "flex w-full flex-col",
             "min-[744px]:gap-1",
-            "min-[1200px]:min-w-0 min-[1200px]:flex-1",
+            "min-[1200px]:w-auto min-[1200px]:shrink-0",
           ].join(" ")}
         >
           <h2 className="text-[var(--black-500)]">
@@ -64,7 +69,7 @@ export function SubHeader({
               {serviceTypeLabel}
             </span>
           </h2>
-          <p className="text-[var(--gray-500)]">
+          <p className="whitespace-nowrap text-[var(--gray-500)]">
             <span className="text-xs-regular min-[744px]:hidden">
               견적 신청일: {requestedAt}
             </span>
@@ -75,27 +80,27 @@ export function SubHeader({
         </div>
 
         <dl className="flex w-full flex-col gap-1 min-[744px]:hidden">
-          <div className="flex w-full items-center justify-between">
-            <dt className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+          <div className="flex w-full items-start justify-between gap-3">
+            <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
               출발지
             </dt>
-            <dd className="text-md-semibold whitespace-nowrap text-[var(--black-500)]">
+            <dd className="text-md-semibold break-keep text-right text-[var(--black-500)]">
               {from}
             </dd>
           </div>
-          <div className="flex w-full items-center justify-between">
-            <dt className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+          <div className="flex w-full items-start justify-between gap-3">
+            <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
               도착지
             </dt>
-            <dd className="text-md-semibold whitespace-nowrap text-[var(--black-500)]">
+            <dd className="text-md-semibold break-keep text-right text-[var(--black-500)]">
               {to}
             </dd>
           </div>
-          <div className="flex w-full items-center justify-between">
-            <dt className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+          <div className="flex w-full items-start justify-between gap-3">
+            <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
               이사일
             </dt>
-            <dd className="text-md-semibold whitespace-nowrap text-[var(--black-500)]">
+            <dd className="text-md-semibold whitespace-nowrap text-right text-[var(--black-500)]">
               {moveDate}
             </dd>
           </div>
@@ -103,22 +108,22 @@ export function SubHeader({
 
         <div
           className={[
-            "hidden w-full items-start gap-10",
-            "min-[744px]:flex",
-            "min-[1200px]:w-auto min-[1200px]:shrink-0",
+            "hidden w-full items-start",
+            "min-[744px]:flex min-[744px]:flex-wrap min-[744px]:gap-x-10 min-[744px]:gap-y-4",
+            "min-[1200px]:min-w-0 min-[1200px]:flex-1 min-[1200px]:justify-end",
           ].join(" ")}
         >
-          <div className="flex items-end gap-3">
-            <div className="flex flex-col items-start">
-              <span className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+          <div className="flex min-w-0 flex-1 items-end gap-3">
+            <div className="flex min-w-0 flex-col items-start">
+              <span className="text-md-regular text-[var(--gray-500)]">
                 출발지
               </span>
-              <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
+              <span className="text-2lg-semibold break-keep text-[var(--black-500)]">
                 {from}
               </span>
             </div>
             <div
-              className="relative h-[23px] w-2 shrink-0 overflow-hidden"
+              className="relative mb-0.5 h-[23px] w-2 shrink-0 overflow-hidden"
               aria-hidden="true"
             >
               <Image
@@ -130,18 +135,18 @@ export function SubHeader({
                 unoptimized
               />
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+            <div className="flex min-w-0 flex-col items-start">
+              <span className="text-md-regular text-[var(--gray-500)]">
                 도착지
               </span>
-              <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
+              <span className="text-2lg-semibold break-keep text-[var(--black-500)]">
                 {to}
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col items-start">
-            <span className="text-md-regular whitespace-nowrap text-center text-[var(--gray-500)]">
+          <div className="flex shrink-0 flex-col items-start">
+            <span className="text-md-regular text-[var(--gray-500)]">
               이사일
             </span>
             <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
