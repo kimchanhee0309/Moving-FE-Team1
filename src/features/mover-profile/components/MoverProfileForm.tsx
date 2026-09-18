@@ -72,13 +72,15 @@ export function MoverProfileForm({
   const [serviceTypeIds, setServiceTypeIds] = useState(initialValues?.serviceTypeIds ?? []);
   const [regions, setRegions] = useState(initialValues?.regions ?? []);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [serviceTouched, setServiceTouched] = useState(false);
+  const [regionTouched, setRegionTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isLoading || isSubmitting;
   const rawFieldErrors = getMoverTextErrors(textValues);
   const hasTextError = Object.values(rawFieldErrors).some(Boolean);
-  const hasServiceError = hasSubmitted && serviceTypeIds.length === 0;
-  const hasRegionError = hasSubmitted && regions.length === 0;
+  const hasServiceError = (hasSubmitted || serviceTouched) && serviceTypeIds.length === 0;
+  const hasRegionError = (hasSubmitted || regionTouched) && regions.length === 0;
   const isIncomplete =
     Object.values(textValues).some((value) => !value.trim()) ||
     serviceTypeIds.length === 0 ||
@@ -179,10 +181,10 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 placeholder="사이트에 노출될 별명을 입력해 주세요"
                 value={textValues.nickname}
-                error={touched.nickname ? rawFieldErrors.nickname : undefined}
+                error={touched.nickname || textValues.nickname ? rawFieldErrors.nickname : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, nickname: true }))}
-                onChange={(event) => updateTextValue("nickname", event.target.value)}
+                onChange={(event) => updateTextValue("nickname", event.currentTarget.value)}
               />
             </div>
             <div className={sectionClass}>
@@ -197,10 +199,10 @@ export function MoverProfileForm({
                 inputMode="numeric"
                 placeholder="기사님의 경력을 입력해 주세요"
                 value={textValues.careerYears}
-                error={touched.careerYears ? rawFieldErrors.careerYears : undefined}
+                error={touched.careerYears || textValues.careerYears ? rawFieldErrors.careerYears : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, careerYears: true }))}
-                onChange={(event) => updateTextValue("careerYears", event.target.value)}
+                onChange={(event) => updateTextValue("careerYears", event.currentTarget.value)}
               />
             </div>
             <div className={sectionClass}>
@@ -211,10 +213,10 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 placeholder="한 줄 소개를 입력해 주세요"
                 value={textValues.shortIntroduction}
-                error={touched.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined}
+                error={touched.shortIntroduction || textValues.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, shortIntroduction: true }))}
-                onChange={(event) => updateTextValue("shortIntroduction", event.target.value)}
+                onChange={(event) => updateTextValue("shortIntroduction", event.currentTarget.value)}
               />
             </div>
           </div>
@@ -228,10 +230,10 @@ export function MoverProfileForm({
                 containerClassName="max-w-none min-[1200px]:[&>div]:px-6"
                 placeholder="상세 내용을 입력해 주세요"
                 value={textValues.description}
-                error={touched.description ? rawFieldErrors.description : undefined}
+                error={touched.description || textValues.description ? rawFieldErrors.description : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, description: true }))}
-                onChange={(event) => updateTextValue("description", event.target.value)}
+                onChange={(event) => updateTextValue("description", event.currentTarget.value)}
               />
             </div>
 
@@ -248,6 +250,7 @@ export function MoverProfileForm({
                 ariaLabel="제공 서비스 선택"
                 ariaDescribedBy={hasServiceError ? "mover-service-error" : undefined}
                 onValuesChange={(nextValues) => {
+                  setServiceTouched(true);
                   setServiceTypeIds(nextValues);
                   setStatusMessage("");
                 }}
@@ -272,6 +275,7 @@ export function MoverProfileForm({
                 ariaLabel="서비스 가능 지역 선택"
                 ariaDescribedBy={hasRegionError ? "mover-region-error" : undefined}
                 onValuesChange={(nextValues) => {
+                  setRegionTouched(true);
                   setRegions(nextValues);
                   setStatusMessage("");
                 }}
