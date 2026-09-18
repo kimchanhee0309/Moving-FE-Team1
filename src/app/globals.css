@@ -7,3 +7,14 @@ body {
   background-color: var(--background-100);
   font-family: var(--font-pretendard), sans-serif;
 }
+
+/* 브라우저 자격 증명 자동완성은 유지하되 기본 파란 배경이 앱의 active 상태처럼 보이지 않게 합니다. */
+.app-text-input:-webkit-autofill,
+.app-text-input:-webkit-autofill:hover,
+.app-text-input:-webkit-autofill:focus,
+.app-text-input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--black-400);
+  caret-color: var(--black-400);
+  box-shadow: 0 0 0 1000px var(--gray-50) inset;
+  transition: background-color 9999s ease-out 0s;
+}

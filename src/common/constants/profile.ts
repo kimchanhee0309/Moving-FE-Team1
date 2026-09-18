@@ -28,3 +28,7 @@ export const PROFILE_REGION_OPTIONS = [
 ] as const;
 
 export type ProfileRegion = (typeof PROFILE_REGION_OPTIONS)[number]["value"];
+
+export function isProfileRegion(value: unknown): value is ProfileRegion {
+  return typeof value === "string" && PROFILE_REGION_OPTIONS.some((option) => option.value === value);
+}
