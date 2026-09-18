@@ -48,6 +48,11 @@ export interface MoverBasicInfoFormValues {
   currentPassword: string;
   newPassword: string;
   newPasswordConfirm: string;
+  changedFields?: {
+    name: boolean;
+    email: boolean;
+    phone: boolean;
+  };
 }
 
 export type MoverBasicInfo = Pick<MoverBasicInfoFormValues, "name" | "email" | "phone">;
@@ -56,5 +61,7 @@ export interface MoverBasicInfoFormProps {
   initialValues: MoverBasicInfo;
   isPending?: boolean;
   submissionError?: string;
+  currentPasswordError?: string;
+  onCurrentPasswordChange?: () => void;
   onSubmit: (values: MoverBasicInfoFormValues) => Promise<MoverBasicInfo>;
 }

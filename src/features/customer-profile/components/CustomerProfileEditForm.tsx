@@ -38,6 +38,8 @@ export function CustomerProfileEditForm({
   initialValues,
   isPending = false,
   submissionError,
+  currentPasswordError,
+  onCurrentPasswordChange,
   onSubmit,
 }: CustomerProfileEditFormProps) {
   const router = useRouter();
@@ -61,10 +63,17 @@ export function CustomerProfileEditForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isPending || isSubmitting;
-  // 비밀번호 관리자가 현재 비밀번호만 자동완성해도 일반 프로필 수정은 막지 않습니다.
-  // 새 비밀번호 입력을 시작한 경우에만 현재 비밀번호와 확인값을 함께 검증합니다.
+  // 현재 비밀번호 자동완성만으로 서비스·지역 수정을 막지 않습니다.
+  // 새 비밀번호 입력을 시작한 경우에만 비밀번호 변경 검증을 활성화합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
   const normalizedPhone = normalizePhoneDigits(values.phone);
+  const changedFields = {
+    name: values.name.trim() !== initialValues.name.trim(),
+    email: normalizeEmail(values.email) !== normalizeEmail(initialValues.email),
+    phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
+    serviceTypeIds: !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds),
+    region: region !== initialValues.region,
+  };
 
   const errors: Partial<Record<TextField, string>> = {
     name: getNameError(values.name),
@@ -73,27 +82,45 @@ export function CustomerProfileEditForm({
     currentPassword:
       isChangingPassword && !values.currentPassword
         ? "현재 비밀번호를 입력해 주세요."
-        : isChangingPassword ? getCurrentPasswordError(values.currentPassword) : undefined,
+        : values.currentPassword
+          ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
+          : undefined,
     newPassword:
-      isChangingPassword ? getNewPasswordError(values.newPassword) : undefined,
+      isChangingPassword && !values.newPassword
+        ? "새 비밀번호를 입력해 주세요."
+        : isChangingPassword
+          ? getNewPasswordError(values.newPassword)
+          : undefined,
     newPasswordConfirm:
-      isChangingPassword && values.newPassword !== values.newPasswordConfirm
-        ? "새 비밀번호가 일치하지 않습니다."
-        : undefined,
+      isChangingPassword && !values.newPasswordConfirm
+        ? "새 비밀번호를 다시 입력해 주세요."
+        : isChangingPassword && values.newPassword !== values.newPasswordConfirm
+          ? "새 비밀번호가 일치하지 않습니다."
+          : undefined,
   };
-  const hasError = Object.values(errors).some(Boolean);
+  // 서버에 이미 저장된 기존 값이 현재 프론트 규칙과 다르더라도, 사용자가 변경하지
+  // 않은 필드 때문에 비밀번호 변경까지 막히지 않도록 변경한 필드만 차단합니다.
+  const hasError = Boolean(
+    (changedFields.name && errors.name) ||
+      (changedFields.email && errors.email) ||
+      (changedFields.phone && errors.phone) ||
+      errors.currentPassword ||
+      errors.newPassword ||
+      errors.newPasswordConfirm,
+  );
   const hasServiceError = (hasSubmitted || serviceTouched) && serviceTypeIds.length === 0;
   const hasRegionError = (hasSubmitted || regionTouched) && region === null;
   const hasChanges =
-    values.name.trim() !== initialValues.name.trim() ||
-    normalizeEmail(values.email) !== normalizeEmail(initialValues.email) ||
-    normalizedPhone !== normalizePhoneDigits(initialValues.phone) ||
+    changedFields.name ||
+    changedFields.email ||
+    changedFields.phone ||
     isChangingPassword ||
     profileImage !== null ||
-    !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds) ||
-    region !== initialValues.region;
+    changedFields.serviceTypeIds ||
+    changedFields.region;
 
   const updateValue = (field: TextField, value: string) => {
+    if (field === "currentPassword") onCurrentPasswordChange?.();
     setTouched((current) => ({ ...current, [field]: true }));
     setValues((current) => ({ ...current, [field]: value }));
     setStatusMessage("");
@@ -122,6 +149,7 @@ export function CustomerProfileEditForm({
       profileImage,
       serviceTypeIds,
       region,
+      changedFields,
     };
 
     setIsSubmitting(true);
@@ -165,22 +193,22 @@ export function CustomerProfileEditForm({
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
           <div className="flex flex-col">
             <div className={fieldClassName}>
-              <Input name="name" label="이름" inputSize="sm" containerClassName={inputClassName} value={values.name} error={touched.name || values.name !== initialValues.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
+              <Input name="name" label="이름" inputSize="sm" containerClassName={inputClassName} value={values.name} error={changedFields.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="email" label="이메일" type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={touched.email || values.email !== initialValues.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.currentTarget.value)} />
+              <Input name="email" label="이메일" type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={changedFields.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={touched.phone || values.phone !== initialValues.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
+              <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={changedFields.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
+              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? "현재 비밀번호 일치 여부는 수정하기를 누르면 확인됩니다." : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
+              <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
             </div>
             <div className={`${fieldClassName} min-[1200px]:border-b-0`}>
-              <Input name="newPasswordConfirm" label="새 비밀번호 확인" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 다시 입력해 주세요" value={values.newPasswordConfirm} error={touched.newPasswordConfirm || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
+              <Input name="newPasswordConfirm" label="새 비밀번호 확인" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 다시 입력해 주세요" value={values.newPasswordConfirm} error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
             </div>
           </div>
 

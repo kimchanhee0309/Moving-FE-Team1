@@ -9,6 +9,14 @@ export interface MoverProfileFormValues {
   description: string;
   serviceTypeIds: ServiceType[];
   regions: ProfileRegion[];
+  changedFields?: {
+    nickname: boolean;
+    careerYears: boolean;
+    shortIntroduction: boolean;
+    description: boolean;
+    serviceTypeIds: boolean;
+    regions: boolean;
+  };
 }
 
 export interface MoverProfile {

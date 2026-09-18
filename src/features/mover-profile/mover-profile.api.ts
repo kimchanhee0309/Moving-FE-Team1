@@ -64,9 +64,24 @@ export async function createMoverProfile(values: MoverProfileFormValues): Promis
 }
 
 export async function updateMoverProfile(values: MoverProfileFormValues): Promise<MoverProfile> {
+  const formData = new FormData();
+  const changed = values.changedFields;
+  if (values.profileImage) formData.append("profileImage", values.profileImage);
+  if (!changed || changed.nickname) formData.append("nickname", values.nickname.trim());
+  if (!changed || changed.careerYears) formData.append("careerYears", values.careerYears.trim());
+  if (!changed || changed.shortIntroduction) {
+    formData.append("shortIntroduction", values.shortIntroduction.trim());
+  }
+  if (!changed || changed.description) formData.append("description", values.description.trim());
+  if (!changed || changed.serviceTypeIds) {
+    values.serviceTypeIds.forEach((serviceType) => formData.append("serviceTypes", serviceType));
+  }
+  if (!changed || changed.regions) {
+    values.regions.forEach((region) => formData.append("regions", region));
+  }
   return readProfile(await apiClient<unknown>("/movers/me/profile", {
     method: "PATCH",
-    body: createProfileFormData(values),
+    body: formData,
   }));
 }
 

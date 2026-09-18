@@ -43,6 +43,8 @@ export function MoverBasicInfoForm({
   initialValues,
   isPending = false,
   submissionError,
+  currentPasswordError,
+  onCurrentPasswordChange,
   onSubmit,
 }: MoverBasicInfoFormProps) {
   const router = useRouter();
@@ -55,8 +57,13 @@ export function MoverBasicInfoForm({
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isPending || isSubmitting;
   const normalizedPhone = normalizePhoneDigits(values.phone);
-  // 비밀번호 관리자가 현재 비밀번호만 자동완성해도 일반 기본정보 수정은 막지 않습니다.
-  // 새 비밀번호 입력을 시작한 경우에만 현재 비밀번호와 확인값을 함께 검증합니다.
+  const changedFields = {
+    name: values.name.trim() !== initialValues.name.trim(),
+    email: normalizeEmail(values.email) !== normalizeEmail(initialValues.email),
+    phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
+  };
+  // 현재 비밀번호 자동완성만으로 기본정보 수정을 막지 않습니다.
+  // 새 비밀번호 입력을 시작한 경우에만 비밀번호 변경 검증을 활성화합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
 
   const errors: Partial<Record<BasicInfoField, string>> = {
@@ -66,22 +73,38 @@ export function MoverBasicInfoForm({
     currentPassword:
       isChangingPassword && !values.currentPassword
         ? "현재 비밀번호를 입력해 주세요."
-        : isChangingPassword ? getCurrentPasswordError(values.currentPassword) : undefined,
+        : values.currentPassword
+          ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
+          : undefined,
     newPassword:
-      isChangingPassword ? getNewPasswordError(values.newPassword) : undefined,
+      isChangingPassword && !values.newPassword
+        ? "새 비밀번호를 입력해 주세요."
+        : isChangingPassword
+          ? getNewPasswordError(values.newPassword)
+          : undefined,
     newPasswordConfirm:
-      isChangingPassword && values.newPassword !== values.newPasswordConfirm
-        ? "새 비밀번호가 일치하지 않습니다."
-        : undefined,
+      isChangingPassword && !values.newPasswordConfirm
+        ? "새 비밀번호를 다시 입력해 주세요."
+        : isChangingPassword && values.newPassword !== values.newPasswordConfirm
+          ? "새 비밀번호가 일치하지 않습니다."
+          : undefined,
   };
-  const hasError = Object.values(errors).some(Boolean);
+  const hasError = Boolean(
+    (changedFields.name && errors.name) ||
+      (changedFields.email && errors.email) ||
+      (changedFields.phone && errors.phone) ||
+      errors.currentPassword ||
+      errors.newPassword ||
+      errors.newPasswordConfirm,
+  );
   const hasChanges =
-    values.name.trim() !== initialValues.name.trim() ||
-    normalizeEmail(values.email) !== normalizeEmail(initialValues.email) ||
-    normalizedPhone !== normalizePhoneDigits(initialValues.phone) ||
+    changedFields.name ||
+    changedFields.email ||
+    changedFields.phone ||
     isChangingPassword;
 
   const updateValue = (field: BasicInfoField, value: string) => {
+    if (field === "currentPassword") onCurrentPasswordChange?.();
     setTouched((current) => ({ ...current, [field]: true }));
     setValues((current) => ({ ...current, [field]: value }));
     setStatusMessage("");
@@ -101,7 +124,7 @@ export function MoverBasicInfoForm({
 
     setIsSubmitting(true);
     try {
-      const savedBasicInfo = await onSubmit(values);
+      const savedBasicInfo = await onSubmit({ ...values, changedFields });
       setValues({
         ...savedBasicInfo,
         currentPassword: "",
@@ -137,7 +160,7 @@ export function MoverBasicInfoForm({
               inputSize="sm"
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               value={values.name}
-              error={touched.name || values.name !== initialValues.name ? errors.name : undefined}
+              error={changedFields.name ? errors.name : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, name: true }))}
               onChange={(event) => updateValue("name", event.currentTarget.value)}
@@ -152,7 +175,7 @@ export function MoverBasicInfoForm({
               inputSize="sm"
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               value={values.email}
-              error={touched.email || values.email !== initialValues.email ? errors.email : undefined}
+              error={changedFields.email ? errors.email : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, email: true }))}
               onChange={(event) => updateValue("email", event.currentTarget.value)}
@@ -168,7 +191,7 @@ export function MoverBasicInfoForm({
               inputSize="sm"
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               value={values.phone}
-              error={touched.phone || values.phone !== initialValues.phone ? errors.phone : undefined}
+              error={changedFields.phone ? errors.phone : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, phone: true }))}
               onChange={(event) => updateValue("phone", event.currentTarget.value)}
@@ -188,6 +211,11 @@ export function MoverBasicInfoForm({
               placeholder="현재 비밀번호를 입력해 주세요"
               value={values.currentPassword}
               error={touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
+              helperText={
+                !currentPasswordError
+                  ? "현재 비밀번호 일치 여부는 수정하기를 누르면 확인됩니다."
+                  : undefined
+              }
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))}
               onChange={(event) => updateValue("currentPassword", event.currentTarget.value)}
@@ -203,7 +231,7 @@ export function MoverBasicInfoForm({
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               placeholder="새 비밀번호를 입력해 주세요"
               value={values.newPassword}
-              error={touched.newPassword || values.newPassword ? errors.newPassword : undefined}
+              error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))}
               onChange={(event) => updateValue("newPassword", event.currentTarget.value)}
@@ -219,7 +247,7 @@ export function MoverBasicInfoForm({
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               placeholder="새 비밀번호를 다시 입력해 주세요"
               value={values.newPasswordConfirm}
-              error={touched.newPasswordConfirm || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
+              error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))}
               onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)}
