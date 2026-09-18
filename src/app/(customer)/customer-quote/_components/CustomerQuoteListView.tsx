@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { EmptyState } from "@/common/components/page-state";
 import { ErrorState } from "@/common/components/page-state";
 import { LoadingState } from "@/common/components/page-state";
@@ -13,6 +14,7 @@ import { QuoteCard } from "@/features/customer-quote/components";
 import { useCustomerQuoteLoadMoreSentinel } from "@/features/customer-quote/hooks/useCustomerQuoteLoadMoreSentinel";
 import {
   useActiveMoveRequestQuery,
+  useConfirmReceivedQuoteMutation,
   useReceivedQuotesQuery,
 } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
 
@@ -20,6 +22,10 @@ export function CustomerQuoteListView() {
   const router = useRouter();
   const quotesQuery = useReceivedQuotesQuery();
   const moveRequestQuery = useActiveMoveRequestQuery();
+  const confirmMutation = useConfirmReceivedQuoteMutation();
+  const [confirmError, setConfirmError] = useState<string | null>(null);
+  // isPending 리렌더 전에 연속 클릭되면 mutate가 두 번 호출될 수 있어 동기 잠금으로 막습니다.
+  const isConfirmLockedRef = useRef(false);
 
   const quotes = useMemo(
     () => quotesQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -36,6 +42,33 @@ export function CustomerQuoteListView() {
   const sentinelRef = useCustomerQuoteLoadMoreSentinel(
     handleLoadMore,
     Boolean(quotesQuery.hasNextPage) && !quotesQuery.isFetchingNextPage,
+  );
+
+  const handleConfirm = useCallback(
+    (quoteId: string) => {
+      if (isConfirmLockedRef.current) {
+        return;
+      }
+      isConfirmLockedRef.current = true;
+      setConfirmError(null);
+      confirmMutation.mutate(quoteId, {
+        onSuccess: (quote) => {
+          router.replace(ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id));
+        },
+        onError: (error) => {
+          setConfirmError(
+            getApiErrorMessage(
+              error,
+              "견적을 확정하지 못했습니다. 다시 시도해 주세요.",
+            ),
+          );
+        },
+        onSettled: () => {
+          isConfirmLockedRef.current = false;
+        },
+      });
+    },
+    [confirmMutation, router],
   );
 
   return (
@@ -115,6 +148,15 @@ export function CustomerQuoteListView() {
           />
         ) : null}
 
+        {confirmError ? (
+          <p
+            role="alert"
+            className="text-md-regular mb-4 text-[var(--secondary-red-200)]"
+          >
+            {confirmError}
+          </p>
+        ) : null}
+
         {!quotesQuery.isLoading &&
         !quotesQuery.isError &&
         quotes.length === 0 ? (
@@ -142,8 +184,12 @@ export function CustomerQuoteListView() {
                     confirmedCount={quote.confirmedCount}
                     favoriteCount={quote.favoriteCount}
                     price={quote.price}
+                    isConfirmDisabled={confirmMutation.isPending}
                     onDetail={() => {
                       router.push(ROUTES.CUSTOMER.QUOTE.DETAIL(quote.id));
+                    }}
+                    onConfirm={() => {
+                      handleConfirm(quote.id);
                     }}
                   />
                 </li>

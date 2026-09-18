@@ -68,6 +68,14 @@ export function getReceivedQuoteDetail(
   );
 }
 
+/** POST /customers/me/quotes/:quoteId/confirm — 대기 견적 확정 */
+export function confirmReceivedQuote(quoteId: string) {
+  return apiClient<ApiReceivedQuoteDetailResult>(
+    `/customers/me/quotes/${quoteId}/confirm`,
+    { method: "POST" },
+  );
+}
+
 /** GET /customers/me/quotes/history/:quoteId — 확정 견적 상세 */
 export function getReceivedQuoteHistoryDetail(
   quoteId: string,
