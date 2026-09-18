@@ -18,6 +18,7 @@ import type {
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function toServiceType(value: string): ServiceType {
+<<<<<<< HEAD
   if (value === SERVICE_TYPE.SMALL) return SERVICE_TYPE.SMALL;
   if (value === SERVICE_TYPE.HOME) return SERVICE_TYPE.HOME;
   if (value === SERVICE_TYPE.OFFICE) return SERVICE_TYPE.OFFICE;
@@ -30,6 +31,18 @@ export function mapApiQuoteStatus(status: ApiQuoteStatus | string): QuoteStatus 
   if (status === "CONFIRMED") return QUOTE_STATUS.CONFIRMED;
   if (status === "REJECTED") return QUOTE_STATUS.REJECTED;
   throw new Error(`Unsupported quote status: ${status}`);
+=======
+  if (value === SERVICE_TYPE.HOME) return SERVICE_TYPE.HOME;
+  if (value === SERVICE_TYPE.OFFICE) return SERVICE_TYPE.OFFICE;
+  return SERVICE_TYPE.SMALL;
+}
+
+/** BE PROPOSED → FE PENDING. UI/칩은 FE QUOTE_STATUS를 유지합니다. */
+export function mapApiQuoteStatus(status: ApiQuoteStatus | string): QuoteStatus {
+  if (status === "CONFIRMED") return QUOTE_STATUS.CONFIRMED;
+  if (status === "REJECTED") return QUOTE_STATUS.REJECTED;
+  return QUOTE_STATUS.PENDING;
+>>>>>>> 277fef463f6fc7cf482ca60e34eb9afe8130f54d
 }
 
 function pad2(value: number) {
@@ -126,7 +139,11 @@ export function groupHistoryQuotes(
 
     groups.set(moveRequestId, {
       id: moveRequestId,
+<<<<<<< HEAD
       requestedAt: formatDateShortDots(item.moveRequest.createdAt),
+=======
+      requestedAt: formatDateShortDots(item.createdAt),
+>>>>>>> 277fef463f6fc7cf482ca60e34eb9afe8130f54d
       serviceType: toServiceType(item.moveRequest.serviceType),
       from: item.moveRequest.fromAddress,
       to: item.moveRequest.toAddress,
@@ -143,8 +160,12 @@ export function mapQuoteDetail(
   options?: { requestedAtIso?: string },
 ): CustomerQuoteDetail {
   const serviceType = toServiceType(item.moveRequest.serviceType);
+<<<<<<< HEAD
   const requestedAtIso =
     options?.requestedAtIso ?? item.moveRequest.createdAt;
+=======
+  const requestedAtIso = options?.requestedAtIso ?? item.createdAt;
+>>>>>>> 277fef463f6fc7cf482ca60e34eb9afe8130f54d
 
   return {
     id: item.id,
