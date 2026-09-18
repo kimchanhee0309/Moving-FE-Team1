@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
@@ -24,6 +25,23 @@ export function CustomerQuoteDetailContainer({
   const router = useRouter();
   const detailQuery = useReceivedQuoteDetailQuery(quoteId);
   const confirmMutation = useConfirmReceivedQuoteMutation();
+  // isPending 리렌더 전에 연속 클릭되면 mutate가 두 번 호출될 수 있어 동기 잠금으로 막습니다.
+  const isConfirmLockedRef = useRef(false);
+
+  const handleConfirm = useCallback(() => {
+    if (isConfirmLockedRef.current) {
+      return;
+    }
+    isConfirmLockedRef.current = true;
+    confirmMutation.mutate(quoteId, {
+      onSuccess: (quote) => {
+        router.replace(ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id));
+      },
+      onSettled: () => {
+        isConfirmLockedRef.current = false;
+      },
+    });
+  }, [confirmMutation, quoteId, router]);
 
   if (detailQuery.isLoading) {
     return (
@@ -71,13 +89,7 @@ export function CustomerQuoteDetailContainer({
             )
           : null
       }
-      onConfirm={() => {
-        confirmMutation.mutate(quoteId, {
-          onSuccess: (quote) => {
-            router.replace(ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id));
-          },
-        });
-      }}
+      onConfirm={handleConfirm}
     />
   );
 }

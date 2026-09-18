@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
@@ -24,6 +24,8 @@ export function CustomerQuoteListView() {
   const moveRequestQuery = useActiveMoveRequestQuery();
   const confirmMutation = useConfirmReceivedQuoteMutation();
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  // isPending 리렌더 전에 연속 클릭되면 mutate가 두 번 호출될 수 있어 동기 잠금으로 막습니다.
+  const isConfirmLockedRef = useRef(false);
 
   const quotes = useMemo(
     () => quotesQuery.data?.pages.flatMap((page) => page.items) ?? [],
@@ -44,6 +46,10 @@ export function CustomerQuoteListView() {
 
   const handleConfirm = useCallback(
     (quoteId: string) => {
+      if (isConfirmLockedRef.current) {
+        return;
+      }
+      isConfirmLockedRef.current = true;
       setConfirmError(null);
       confirmMutation.mutate(quoteId, {
         onSuccess: (quote) => {
@@ -56,6 +62,9 @@ export function CustomerQuoteListView() {
               "견적을 확정하지 못했습니다. 다시 시도해 주세요.",
             ),
           );
+        },
+        onSettled: () => {
+          isConfirmLockedRef.current = false;
         },
       });
     },
