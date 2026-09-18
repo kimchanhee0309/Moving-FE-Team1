@@ -14,6 +14,7 @@ import { PROFILE_REGION_OPTIONS, PROFILE_SERVICE_OPTIONS } from "@/common/consta
 import { ROUTES } from "@/common/constants/routes";
 import { haveSameSelection } from "@/common/utils/selection";
 import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { getEmailError } from "@/common/validation/email";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
 
 import type {
@@ -66,9 +67,7 @@ export function CustomerProfileEditForm({
     name: !values.name.trim()
       ? "이름을 입력해 주세요."
       : values.name.trim().length > 50 ? "이름은 50자 이하여야 합니다." : undefined,
-    email: values.email.trim().length <= 255 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())
-      ? undefined
-      : "올바른 이메일 형식으로 입력해 주세요.",
+    email: getEmailError(values.email),
     phone: !normalizedPhone || /^01[016789]\d{7,8}$/.test(normalizedPhone)
       ? undefined
       : "올바른 대한민국 전화번호를 입력해 주세요.",

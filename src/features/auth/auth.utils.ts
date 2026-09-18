@@ -1,4 +1,5 @@
 import { ROUTES } from "@/common/constants/routes";
+import { getEmailError } from "@/common/validation/email";
 import { getNewPasswordError } from "@/common/validation/password";
 
 import type { AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
@@ -11,9 +12,8 @@ export function normalizePhone(phone: string): string {
 /** 화면용 검증입니다. 서버의 계정 존재 여부/중복/비밀번호 일치는 판단하지 않습니다. */
 export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFormErrors {
   const errors: AuthFormErrors = {};
-  if (values.email.trim().length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-    errors.email = "올바른 이메일 형식을 입력해 주세요.";
-  }
+  const emailError = getEmailError(values.email);
+  if (emailError) errors.email = emailError;
   if (!values.password.trim()) errors.password = "비밀번호를 입력해 주세요.";
 
   // 로그인에서는 가입 정책 변경 전의 비밀번호도 서버가 판정할 수 있도록 존재 여부만 검사합니다.
