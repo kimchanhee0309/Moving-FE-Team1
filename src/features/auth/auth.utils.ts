@@ -1,24 +1,34 @@
 import { ROUTES } from "@/common/constants/routes";
+import { getEmailError } from "@/common/validation/email";
+import { getNameError } from "@/common/validation/name";
 import { getNewPasswordError } from "@/common/validation/password";
 
-import type { AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
+import type { AuthField, AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
 
 /** 백엔드와 동일하게 앞뒤 공백과 하이픈만 제거합니다. 내부 문자/공백은 검증에서 거절합니다. */
 export function normalizePhone(phone: string): string {
   return phone.trim().replace(/-/g, "");
 }
 
+/** 입력을 다시 시작한 필드의 서버 오류 키를 제거해 클라이언트 검증 오류를 가리지 않게 합니다. */
+export function clearAuthFieldError(errors: AuthFormErrors, field: AuthField): AuthFormErrors {
+  if (!(field in errors)) return errors;
+  const nextErrors = { ...errors };
+  delete nextErrors[field];
+  return nextErrors;
+}
+
 /** 화면용 검증입니다. 서버의 계정 존재 여부/중복/비밀번호 일치는 판단하지 않습니다. */
 export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFormErrors {
   const errors: AuthFormErrors = {};
-  if (values.email.trim().length > 255 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-    errors.email = "올바른 이메일 형식을 입력해 주세요.";
-  }
+  const emailError = getEmailError(values.email);
+  if (emailError) errors.email = emailError;
   if (!values.password.trim()) errors.password = "비밀번호를 입력해 주세요.";
 
   // 로그인에서는 가입 정책 변경 전의 비밀번호도 서버가 판정할 수 있도록 존재 여부만 검사합니다.
   if (mode === "signup") {
-    if (!values.name.trim() || values.name.trim().length > 50) errors.name = "성함을 1~50자로 입력해 주세요.";
+    const nameError = getNameError(values.name);
+    if (nameError) errors.name = nameError;
     if (!/^(?:010\d{8}|01[16789]\d{7,8})$/.test(normalizePhone(values.phone))) {
       errors.phone = "올바른 휴대전화 번호를 입력해 주세요.";
     }

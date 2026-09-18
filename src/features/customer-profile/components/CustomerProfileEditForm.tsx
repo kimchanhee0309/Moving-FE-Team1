@@ -13,7 +13,9 @@ import {
 import { PROFILE_REGION_OPTIONS, PROFILE_SERVICE_OPTIONS } from "@/common/constants/profile";
 import { ROUTES } from "@/common/constants/routes";
 import { haveSameSelection } from "@/common/utils/selection";
-import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { getEmailError } from "@/common/validation/email";
+import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
 
 import type {
@@ -54,6 +56,8 @@ export function CustomerProfileEditForm({
   const [region, setRegion] = useState(initialValues.region);
   const [touched, setTouched] = useState<Partial<Record<TextField, boolean>>>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [serviceTouched, setServiceTouched] = useState(false);
+  const [regionTouched, setRegionTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isPending || isSubmitting;
@@ -63,15 +67,9 @@ export function CustomerProfileEditForm({
   const normalizedPhone = normalizePhoneDigits(values.phone);
 
   const errors: Partial<Record<TextField, string>> = {
-    name: !values.name.trim()
-      ? "이름을 입력해 주세요."
-      : values.name.trim().length > 50 ? "이름은 50자 이하여야 합니다." : undefined,
-    email: values.email.trim().length <= 255 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())
-      ? undefined
-      : "올바른 이메일 형식으로 입력해 주세요.",
-    phone: !normalizedPhone || /^01[016789]\d{7,8}$/.test(normalizedPhone)
-      ? undefined
-      : "올바른 대한민국 전화번호를 입력해 주세요.",
+    name: getNameError(values.name),
+    email: getEmailError(values.email),
+    phone: getPhoneError(values.phone),
     currentPassword:
       isChangingPassword && !values.currentPassword
         ? "현재 비밀번호를 입력해 주세요."
@@ -84,8 +82,8 @@ export function CustomerProfileEditForm({
         : undefined,
   };
   const hasError = Object.values(errors).some(Boolean);
-  const hasServiceError = hasSubmitted && serviceTypeIds.length === 0;
-  const hasRegionError = hasSubmitted && region === null;
+  const hasServiceError = (hasSubmitted || serviceTouched) && serviceTypeIds.length === 0;
+  const hasRegionError = (hasSubmitted || regionTouched) && region === null;
   const hasChanges =
     values.name.trim() !== initialValues.name.trim() ||
     normalizeEmail(values.email) !== normalizeEmail(initialValues.email) ||
@@ -167,22 +165,22 @@ export function CustomerProfileEditForm({
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
           <div className="flex flex-col">
             <div className={fieldClassName}>
-              <Input name="name" label="이름" inputSize="sm" containerClassName={inputClassName} value={values.name} error={touched.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.target.value)} />
+              <Input name="name" label="이름" inputSize="sm" containerClassName={inputClassName} value={values.name} error={touched.name || values.name !== initialValues.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="email" label="이메일" type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={touched.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.target.value)} />
+              <Input name="email" label="이메일" type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={touched.email || values.email !== initialValues.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={touched.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.target.value)} />
+              <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={touched.phone || values.phone !== initialValues.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={touched.currentPassword ? errors.currentPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.target.value)} />
+              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.target.value)} />
+              <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
             </div>
             <div className={`${fieldClassName} min-[1200px]:border-b-0`}>
-              <Input name="newPasswordConfirm" label="새 비밀번호 확인" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 다시 입력해 주세요" value={values.newPasswordConfirm} error={touched.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.target.value)} />
+              <Input name="newPasswordConfirm" label="새 비밀번호 확인" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 다시 입력해 주세요" value={values.newPasswordConfirm} error={touched.newPasswordConfirm || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
             </div>
           </div>
 
@@ -192,14 +190,14 @@ export function CustomerProfileEditForm({
             <fieldset className={`flex flex-col gap-4 ${fieldClassName}`}>
               <legend className="text-lg-semibold text-[var(--black-300)]">이용 서비스</legend>
               <p className="text-xs-regular text-[var(--gray-400)]">* 이용 서비스는 중복 선택 가능하며, 언제든 수정 가능해요!</p>
-              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} ariaLabel="이용 서비스 선택" ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTypeIds(nextValues); setStatusMessage(""); }} />
+              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} ariaLabel="이용 서비스 선택" ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTouched(true); setServiceTypeIds(nextValues); setStatusMessage(""); }} />
               {hasServiceError ? <p id="customer-edit-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">이용 서비스를 한 개 이상 선택해 주세요.</p> : null}
             </fieldset>
 
             <fieldset className="flex flex-col gap-4 py-6 min-[1200px]:py-8">
               <legend className="text-lg-semibold text-[var(--black-300)]">내가 사는 지역</legend>
               <p className="text-xs-regular text-[var(--gray-400)]">* 내가 사는 지역은 언제든 수정 가능해요!</p>
-              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required ariaLabel="거주 지역 선택" ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegion(nextRegion); setStatusMessage(""); }} />
+              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required ariaLabel="거주 지역 선택" ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegionTouched(true); setRegion(nextRegion); setStatusMessage(""); }} />
               {hasRegionError ? <p id="customer-edit-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">지역을 선택해 주세요.</p> : null}
             </fieldset>
 

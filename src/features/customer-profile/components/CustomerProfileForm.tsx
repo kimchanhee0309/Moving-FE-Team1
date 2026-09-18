@@ -31,11 +31,13 @@ export function CustomerProfileForm({
   const [serviceTypeIds, setServiceTypeIds] = useState(initialValues?.serviceTypeIds ?? []);
   const [region, setRegion] = useState(initialValues?.region ?? null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [serviceTouched, setServiceTouched] = useState(false);
+  const [regionTouched, setRegionTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isLoading || isSubmitting;
-  const hasServiceError = hasSubmitted && serviceTypeIds.length === 0;
-  const hasRegionError = hasSubmitted && region === null;
+  const hasServiceError = (hasSubmitted || serviceTouched) && serviceTypeIds.length === 0;
+  const hasRegionError = (hasSubmitted || regionTouched) && region === null;
   const isIncomplete = serviceTypeIds.length === 0 || region === null || Boolean(profileImageError);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -108,7 +110,10 @@ export function CustomerProfileForm({
                 className="mt-4 min-[1200px]:mt-6 min-[1200px]:gap-[14px]"
                 ariaLabel="이용 서비스 선택"
                 ariaDescribedBy={hasServiceError ? "customer-service-error" : undefined}
-                onValuesChange={setServiceTypeIds}
+                onValuesChange={(nextValues) => {
+                  setServiceTouched(true);
+                  setServiceTypeIds(nextValues);
+                }}
               />
               {hasServiceError ? (
                 <p id="customer-service-error" role="alert" className="text-xs-medium mt-2 text-[var(--primary-400)]">
@@ -133,7 +138,10 @@ export function CustomerProfileForm({
                 className="mt-4 !gap-2 min-[1200px]:mt-6 min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]"
                 ariaLabel="거주 지역 선택"
                 ariaDescribedBy={hasRegionError ? "customer-region-error" : undefined}
-                onValueChange={setRegion}
+                onValueChange={(nextRegion) => {
+                  setRegionTouched(true);
+                  setRegion(nextRegion);
+                }}
               />
               {hasRegionError ? (
                 <p id="customer-region-error" role="alert" className="text-xs-medium mt-2 text-[var(--primary-400)]">

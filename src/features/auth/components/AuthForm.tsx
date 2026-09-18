@@ -10,7 +10,7 @@ import { ROUTES } from "@/common/constants/routes";
 import { ApiError } from "@/common/api/error";
 
 import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, SocialProvider } from "../auth.types";
-import { authHref, normalizePhone, validateAuthForm } from "../auth.utils";
+import { authHref, clearAuthFieldError, normalizePhone, validateAuthForm } from "../auth.utils";
 
 interface AuthFormProps extends AuthScreenProps {
   /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
@@ -50,6 +50,15 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
   const errors = { ...validateAuthForm(values, mode), ...serverErrors };
   const isIncomplete = fields.some((field) => !values[field].trim());
   const hasValidationError = fields.some((field) => Boolean(errors[field]));
+
+  function handleFieldChange(field: AuthField, value: string) {
+    // React가 상태 updater를 실행할 때까지 event 객체를 보관하지 않고,
+    // 입력 시점의 값을 즉시 전달해 실시간 검증이 한 박자 늦게 표시되지 않게 합니다.
+    setTouched((current) => ({ ...current, [field]: true }));
+    setValues((current) => ({ ...current, [field]: value }));
+    setServerErrors((current) => clearAuthFieldError(current, field));
+    setSubmitError("");
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,6 +111,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
         <div className="flex flex-col gap-0">
           {fields.map((field) => {
             const isPassword = field === "password" || field === "passwordConfirm";
+            const shouldShowError = Boolean(touched[field] || values[field]);
             return (
               <Input
                 key={field}
@@ -118,9 +128,9 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
                 value={values[field]}
                 disabled={isPending}
                 placeholder={FIELD_PLACEHOLDERS[field]}
-                error={touched[field] ? errors[field] : undefined}
+                error={shouldShowError ? errors[field] : undefined}
                 onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
-                onChange={(event) => { setTouched((current) => ({ ...current, [field]: true })); setValues((current) => ({ ...current, [field]: event.target.value })); setServerErrors((current) => ({ ...current, [field]: undefined })); setSubmitError(""); }}
+                onChange={(event) => handleFieldChange(field, event.currentTarget.value)}
               />
             );
           })}
