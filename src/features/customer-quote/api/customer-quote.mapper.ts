@@ -18,16 +18,18 @@ import type {
 const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function toServiceType(value: string): ServiceType {
+  if (value === SERVICE_TYPE.SMALL) return SERVICE_TYPE.SMALL;
   if (value === SERVICE_TYPE.HOME) return SERVICE_TYPE.HOME;
   if (value === SERVICE_TYPE.OFFICE) return SERVICE_TYPE.OFFICE;
-  return SERVICE_TYPE.SMALL;
+  throw new Error(`Unsupported serviceType: ${value}`);
 }
 
-/** BE PROPOSED → FE PENDING. UI/칩은 FE QUOTE_STATUS를 유지합니다. */
+/** BE PROPOSED → FE PENDING. 지원 값만 매핑하고 그 외는 거부합니다. */
 export function mapApiQuoteStatus(status: ApiQuoteStatus | string): QuoteStatus {
+  if (status === "PROPOSED") return QUOTE_STATUS.PENDING;
   if (status === "CONFIRMED") return QUOTE_STATUS.CONFIRMED;
   if (status === "REJECTED") return QUOTE_STATUS.REJECTED;
-  return QUOTE_STATUS.PENDING;
+  throw new Error(`Unsupported quote status: ${status}`);
 }
 
 function pad2(value: number) {
@@ -124,7 +126,7 @@ export function groupHistoryQuotes(
 
     groups.set(moveRequestId, {
       id: moveRequestId,
-      requestedAt: formatDateShortDots(item.createdAt),
+      requestedAt: formatDateShortDots(item.moveRequest.createdAt),
       serviceType: toServiceType(item.moveRequest.serviceType),
       from: item.moveRequest.fromAddress,
       to: item.moveRequest.toAddress,
@@ -141,7 +143,8 @@ export function mapQuoteDetail(
   options?: { requestedAtIso?: string },
 ): CustomerQuoteDetail {
   const serviceType = toServiceType(item.moveRequest.serviceType);
-  const requestedAtIso = options?.requestedAtIso ?? item.createdAt;
+  const requestedAtIso =
+    options?.requestedAtIso ?? item.moveRequest.createdAt;
 
   return {
     id: item.id,

@@ -28,6 +28,21 @@ function getNextCursor(pagination: {
   return pagination.nextCursor;
 }
 
+/** hasNext인데 nextCursor가 pageParam과 같으면 같은 페이지를 반복 요청하게 되므로 실패 처리합니다. */
+function assertCursorAdvanced(
+  pageParam: string | undefined,
+  pagination: { hasNext: boolean; nextCursor: string | null },
+) {
+  if (
+    pagination.hasNext &&
+    pagination.nextCursor != null &&
+    pageParam != null &&
+    pagination.nextCursor === pageParam
+  ) {
+    throw new Error("Pagination cursor did not advance");
+  }
+}
+
 export function useReceivedQuotesQuery() {
   return useInfiniteQuery({
     queryKey: customerQuoteQueryKeys.pendingList(),
@@ -36,6 +51,7 @@ export function useReceivedQuotesQuery() {
         limit: LIST_PAGE_SIZE,
         cursor: pageParam,
       });
+      assertCursorAdvanced(pageParam, result.pagination);
       return {
         items: result.items.map(mapQuoteListItem),
         pagination: result.pagination,
@@ -78,6 +94,7 @@ export function useReceivedQuoteHistoryQuery() {
         limit: LIST_PAGE_SIZE,
         cursor: pageParam,
       });
+      assertCursorAdvanced(pageParam, result.pagination);
       return {
         items: result.items,
         pagination: result.pagination,

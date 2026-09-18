@@ -26,6 +26,8 @@ export interface ApiQuoteListMoveRequest {
   fromAddress: string;
   toAddress: string;
   status: ApiMoveRequestStatus;
+  /** 이사 요청 생성일. 견적 항목 createdAt과 구분합니다. */
+  createdAt: string;
 }
 
 export interface ApiQuoteListItem {
