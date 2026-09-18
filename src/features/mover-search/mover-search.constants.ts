@@ -1,6 +1,9 @@
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 
-import type { MoverSearchSortValue } from "./mover-search.types";
+import type {
+  MoverReviewRatingCount,
+  MoverSearchSortValue,
+} from "./mover-search.types";
 
 export const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
@@ -74,15 +77,22 @@ export const moverSearchQueryKeys = {
     [...moverSearchQueryKeys.all, "favorites", userId] as const,
   detail: (moverId: string) =>
     [...moverSearchQueryKeys.all, "detail", moverId] as const,
-  reviews: (moverId: string) =>
-    [...moverSearchQueryKeys.all, "reviews", moverId] as const,
+  reviews: (moverId: string, page: number) =>
+    [...moverSearchQueryKeys.all, "reviews", moverId, page] as const,
   designated: (userId: string) =>
     [...moverSearchQueryKeys.all, "designated", userId] as const,
-  generalQuote: (userId: string) =>
-    [...moverSearchQueryKeys.all, "general-quote", userId] as const,
 };
 
 export const MOVER_DETAIL_REVIEW_PAGE_SIZE = 5;
+
+/** BE 리뷰 summary에 별점 분포가 없어 상세 진행 바는 0으로 둡니다. */
+export const EMPTY_MOVER_REVIEW_RATING_COUNTS: MoverReviewRatingCount[] = [
+  { score: 5, count: 0 },
+  { score: 4, count: 0 },
+  { score: 3, count: 0 },
+  { score: 2, count: 0 },
+  { score: 1, count: 0 },
+];
 
 export function createMoverDetailShareUrl(origin: string, detailHref: string) {
   return `${origin}${detailHref}`;

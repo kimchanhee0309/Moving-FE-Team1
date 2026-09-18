@@ -29,3 +29,15 @@ export interface CreateMoveRequestPayload {
   fromAddress: string;
   toAddress: string;
 }
+
+/**
+ * `POST /customers/me/move-requests/:moveRequestId/designated-requests` 성공
+ * `data.designatedRequest`입니다.
+ */
+export interface DesignatedRequestDto {
+  id: string;
+  moveRequestId: string;
+  moverId: string;
+  createdAt: string;
+  updatedAt: string;
+}
