@@ -85,7 +85,7 @@ export const moverSearchQueryKeys = {
 
 export const MOVER_DETAIL_REVIEW_PAGE_SIZE = 5;
 
-/** BE 리뷰 summary에 별점 분포가 없어 상세 진행 바는 0으로 둡니다. */
+/** BE 리뷰 summary에 별점 분포가 없을 때, 여러 페이지인 경우 진행 바를 0으로 둡니다. */
 export const EMPTY_MOVER_REVIEW_RATING_COUNTS: MoverReviewRatingCount[] = [
   { score: 5, count: 0 },
   { score: 4, count: 0 },
@@ -98,6 +98,12 @@ export function createMoverDetailShareUrl(origin: string, detailHref: string) {
   return `${origin}${detailHref}`;
 }
 
-export function createKakaoShareUrl(detailUrl: string) {
-  return `https://story.kakao.com/s/share?url=${encodeURIComponent(detailUrl)}`;
-}
+/** 카카오 JS SDK 2.8.3. integrity는 공식 CDN 파일 SHA-384입니다. */
+export const KAKAO_JS_SDK_SRC =
+  "https://t1.kakaocdn.net/kakao_js_sdk/2.8.3/kakao.min.js";
+
+export const KAKAO_JS_SDK_INTEGRITY =
+  "sha384-oroumrnFVE0xtgqyDZJARgERibXg2C28380uaUZz2kHDS5CR7tu20eGiOU6GkTpy";
+
+export const KAKAO_SHARE_FALLBACK_IMAGE_PATH =
+  "/images/mover-search/profile-placeholder.png";

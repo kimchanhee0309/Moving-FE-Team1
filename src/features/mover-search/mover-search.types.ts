@@ -3,6 +3,7 @@ import type { ServiceType } from "@/common/constants/domain";
 export interface MoverSearchResult {
   id: string;
   serviceType: ServiceType;
+  serviceTypes: ServiceType[];
   region: string;
   moverName: string;
   introduction: string;
@@ -39,6 +40,7 @@ export interface MoverSearchListParams {
 export interface MoverSearchItemDto {
   id: string;
   serviceType: ServiceType;
+  serviceTypes: ServiceType[];
   region: string;
   moverName: string;
   introduction: string;
@@ -67,7 +69,6 @@ export interface MoverSearchPageResult {
 }
 
 export interface MoverDetail extends MoverSearchResult {
-  serviceTypes: ServiceType[];
   regionValues: string[];
   detailDescription: string;
 }
@@ -85,9 +86,8 @@ export interface MoverReviewRatingCount {
   count: number;
 }
 
-/** `GET /movers/:id` 성공 `data.mover`입니다. */
+/** `GET /movers/:id` 성공 `data.mover`입니다. `serviceTypes`는 목록 카드와 같습니다. */
 export interface MoverSearchDetailDto extends MoverSearchItemDto {
-  serviceTypes: ServiceType[];
   regions: string[];
 }
 

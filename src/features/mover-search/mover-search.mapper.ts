@@ -1,3 +1,4 @@
+import { resolveApiAssetUrl } from "@/common/api/asset-url";
 import { ApiError } from "@/common/api/error";
 import type { Pagination } from "@/common/api/types";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
@@ -12,6 +13,7 @@ import type {
   MoverDetail,
   MoverReceivedReviewDto,
   MoverReview,
+  MoverReviewRatingCount,
   MoverReviewSummary,
   MoverSearchDetailDto,
   MoverSearchItemDto,
@@ -63,6 +65,9 @@ function isMoverSearchItemDto(value: unknown): value is MoverSearchItemDto {
   return (
     isNonEmptyString(value.id) &&
     isServiceType(value.serviceType) &&
+    Array.isArray(value.serviceTypes) &&
+    value.serviceTypes.length > 0 &&
+    value.serviceTypes.every(isServiceType) &&
     isNonEmptyString(value.region) &&
     isNonEmptyString(value.moverName) &&
     typeof value.introduction === "string" &&
@@ -96,11 +101,12 @@ function mapMoverSearchItem(item: MoverSearchItemDto): MoverSearchResult {
   return {
     id: item.id,
     serviceType: item.serviceType,
+    serviceTypes: item.serviceTypes,
     region: item.region,
     moverName: item.moverName,
     introduction: item.introduction,
     description: item.description,
-    profileImageUrl: item.profileImageUrl,
+    profileImageUrl: resolveApiAssetUrl(item.profileImageUrl),
     rating: item.rating,
     reviewCount: item.reviewCount,
     careerYears: item.careerYears,
@@ -165,8 +171,6 @@ function isMoverSearchDetailDto(value: unknown): value is MoverSearchDetailDto {
   }
 
   return (
-    Array.isArray(value.serviceTypes) &&
-    value.serviceTypes.every(isServiceType) &&
     Array.isArray(value.regions) &&
     value.regions.every(isNonEmptyString) &&
     isMoverSearchItemDto(value)
@@ -220,6 +224,30 @@ function mapMoverReceivedReview(item: MoverReceivedReviewDto): MoverReview {
   };
 }
 
+/** 공개 리뷰 API에 ratingCounts가 없어, 한 페이지에 전체가 오면 items로 점수 분포를 만듭니다. */
+function toRatingCountsFromReviews(
+  items: MoverReceivedReviewDto[],
+): MoverReviewRatingCount[] {
+  const counts: Record<1 | 2 | 3 | 4 | 5, number> = {
+    1: 0,
+    2: 0,
+    3: 0,
+    4: 0,
+    5: 0,
+  };
+
+  items.forEach((item) => {
+    if (item.rating === 1 || item.rating === 2 || item.rating === 3 || item.rating === 4 || item.rating === 5) {
+      counts[item.rating] += 1;
+    }
+  });
+
+  return ([5, 4, 3, 2, 1] as const).map((score) => ({
+    score,
+    count: counts[score],
+  }));
+}
+
 /** apiClient가 벗긴 `GET /movers/recommended` data를 카드 목록으로 검증·변환합니다. */
 export function mapMoverSearchRecommendedResult(
   data: unknown,
@@ -246,14 +274,11 @@ export function mapMoverSearchDetailResult(data: unknown): MoverDetail {
   }
 
   const mover = data.mover;
-  const serviceTypes =
-    mover.serviceTypes.length > 0 ? mover.serviceTypes : [mover.serviceType];
   const regionValues =
     mover.regions.length > 0 ? mover.regions : [mover.region];
 
   return {
     ...mapMoverSearchItem(mover),
-    serviceTypes,
     regionValues,
     // 상세 전용 긴 소개 필드가 없어 목록 description을 본문에 사용합니다.
     detailDescription: mover.description,
@@ -283,7 +308,10 @@ export function mapMoverReviewPageResult(data: unknown): MoverReviewSummary {
 
   return {
     reviews: data.items.map(mapMoverReceivedReview),
-    ratingCounts: EMPTY_MOVER_REVIEW_RATING_COUNTS,
+    ratingCounts:
+      data.pagination.totalCount === data.items.length
+        ? toRatingCountsFromReviews(data.items)
+        : EMPTY_MOVER_REVIEW_RATING_COUNTS,
     totalCount: data.pagination.totalCount,
     totalPages: data.pagination.totalPages,
     averageRating: data.summary.averageRating ?? 0,
@@ -297,11 +325,13 @@ export function mapFavoriteMoverToSearchResult(
   return {
     id: mover.id,
     serviceType: mover.serviceType,
+    serviceTypes:
+      mover.serviceTypes.length > 0 ? mover.serviceTypes : [mover.serviceType],
     region: "",
     moverName: mover.moverName,
     introduction: mover.introduction,
     description: mover.description,
-    profileImageUrl: mover.profileImageUrl,
+    profileImageUrl: resolveApiAssetUrl(mover.profileImageUrl ?? null),
     rating: mover.rating,
     reviewCount: mover.reviewCount,
     careerYears: mover.careerYears,

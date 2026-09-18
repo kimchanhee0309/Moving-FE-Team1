@@ -41,11 +41,13 @@ export interface FavoriteListResult {
 
 /**
  * 찜 목록 화면용 뷰 모델입니다.
- * MoverSearchCard props에 맞추며, API에 없는 confirmedCount는 0으로 둡니다.
+ * MoverSearchCard props에 맞추며, API에 없는 confirmedCount는 0입니다.
+ * serviceTypes는 찾기 사이드바 칩용이고, FavoritePage는 대표 serviceType만 씁니다.
  */
 export interface FavoriteMover {
   id: string;
   serviceType: ServiceType;
+  serviceTypes: ServiceType[];
   moverName: string;
   introduction: string;
   description: string;
