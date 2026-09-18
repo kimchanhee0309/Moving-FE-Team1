@@ -1,15 +1,10 @@
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
-import {
-  MOVER_SEARCH_PAGE_SIZE,
-  SIDEBAR_MOVER_LIMIT,
-} from "./mover-search.constants";
+import { SIDEBAR_MOVER_LIMIT } from "./mover-search.constants";
 import type {
   MoverDetail,
   MoverReview,
   MoverReviewSummary,
-  MoverSearchListParams,
-  MoverSearchPageResult,
   MoverSearchResult,
 } from "./mover-search.types";
 
@@ -185,47 +180,6 @@ export const MOCK_MOVER_SEARCH_RESULTS: MoverSearchResult[] = [
     favoriteCount: 19,
   },
 ];
-
-function matchesListParams(
-  mover: MoverSearchResult,
-  params: MoverSearchListParams,
-): boolean {
-  const keyword = params.search.trim().toLowerCase();
-  if (keyword && !mover.moverName.toLowerCase().includes(keyword)) {
-    return false;
-  }
-  if (params.regions.length > 0 && !params.regions.includes(mover.region)) {
-    return false;
-  }
-  if (
-    params.services.length > 0 &&
-    !params.services.includes(mover.serviceType)
-  ) {
-    return false;
-  }
-  return true;
-}
-
-export function queryMockMoverSearchPage(
-  params: MoverSearchListParams,
-  page: number,
-): MoverSearchPageResult {
-  const filtered = MOCK_MOVER_SEARCH_RESULTS.filter((mover) =>
-    matchesListParams(mover, params),
-  );
-  const sorted = [...filtered].sort(
-    (left, right) => right[params.sort] - left[params.sort],
-  );
-  const start = (page - 1) * MOVER_SEARCH_PAGE_SIZE;
-  const items = sorted.slice(start, start + MOVER_SEARCH_PAGE_SIZE);
-  const hasNext = start + items.length < sorted.length;
-
-  return {
-    items,
-    nextPage: hasNext ? page + 1 : undefined,
-    totalCount: sorted.length,
-  };
-}
 
 export const MOCK_FAVORITE_MOVER_IDS = [
   "mover-3",

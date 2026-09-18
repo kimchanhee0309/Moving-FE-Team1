@@ -33,7 +33,13 @@ export const REGION_FILTER_OPTIONS = [
   { value: "ulsan", label: "울산" },
   { value: "busan", label: "부산" },
   { value: "jeju", label: "제주" },
-];
+] as const;
+
+/** UI 필터 slug(`seoul`) → `GET /movers` `regions` 한글 값(`서울`). BE `MOVER_REGIONS`와 동일합니다. */
+export const REGION_SLUG_TO_API_VALUE: Readonly<Record<string, string>> =
+  Object.fromEntries(
+    REGION_FILTER_OPTIONS.map((option) => [option.value, option.label]),
+  );
 
 export const SORT_OPTIONS: { value: MoverSearchSortValue; label: string }[] = [
   { value: "reviewCount", label: "리뷰 많은순" },
