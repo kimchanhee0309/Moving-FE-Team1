@@ -1,5 +1,8 @@
-import { MOCK_PENDING_QUOTE } from "../_lib/customerQuoteDetail";
-import { CustomerQuoteDetailView } from "./_components/CustomerQuoteDetailView";
+import { HydrationBoundary } from "@tanstack/react-query";
+
+import { prefetchReceivedQuoteDetail } from "@/features/customer-quote/api/customer-quote.server";
+
+import { CustomerQuoteDetailContainer } from "./_components/CustomerQuoteDetailContainer";
 
 interface CustomerQuoteDetailPageProps {
   params: Promise<{ quoteId: string }>;
@@ -9,10 +12,11 @@ export default async function CustomerQuoteDetailPage({
   params,
 }: CustomerQuoteDetailPageProps) {
   const { quoteId } = await params;
+  const dehydratedState = await prefetchReceivedQuoteDetail(quoteId);
 
   return (
-    <CustomerQuoteDetailView
-      quote={{ ...MOCK_PENDING_QUOTE, id: quoteId }}
-    />
+    <HydrationBoundary state={dehydratedState}>
+      <CustomerQuoteDetailContainer quoteId={quoteId} />
+    </HydrationBoundary>
   );
 }

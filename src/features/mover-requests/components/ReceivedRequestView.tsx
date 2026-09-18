@@ -1,18 +1,41 @@
 "use client";
 
-import { useMemo, useState } from "react";
+/**
+ * 기사님의 받은 요청 페이지를 구성하는 Client Component입니다.
+ *
+ * 담당 기능:
+ * - 검색, 서비스 유형, 지정 요청, 정렬 조건 관리
+ * - 받은 요청 Infinite Query 실행
+ * - 견적 보내기/반려 모달 열기
+ * - loading, error, empty, pagination 상태 렌더링
+ *
+ * API 호출과 응답 변환은 hooks/API 파일에 위임합니다.
+ */
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
-import { SortDropdown } from "@/common/components/Dropdown/SortDropdown";
-import { SearchInput } from "@/common/components/Input/SearchInput";
+import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { Button } from "@/common/components/button";
+import { SortDropdown } from "@/common/components/Dropdown";
+import { SearchInput } from "@/common/components/Input";
 import {
   EmptyState,
   ErrorState,
   LoadingState,
 } from "@/common/components/page-state";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
-import { useModal } from "@/providers/modal-provider";
+import { useModal } from "@/providers/ModalProvider";
 
-import type { ReceivedRequestViewModel } from "../mover-requests.types";
+import {
+  useReceivedRequests,
+  useRejectReceivedRequestMutation,
+  useSendQuoteMutation,
+} from "../mover-requests.hooks";
+import type {
+  ReceivedRequestSort,
+  ReceivedRequestViewModel,
+  RejectRequestFormValue,
+  SendQuoteFormValue,
+} from "../mover-requests.types";
 import { ReceivedRequestCard } from "./ReceivedRequestCard";
 import { RejectRequestModal } from "./RejectRequestModal";
 import { SendQuoteModal } from "./SendQuoteModal";
@@ -46,19 +69,139 @@ const SORT_OPTIONS = [
   },
 ] as const;
 
-interface ReceivedRequestsViewProps {
-  requests: ReceivedRequestViewModel[];
-  isLoading?: boolean;
-  error?: string;
-  onRetry?: () => void;
+function isReceivedRequestSort(value: string): value is ReceivedRequestSort {
+  return SORT_OPTIONS.some((option) => option.value === value);
 }
 
-export function ReceivedRequestsView({
-  requests,
-  isLoading = false,
-  error,
-  onRetry,
-}: ReceivedRequestsViewProps) {
+interface SendQuoteModalContentProps {
+  request: ReceivedRequestViewModel;
+  onClose: () => void;
+}
+
+/**
+ * 견적 보내기 모달과 mutation을 연결하는 컨테이너입니다.
+ *
+ * 전역 ModalProvider에는 ReactNode가 저장되므로 mutation 상태를 이
+ * 컴포넌트 내부에서 관리해야 isSubmitting과 serverError가 변경될 때
+ * 모달이 다시 렌더링됩니다.
+ */
+function SendQuoteModalContent({
+  request,
+  onClose,
+}: SendQuoteModalContentProps) {
+  const mutation = useSendQuoteMutation();
+  const { setModalDismissible } = useModal();
+
+  /**
+   * 요청을 전송하는 동안에는 닫기 버튼뿐만 아니라 Escape와 backdrop
+   * 클릭도 막습니다. 요청 성공 시 호출하는 onClose는 dismissal 정책과
+   * 관계없이 모달을 닫을 수 있습니다.
+   */
+  useEffect(() => {
+    setModalDismissible(!mutation.isPending);
+
+    return () => {
+      // 모달이 닫히거나 다른 모달로 교체될 때 다음 모달의 닫기 정책이
+      // 잠긴 상태로 남지 않도록 기본값을 복구합니다.
+      setModalDismissible(true);
+    };
+  }, [mutation.isPending, setModalDismissible]);
+
+  const handleSubmit = (value: SendQuoteFormValue) => {
+    if (mutation.isPending) {
+      return;
+    }
+
+    mutation.mutate(
+      {
+        requestId: request.requestId,
+        value,
+      },
+      {
+        onSuccess: onClose,
+      },
+    );
+  };
+
+  return (
+    <SendQuoteModal
+      request={request}
+      isSubmitting={mutation.isPending}
+      serverError={
+        mutation.error
+          ? getApiErrorMessage(
+              mutation.error,
+              "견적을 보내지 못했습니다. 다시 시도해 주세요.",
+            )
+          : undefined
+      }
+      onClose={onClose}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+interface RejectRequestModalContentProps {
+  request: ReceivedRequestViewModel;
+  onClose: () => void;
+}
+
+/**
+ * 반려 요청 모달과 mutation을 연결하는 컨테이너입니다.
+ */
+function RejectRequestModalContent({
+  request,
+  onClose,
+}: RejectRequestModalContentProps) {
+  const mutation = useRejectReceivedRequestMutation();
+  const { setModalDismissible } = useModal();
+
+  /**
+   * 반려 요청이 진행되는 동안 Escape와 backdrop 닫기를 막습니다.
+   */
+  useEffect(() => {
+    setModalDismissible(!mutation.isPending);
+
+    return () => {
+      setModalDismissible(true);
+    };
+  }, [mutation.isPending, setModalDismissible]);
+
+  const handleSubmit = (value: RejectRequestFormValue) => {
+    if (mutation.isPending) {
+      return;
+    }
+
+    mutation.mutate(
+      {
+        requestId: request.requestId,
+        value,
+      },
+      {
+        onSuccess: onClose,
+      },
+    );
+  };
+
+  return (
+    <RejectRequestModal
+      request={request}
+      isSubmitting={mutation.isPending}
+      serverError={
+        mutation.error
+          ? getApiErrorMessage(
+              mutation.error,
+              "요청을 반려하지 못했습니다. 다시 시도해 주세요.",
+            )
+          : undefined
+      }
+      onClose={onClose}
+      onSubmit={handleSubmit}
+    />
+  );
+}
+
+export function ReceivedRequestsView() {
   const { openModal, closeModal } = useModal();
 
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -66,79 +209,106 @@ export function ReceivedRequestsView({
     null,
   );
   const [designatedOnly, setDesignatedOnly] = useState(false);
-  const [sortValue, setSortValue] = useState("REQUESTED_AT_DESC");
+  const [sortValue, setSortValue] =
+    useState<ReceivedRequestSort>("REQUESTED_AT_DESC");
   const [isSortOpen, setIsSortOpen] = useState(false);
 
-  const filteredRequests = useMemo(() => {
-    const keyword = searchKeyword.trim().toLowerCase();
+  /**
+   * 입력값을 바로 API query에 넣지 않고 deferred 값을 사용합니다.
+   * 연속 입력 중 화면 갱신 우선순위를 낮추면서 최신 검색어를 조회합니다.
+   */
+  const deferredKeyword = useDeferredValue(searchKeyword.trim());
 
-    return requests
-      .filter((request) => {
-        const matchesKeyword =
-          keyword.length === 0 ||
-          request.customerName.toLowerCase().includes(keyword);
+  const query = useMemo(
+    () => ({
+      keyword: deferredKeyword.length > 0 ? deferredKeyword : undefined,
+      serviceType: selectedService ?? undefined,
+      isDesignated: designatedOnly ? true : undefined,
+      sort: sortValue,
+      limit: 10,
+    }),
+    [deferredKeyword, designatedOnly, selectedService, sortValue],
+  );
 
-        const matchesService =
-          selectedService === null || request.serviceType === selectedService;
+  const receivedRequestsQuery = useReceivedRequests(query);
 
-        const matchesDesignated = !designatedOnly || request.isDesignated;
-
-        return matchesKeyword && matchesService && matchesDesignated;
-      })
-      .sort((firstRequest, secondRequest) => {
-        if (sortValue === "REQUESTED_AT_DESC") {
-          return (
-            new Date(secondRequest.requestedAt).getTime() -
-            new Date(firstRequest.requestedAt).getTime()
-          );
-        }
-
-        return (
-          new Date(firstRequest.moveDate).getTime() -
-          new Date(secondRequest.moveDate).getTime()
-        );
-      });
-  }, [designatedOnly, requests, searchKeyword, selectedService, sortValue]);
-
-  const findRequest = (requestId: string) =>
-    requests.find((request) => request.requestId === requestId);
+  /**
+   * useInfiniteQuery가 페이지 단위로 보관한 items를 카드에서 사용할
+   * 하나의 배열로 합칩니다.
+   */
+  const requests =
+    receivedRequestsQuery.data?.pages.flatMap((page) => page.items) ?? [];
 
   const handleOpenSendQuote = (requestId: string) => {
-    const request = findRequest(requestId);
+    const request = requests.find((item) => item.requestId === requestId);
 
     if (!request) {
       return;
     }
 
     openModal(
-      <SendQuoteModal
-        request={request}
-        onClose={closeModal}
-        onSubmit={closeModal}
-      />,
+      <SendQuoteModalContent request={request} onClose={closeModal} />,
+      {
+        ariaLabel: "견적 보내기",
+      },
     );
   };
 
   const handleOpenRejectRequest = (requestId: string) => {
-    const request = findRequest(requestId);
+    const request = requests.find((item) => item.requestId === requestId);
 
     if (!request) {
       return;
     }
 
     openModal(
-      <RejectRequestModal
-        request={request}
-        onClose={closeModal}
-        onSubmit={closeModal}
-      />,
+      <RejectRequestModalContent request={request} onClose={closeModal} />,
+      {
+        ariaLabel: "반려 요청",
+      },
     );
+  };
+
+  const handleSortChange = (value: string) => {
+    if (isReceivedRequestSort(value)) {
+      setSortValue(value);
+    }
   };
 
   const hasActiveFilter =
     searchKeyword.trim().length > 0 ||
     selectedService !== null ||
     designatedOnly;
+
+  const hasLoadedRequests = requests.length > 0;
+
+  /**
+   * 첫 조회가 실패해 표시할 기존 카드가 없을 때만 전체 ErrorState를
+   * 보여줍니다. 이미 받은 페이지가 있다면 오류가 발생해도 기존 카드를
+   * 숨기지 않습니다.
+   */
+  const initialErrorMessage =
+    receivedRequestsQuery.isError &&
+    !hasLoadedRequests &&
+    receivedRequestsQuery.error
+      ? getApiErrorMessage(
+          receivedRequestsQuery.error,
+          "받은 요청을 불러오지 못했습니다.",
+        )
+      : undefined;
+
+  /**
+   * 추가 페이지 조회 실패는 기존 목록을 유지한 채 목록 아래에 표시합니다.
+   * useInfiniteQuery는 fetchNextPage 실패 후에도 기존 pages를 캐시에
+   * 보존하므로 이를 전체 ErrorState로 덮지 않아야 합니다.
+   */
+  const loadMoreErrorMessage =
+    receivedRequestsQuery.isFetchNextPageError && receivedRequestsQuery.error
+      ? getApiErrorMessage(
+          receivedRequestsQuery.error,
+          "추가 요청을 불러오지 못했습니다. 다시 시도해 주세요.",
+        )
+      : undefined;
 
   return (
     <>
@@ -158,7 +328,6 @@ export function ReceivedRequestsView({
               inputSize="md"
               placeholder="어떤 고객님을 찾고 계세요?"
               value={searchKeyword}
-              isLoading={isLoading}
               onChange={(event) => setSearchKeyword(event.target.value)}
               onClear={() => setSearchKeyword("")}
               containerClassName="!max-w-none"
@@ -181,7 +350,7 @@ export function ReceivedRequestsView({
                     "focus-visible:outline-[var(--primary-400)]",
                     isSelected
                       ? "border-[var(--primary-400)] bg-[var(--primary-100)] font-medium text-[var(--primary-400)]"
-                      : "border-[var(--gray-300)] bg-[var(--backgroud-100)] text-[var(--black-400)]",
+                      : "border-[var(--gray-300)] bg-[var(--background-100)] text-[var(--black-400)]",
                   ].join(" ")}
                   onClick={() =>
                     setSelectedService(isSelected ? null : service.value)
@@ -197,7 +366,8 @@ export function ReceivedRequestsView({
         <section className="flex flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
             <strong className="text-[18px] font-semibold max-[743px]:text-[13px]">
-              전체 {filteredRequests.length}건
+              받은 요청 {requests.length}
+              {receivedRequestsQuery.hasNextPage ? "건 이상" : "건"}
             </strong>
 
             <div className="flex items-center gap-3">
@@ -217,22 +387,24 @@ export function ReceivedRequestsView({
                 value={sortValue}
                 isOpen={isSortOpen}
                 size="md"
-                disabled={isLoading}
-                onChange={setSortValue}
+                disabled={receivedRequestsQuery.isPending}
+                onChange={handleSortChange}
                 onOpenChange={setIsSortOpen}
               />
             </div>
           </div>
 
-          {isLoading ? (
-            <LoadingState message="받은 요청을 불러오는 중이에요." />
-          ) : error ? (
+          {receivedRequestsQuery.isPending ? (
+            <LoadingState message="받은 요청을 불러오는 중이에요" />
+          ) : initialErrorMessage ? (
             <ErrorState
               title="받은 요청을 불러오지 못했어요."
-              description={error}
-              onRetry={onRetry}
+              description={initialErrorMessage}
+              onRetry={() => {
+                void receivedRequestsQuery.refetch();
+              }}
             />
-          ) : filteredRequests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <EmptyState
               title={
                 hasActiveFilter
@@ -246,16 +418,55 @@ export function ReceivedRequestsView({
               }
             />
           ) : (
-            <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
-              {filteredRequests.map((request) => (
-                <ReceivedRequestCard
-                  key={request.requestId}
-                  request={request}
-                  onSendQuote={handleOpenSendQuote}
-                  onReject={handleOpenRejectRequest}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 items-start justify-items-center gap-6 min-[1200px]:grid-cols-2">
+                {requests.map((request) => (
+                  <ReceivedRequestCard
+                    key={request.requestId}
+                    request={request}
+                    onSendQuote={handleOpenSendQuote}
+                    onReject={handleOpenRejectRequest}
+                  />
+                ))}
+              </div>
+
+              {loadMoreErrorMessage ? (
+                <div
+                  role="alert"
+                  className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-[var(--primary-200)] bg-[var(--primary-100)] px-6 py-5 text-center"
+                >
+                  <p className="text-[14px] font-medium leading-6 text-[var(--primary-400)]">
+                    {loadMoreErrorMessage}
+                  </p>
+
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outlined"
+                    isLoading={receivedRequestsQuery.isFetchingNextPage}
+                    onClick={() => {
+                      void receivedRequestsQuery.fetchNextPage();
+                    }}
+                  >
+                    다시 시도
+                  </Button>
+                </div>
+              ) : receivedRequestsQuery.hasNextPage ? (
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outlined"
+                    isLoading={receivedRequestsQuery.isFetchingNextPage}
+                    onClick={() => {
+                      void receivedRequestsQuery.fetchNextPage();
+                    }}
+                  >
+                    더 보기
+                  </Button>
+                </div>
+              ) : null}
+            </>
           )}
         </section>
       </main>

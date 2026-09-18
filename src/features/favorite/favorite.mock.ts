@@ -1,22 +1,11 @@
-import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
-/** 찜 목록 mock용 기사님 카드 데이터 (API DTO 확정 전) */
-export interface FavoriteMover {
-  id: string;
-  serviceType: ServiceType;
-  moverName: string;
-  introduction: string;
-  description: string;
-  profileImageUrl?: string | null;
-  rating: number;
-  reviewCount: number;
-  careerYears: number;
-  confirmedCount: number;
-  favoriteCount: number;
-}
+import type { FavoriteMover } from "./favorite.types";
 
-/** API 연동 전 로컬 확인용 mock. 서버 응답과 다를 수 있다. */
+/**
+ * API 연동 전 로컬 확인용 mock입니다.
+ * FavoritePage는 GET /favorites를 사용하며 이 파일은 참조하지 않습니다.
+ */
 export const MOCK_FAVORITE_MOVERS: FavoriteMover[] = [
   {
     id: "mover-1",
