@@ -6,6 +6,8 @@ import type { ButtonHTMLAttributes } from "react";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 import type { ServiceType } from "@/common/constants/domain";
 
+import { toDisplayRegionAddress } from "../review.utils";
+
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
   [SERVICE_TYPE.HOME]: "가정이사",
@@ -186,11 +188,14 @@ interface MoveInfoItemProps {
 
 function MoveInfoItem({ label, value }: MoveInfoItemProps) {
   return (
-    <div className="flex flex-col items-start">
+    <div className="flex min-w-0 flex-1 flex-col items-start">
       <span className="text-[14px]/[24px] font-normal text-(--gray-500)">
         {label}
       </span>
-      <span className="text-[14px]/[24px] font-normal text-(--black-500) min-[744px]:text-[16px]/[26px]">
+      <span
+        className="w-full truncate text-[14px]/[24px] font-normal text-(--black-500) min-[744px]:text-[16px]/[26px]"
+        title={value}
+      >
         {value}
       </span>
     </div>
@@ -266,7 +271,7 @@ export function ReviewableCard({
   return (
     <article
       className={cn(
-        "flex flex-col gap-5 rounded-[20px] px-5 py-6",
+        "flex w-full min-w-0 flex-col gap-5 rounded-[20px] px-5 py-6",
         "border-[0.5px] border-(--line-100) bg-(--gray-50)",
         "shadow-[-2px_-2px_10px_0_rgba(220,220,220,0.2),2px_2px_10px_0_rgba(220,220,220,0.2)]",
         "min-[744px]:gap-10 min-[744px]:p-8 min-[1200px]:gap-6 min-[1200px]:px-10 min-[1200px]:py-8",
@@ -311,12 +316,18 @@ export function ReviewableCard({
           />
         </div>
 
-        <div className="flex flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:items-start min-[1200px]:justify-between">
-          <div className="flex flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:gap-5">
-            <div className="flex gap-4 min-[744px]:contents">
-              <MoveInfoItem label="출발지" value={departure} />
+        <div className="flex min-w-0 flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:items-start min-[1200px]:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:gap-5">
+            <div className="flex min-w-0 flex-1 gap-4 min-[744px]:contents">
+              <MoveInfoItem
+                label="출발지"
+                value={toDisplayRegionAddress(departure)}
+              />
               <MoveInfoDivider className="hidden min-[1200px]:block" />
-              <MoveInfoItem label="도착지" value={arrival} />
+              <MoveInfoItem
+                label="도착지"
+                value={toDisplayRegionAddress(arrival)}
+              />
             </div>
             <MoveInfoDivider className="hidden min-[744px]:block" />
             <MoveInfoItem label="이사일" value={formatMoveDate(movedAt)} />
@@ -326,7 +337,7 @@ export function ReviewableCard({
 
           <PriceBlock
             price={price}
-            className="hidden flex-1 items-end min-[744px]:flex min-[1200px]:hidden"
+            className="hidden shrink-0 items-end min-[744px]:flex min-[1200px]:hidden"
             labelClassName="text-[14px]/[24px] font-normal text-(--gray-500)"
             valueClassName="text-[18px]/[26px] font-bold text-(--black-500)"
           />

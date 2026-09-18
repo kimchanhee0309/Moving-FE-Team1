@@ -7,6 +7,8 @@ import type { MouseEvent, ReactNode } from "react";
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
+import { toDisplayRegionAddress } from "../review.utils";
+
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
   [SERVICE_TYPE.HOME]: "가정이사",
@@ -138,13 +140,29 @@ function Chip({
   );
 }
 
-function MoveInfoItem({ label, value }: { label: string; value: string }) {
+function MoveInfoItem({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col items-start">
+    <div
+      className={cn(
+        "flex min-w-0 flex-col items-start",
+        className,
+      )}
+    >
       <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[1200px]:text-md-regular">
         {label}
       </span>
-      <span className="text-sm-medium whitespace-nowrap text-[var(--black-500)] min-[1200px]:text-lg-regular">
+      <span
+        className="w-full truncate text-sm-medium text-[var(--black-500)] min-[1200px]:text-lg-regular"
+        title={value}
+      >
         {value}
       </span>
     </div>
@@ -425,9 +443,14 @@ export function ReviewWriteModal({
 
             <div className="h-px w-full bg-[var(--line-100)]" aria-hidden="true" />
 
-            <div className="flex w-full items-end justify-between gap-3 min-[1200px]:justify-start min-[1200px]:gap-10">
-              <div className="flex items-end gap-3">
-                <MoveInfoItem label="출발지" value={departure} />
+            {/* 모달 M/T(폭 375): 주소 한 줄 + 이사일 다음 줄로 겹침 방지. Desktop만 Figma 3열 한 줄 */}
+            <div className="flex w-full min-w-0 flex-col gap-3 min-[1200px]:flex-row min-[1200px]:items-end min-[1200px]:gap-10">
+              <div className="flex min-w-0 w-full items-end gap-2 min-[1200px]:flex-1 min-[1200px]:gap-3">
+                <MoveInfoItem
+                  label="출발지"
+                  value={toDisplayRegionAddress(departure)}
+                  className="min-w-0 flex-1"
+                />
                 <div
                   className="relative h-[23px] w-3 shrink-0 min-[1200px]:w-4"
                   aria-hidden="true"
@@ -441,9 +464,17 @@ export function ReviewWriteModal({
                     unoptimized
                   />
                 </div>
-                <MoveInfoItem label="도착지" value={arrival} />
+                <MoveInfoItem
+                  label="도착지"
+                  value={toDisplayRegionAddress(arrival)}
+                  className="min-w-0 flex-1"
+                />
               </div>
-              <MoveInfoItem label="이사일" value={formatMoveDate(movedAt)} />
+              <MoveInfoItem
+                label="이사일"
+                value={formatMoveDate(movedAt)}
+                className="w-full shrink-0 min-[1200px]:w-auto"
+              />
             </div>
 
             <div className="h-px w-full bg-[var(--line-100)]" aria-hidden="true" />

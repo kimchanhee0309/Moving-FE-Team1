@@ -3,6 +3,8 @@ import Image from "next/image";
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
+import { toDisplayRegionAddress } from "../review.utils";
+
 const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
   [SERVICE_TYPE.HOME]: "가정이사",
@@ -214,13 +216,31 @@ function ChipGroup({
   );
 }
 
-function MoveInfoItem({ label, value }: { label: string; value: string }) {
+function MoveInfoItem({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col items-start">
+    <div
+      className={[
+        "flex min-w-0 flex-col items-start",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[744px]:text-md-regular">
         {label}
       </span>
-      <span className="text-sm-medium whitespace-nowrap text-[var(--black-100)] min-[744px]:text-md-medium">
+      <span
+        className="w-full truncate text-sm-medium text-[var(--black-100)] min-[744px]:text-md-medium"
+        title={value}
+      >
         {value}
       </span>
     </div>
@@ -351,12 +371,25 @@ export function WrittenReviewCard({
         aria-hidden="true"
       />
 
-      <div className="flex w-full items-center gap-4 min-[744px]:gap-5">
-        <MoveInfoItem label="출발지" value={departure} />
+      {/* 모바일: 세로 스택으로 긴 주소·이사일 겹침 방지. 태블릿+: Figma 한 줄 + truncate */}
+      <div className="flex w-full min-w-0 flex-col gap-3 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-5">
+        <MoveInfoItem
+          label="출발지"
+          value={toDisplayRegionAddress(departure)}
+          className="w-full min-[744px]:min-w-0 min-[744px]:flex-1"
+        />
         <MoveInfoDivider />
-        <MoveInfoItem label="도착지" value={arrival} />
+        <MoveInfoItem
+          label="도착지"
+          value={toDisplayRegionAddress(arrival)}
+          className="w-full min-[744px]:min-w-0 min-[744px]:flex-1"
+        />
         <MoveInfoDivider />
-        <MoveInfoItem label="이사일" value={moveDateLabel} />
+        <MoveInfoItem
+          label="이사일"
+          value={moveDateLabel}
+          className="w-full shrink-0 min-[744px]:w-auto"
+        />
       </div>
 
       <div
