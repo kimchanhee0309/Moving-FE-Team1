@@ -52,9 +52,10 @@ export function authHref(path: string, redirectTo?: string): string {
 /** 인증 성공 뒤 프로필 미등록 사용자를 역할별 등록 화면으로 먼저 보냅니다. */
 export function resolveAuthenticatedPath(user: AuthUser, redirectTo?: string): string {
   if (!user.profileCompleted) {
-    return user.role === "MOVER"
+    const registerPath = user.role === "MOVER"
       ? ROUTES.MOVER.PROFILE.REGISTER
       : ROUTES.CUSTOMER.PROFILE.REGISTER;
+    return authHref(registerPath, redirectTo);
   }
 
   const target = safeAuthRedirect(redirectTo);

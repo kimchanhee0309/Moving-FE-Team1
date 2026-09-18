@@ -50,9 +50,11 @@ export interface MoverBasicInfoFormValues {
   newPasswordConfirm: string;
 }
 
+export type MoverBasicInfo = Pick<MoverBasicInfoFormValues, "name" | "email" | "phone">;
+
 export interface MoverBasicInfoFormProps {
-  initialValues: Pick<MoverBasicInfoFormValues, "name" | "email" | "phone">;
+  initialValues: MoverBasicInfo;
   isPending?: boolean;
   submissionError?: string;
-  onSubmit: (values: MoverBasicInfoFormValues) => Promise<void>;
+  onSubmit: (values: MoverBasicInfoFormValues) => Promise<MoverBasicInfo>;
 }

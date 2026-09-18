@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, before, mock, test } from "node:test";
 
 let createCustomerProfile: typeof import("../../src/features/customer-profile/customer-profile.api").createCustomerProfile;
+let updateCustomerProfile: typeof import("../../src/features/customer-profile/customer-profile.api").updateCustomerProfile;
 let createMoverProfile: typeof import("../../src/features/mover-profile/mover-profile.api").createMoverProfile;
 let getMoverReviews: typeof import("../../src/features/mover-mypage/mover-mypage.api").getMoverReviews;
 let updateMoverBasicInfo: typeof import("../../src/features/mover-mypage/mover-mypage.api").updateMoverBasicInfo;
@@ -11,7 +12,7 @@ const pathname = (input: RequestInfo | URL) => new URL(input instanceof Request 
 
 before(async () => {
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:4000";
-  ({ createCustomerProfile } = await import("../../src/features/customer-profile/customer-profile.api"));
+  ({ createCustomerProfile, updateCustomerProfile } = await import("../../src/features/customer-profile/customer-profile.api"));
   ({ createMoverProfile } = await import("../../src/features/mover-profile/mover-profile.api"));
   ({ getMoverReviews, updateMoverBasicInfo } = await import("../../src/features/mover-mypage/mover-mypage.api"));
 });
@@ -49,6 +50,40 @@ test("일반 유저 프로필 등록은 multipart 배열과 지역을 백엔드 
   });
   assert.deepEqual(profile.serviceTypes, ["SMALL", "HOME"]);
   assert.equal(profile.phone, null);
+});
+
+test("일반 유저 프로필 수정은 검증과 동일한 숫자 전화번호를 전송한다", async () => {
+  mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
+    assert.ok(options.body instanceof FormData);
+    assert.equal(options.body.get("email"), "customer@example.com");
+    assert.equal(options.body.get("phone"), "01012345678");
+    return success({
+      profile: {
+        id: "customer-profile-1",
+        name: "테스트 고객",
+        email: "customer@example.com",
+        phone: "01012345678",
+        profileImageUrl: null,
+        serviceTypes: ["HOME"],
+        region: "서울",
+        createdAt: "2026-09-17T00:00:00.000Z",
+        updatedAt: "2026-09-18T00:00:00.000Z",
+      },
+    });
+  });
+
+  const profile = await updateCustomerProfile({
+    profileImage: null,
+    serviceTypeIds: ["HOME"],
+    region: "서울",
+    name: "테스트 고객",
+    email: "CUSTOMER@example.com",
+    phone: "(010) 1234-5678",
+    currentPassword: "",
+    newPassword: "",
+    newPasswordConfirm: "",
+  });
+  assert.equal(profile.phone, "01012345678");
 });
 
 test("기사님 프로필 등록은 서비스와 활동 지역을 반복 multipart 필드로 전송한다", async () => {
@@ -129,4 +164,27 @@ test("기사님 기본정보의 빈 전화번호는 null로 전송하고 비밀�
     newPasswordConfirm: "",
   });
   assert.equal(basicInfo.phone, "");
+});
+
+test("기사님 기본정보는 이메일과 전화번호를 검증 기준으로 정규화한다", async () => {
+  mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
+    const payload: unknown = JSON.parse(String(options.body));
+    assert.deepEqual(payload, {
+      name: "기사님",
+      email: "mover@example.com",
+      phone: "01012345678",
+    });
+    return success({ basicInfo: { name: "기사님", email: "mover@example.com", phone: "01012345678" } });
+  });
+
+  const basicInfo = await updateMoverBasicInfo({
+    name: "기사님",
+    email: "MOVER@example.com",
+    phone: "010.1234.5678",
+    currentPassword: "",
+    newPassword: "",
+    newPasswordConfirm: "",
+  });
+  assert.equal(basicInfo.email, "mover@example.com");
+  assert.equal(basicInfo.phone, "01012345678");
 });

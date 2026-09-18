@@ -1,5 +1,11 @@
 import { CustomerProfileRegisterContent } from "@/features/customer-profile/components";
+import { safeAuthRedirect } from "@/features/auth/auth.utils";
 
-export default function CustomerProfileRegisterPage() {
-  return <CustomerProfileRegisterContent />;
+export default async function CustomerProfileRegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+}) {
+  const { redirect } = await searchParams;
+  return <CustomerProfileRegisterContent redirectTo={safeAuthRedirect(redirect)} />;
 }

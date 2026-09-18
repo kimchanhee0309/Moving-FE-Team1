@@ -1,6 +1,6 @@
 import { resolveApiAssetUrl } from "@/common/api/asset-url";
 import { apiClient } from "@/common/api/client";
-import { ApiError } from "@/common/api/error";
+import { createApiResponseReader } from "@/common/api/response-reader";
 import { isServiceType, type ServiceType } from "@/common/constants/domain";
 import { isProfileRegion, type ProfileRegion } from "@/common/constants/profile";
 
@@ -11,53 +11,32 @@ export const moverProfileKeys = {
   current: () => [...moverProfileKeys.all, "current"] as const,
 };
 
-function invalidResponse(): never {
-  throw new ApiError(200, "INVALID_RESPONSE", "기사님 프로필 응답 형식이 올바르지 않습니다.");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function readString(value: unknown): string {
-  if (typeof value !== "string") return invalidResponse();
-  return value;
-}
-
-function readNumber(value: unknown): number {
-  if (typeof value !== "number" || !Number.isFinite(value)) return invalidResponse();
-  return value;
-}
-
-function readNullableString(value: unknown): string | null {
-  if (value !== null && typeof value !== "string") return invalidResponse();
-  return value;
-}
+const response = createApiResponseReader("기사님 프로필 응답 형식이 올바르지 않습니다.");
 
 function readServiceTypes(value: unknown): ServiceType[] {
-  if (!Array.isArray(value) || !value.every(isServiceType)) return invalidResponse();
+  if (!Array.isArray(value) || !value.every(isServiceType)) return response.invalid();
   return value;
 }
 
 function readRegions(value: unknown): ProfileRegion[] {
-  if (!Array.isArray(value) || !value.every(isProfileRegion)) return invalidResponse();
+  if (!Array.isArray(value) || !value.every(isProfileRegion)) return response.invalid();
   return value;
 }
 
 function readProfile(data: unknown): MoverProfile {
-  if (!isRecord(data) || !isRecord(data.profile)) return invalidResponse();
+  if (!response.isRecord(data) || !response.isRecord(data.profile)) return response.invalid();
   const profile = data.profile;
   return {
-    id: readString(profile.id),
-    profileImageUrl: resolveApiAssetUrl(readNullableString(profile.profileImageUrl)),
-    nickname: readString(profile.nickname),
-    careerYears: readNumber(profile.careerYears),
-    shortIntroduction: readString(profile.shortIntroduction),
-    description: readString(profile.description),
+    id: response.string(profile.id),
+    profileImageUrl: resolveApiAssetUrl(response.nullableString(profile.profileImageUrl)),
+    nickname: response.string(profile.nickname),
+    careerYears: response.number(profile.careerYears),
+    shortIntroduction: response.string(profile.shortIntroduction),
+    description: response.string(profile.description),
     serviceTypes: readServiceTypes(profile.serviceTypes),
     regions: readRegions(profile.regions),
-    createdAt: readString(profile.createdAt),
-    updatedAt: readString(profile.updatedAt),
+    createdAt: response.string(profile.createdAt),
+    updatedAt: response.string(profile.updatedAt),
   };
 }
 

@@ -1,8 +1,9 @@
 import { resolveApiAssetUrl } from "@/common/api/asset-url";
 import { apiClient } from "@/common/api/client";
-import { ApiError } from "@/common/api/error";
+import { createApiResponseReader } from "@/common/api/response-reader";
 import { isServiceType, type ServiceType } from "@/common/constants/domain";
 import { isProfileRegion } from "@/common/constants/profile";
+import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
 
 import type {
   CustomerProfile,
@@ -15,45 +16,29 @@ export const customerProfileKeys = {
   current: () => [...customerProfileKeys.all, "current"] as const,
 };
 
-function invalidResponse(): never {
-  throw new ApiError(200, "INVALID_RESPONSE", "일반 유저 프로필 응답 형식이 올바르지 않습니다.");
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function readString(value: unknown): string {
-  if (typeof value !== "string") return invalidResponse();
-  return value;
-}
-
-function readNullableString(value: unknown): string | null {
-  if (value !== null && typeof value !== "string") return invalidResponse();
-  return value;
-}
+const response = createApiResponseReader("일반 유저 프로필 응답 형식이 올바르지 않습니다.");
 
 function readServiceTypes(value: unknown): ServiceType[] {
-  if (!Array.isArray(value) || !value.every(isServiceType)) return invalidResponse();
+  if (!Array.isArray(value) || !value.every(isServiceType)) return response.invalid();
   return value;
 }
 
 function readProfile(data: unknown): CustomerProfile {
-  if (!isRecord(data) || !isRecord(data.profile)) return invalidResponse();
+  if (!response.isRecord(data) || !response.isRecord(data.profile)) return response.invalid();
   const profile = data.profile;
   const region = profile.region;
-  if (!isProfileRegion(region)) return invalidResponse();
+  if (!isProfileRegion(region)) return response.invalid();
 
   return {
-    id: readString(profile.id),
-    name: readString(profile.name),
-    email: readString(profile.email),
-    phone: readNullableString(profile.phone),
-    profileImageUrl: resolveApiAssetUrl(readNullableString(profile.profileImageUrl)),
+    id: response.string(profile.id),
+    name: response.string(profile.name),
+    email: response.string(profile.email),
+    phone: response.nullableString(profile.phone),
+    profileImageUrl: resolveApiAssetUrl(response.nullableString(profile.profileImageUrl)),
     serviceTypes: readServiceTypes(profile.serviceTypes),
     region,
-    createdAt: readString(profile.createdAt),
-    updatedAt: readString(profile.updatedAt),
+    createdAt: response.string(profile.createdAt),
+    updatedAt: response.string(profile.updatedAt),
   };
 }
 
@@ -77,8 +62,8 @@ export async function updateCustomerProfile(values: CustomerProfileEditFormValue
   const formData = new FormData();
   appendProfileFields(formData, values);
   formData.append("name", values.name.trim());
-  formData.append("email", values.email.trim().toLowerCase());
-  formData.append("phone", values.phone.replace(/[-\s]/g, ""));
+  formData.append("email", normalizeEmail(values.email));
+  formData.append("phone", normalizePhoneDigits(values.phone));
   if (values.currentPassword && values.newPassword) {
     formData.append("currentPassword", values.currentPassword);
     formData.append("newPassword", values.newPassword);

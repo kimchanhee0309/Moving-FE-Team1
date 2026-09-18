@@ -7,6 +7,7 @@ import { Input, Textarea } from "@/common/components/Input";
 import { ProfileImageInput } from "@/common/components/ProfileImageInput";
 import { ProfileMultiSelectChipGroup } from "@/common/components/ProfileSelectionChip";
 import { PROFILE_REGION_OPTIONS, PROFILE_SERVICE_OPTIONS } from "@/common/constants/profile";
+import { haveSameSelection } from "@/common/utils/selection";
 
 import type { MoverProfileFormProps, MoverProfileFormValues } from "../mover-profile.types";
 
@@ -25,10 +26,6 @@ const EMPTY_TEXT_VALUES: MoverTextValues = {
   shortIntroduction: "",
   description: "",
 };
-
-function haveSameValues<T extends string>(left: readonly T[], right: readonly T[]) {
-  return left.length === right.length && left.every((value) => right.includes(value));
-}
 
 function getMoverTextErrors(values: MoverTextValues) {
   return {
@@ -59,6 +56,7 @@ export function MoverProfileForm({
   onSubmit,
 }: MoverProfileFormProps) {
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imageInputVersion, setImageInputVersion] = useState(0);
   const [profileImageError, setProfileImageError] = useState<string | null>(null);
   const [textValues, setTextValues] = useState<MoverTextValues>(
     initialValues
@@ -94,8 +92,8 @@ export function MoverProfileForm({
     textValues.careerYears.trim() !== initialValues.careerYears.trim() ||
     textValues.shortIntroduction.trim() !== initialValues.shortIntroduction.trim() ||
     textValues.description.trim() !== initialValues.description.trim() ||
-    !haveSameValues(serviceTypeIds, initialValues.serviceTypeIds) ||
-    !haveSameValues(regions, initialValues.regions);
+    !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds) ||
+    !haveSameSelection(regions, initialValues.regions);
 
   const updateTextValue = (field: MoverTextField, value: string) => {
     setTouched((current) => ({ ...current, [field]: true }));
@@ -124,6 +122,7 @@ export function MoverProfileForm({
     try {
       await onSubmit(values);
       setProfileImage(null);
+      setImageInputVersion((current) => current + 1);
       setStatusMessage(mode === "register" ? "기사님 프로필이 등록되었습니다." : "기사님 프로필이 수정되었습니다.");
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
@@ -159,6 +158,7 @@ export function MoverProfileForm({
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
           <div className="flex flex-col">
             <ProfileImageInput
+              key={imageInputVersion}
               className={sectionClass}
               file={profileImage}
               initialImageUrl={initialValues?.profileImageUrl}

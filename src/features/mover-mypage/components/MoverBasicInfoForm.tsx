@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
+import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
 
 import type {
@@ -51,7 +52,7 @@ export function MoverBasicInfoForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isPending || isSubmitting;
-  const normalizedPhone = values.phone.replace(/\D/g, "");
+  const normalizedPhone = normalizePhoneDigits(values.phone);
   // 비밀번호 관리자가 현재 비밀번호만 자동완성해도 일반 기본정보 수정은 막지 않습니다.
   // 새 비밀번호 입력을 시작한 경우에만 현재 비밀번호와 확인값을 함께 검증합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
@@ -80,8 +81,8 @@ export function MoverBasicInfoForm({
   const hasError = Object.values(errors).some(Boolean);
   const hasChanges =
     values.name.trim() !== initialValues.name.trim() ||
-    values.email.trim() !== initialValues.email.trim() ||
-    values.phone.trim() !== initialValues.phone.trim() ||
+    normalizeEmail(values.email) !== normalizeEmail(initialValues.email) ||
+    normalizedPhone !== normalizePhoneDigits(initialValues.phone) ||
     isChangingPassword;
 
   const updateValue = (field: BasicInfoField, value: string) => {
@@ -104,13 +105,13 @@ export function MoverBasicInfoForm({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(values);
-      setValues((current) => ({
-        ...current,
+      const savedBasicInfo = await onSubmit(values);
+      setValues({
+        ...savedBasicInfo,
         currentPassword: "",
         newPassword: "",
         newPasswordConfirm: "",
-      }));
+      });
       setStatusMessage("기본정보가 수정되었습니다.");
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.

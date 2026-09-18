@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { MOVER_MY_PAGE_QUERY_KEY } from "@/common/api/query-keys";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
 import {
@@ -23,7 +24,7 @@ export function MoverProfileEditContent() {
     mutationFn: updateMoverProfile,
     onSuccess: (profile) => {
       queryClient.setQueryData(moverProfileKeys.current(), profile);
-      void queryClient.invalidateQueries({ queryKey: ["mover-mypage"] });
+      void queryClient.invalidateQueries({ queryKey: MOVER_MY_PAGE_QUERY_KEY });
     },
   });
 

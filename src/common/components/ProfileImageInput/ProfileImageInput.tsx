@@ -47,6 +47,10 @@ export function ProfileImageInput({
     };
   }, [selectedPreviewUrl]);
 
+  useEffect(() => {
+    if (file === null && inputRef.current) inputRef.current.value = "";
+  }, [file]);
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.currentTarget.files?.[0] ?? null;
 

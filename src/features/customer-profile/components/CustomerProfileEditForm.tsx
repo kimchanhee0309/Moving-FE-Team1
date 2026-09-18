@@ -12,6 +12,8 @@ import {
 } from "@/common/components/ProfileSelectionChip";
 import { PROFILE_REGION_OPTIONS, PROFILE_SERVICE_OPTIONS } from "@/common/constants/profile";
 import { ROUTES } from "@/common/constants/routes";
+import { haveSameSelection } from "@/common/utils/selection";
+import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
 
 import type {
@@ -30,10 +32,6 @@ const TEXT_FIELDS: ReadonlyArray<TextField> = [
   "newPasswordConfirm",
 ];
 
-function haveSameValues<T extends string>(left: readonly T[], right: readonly T[]) {
-  return left.length === right.length && left.every((value) => right.includes(value));
-}
-
 export function CustomerProfileEditForm({
   initialValues,
   isPending = false,
@@ -42,6 +40,7 @@ export function CustomerProfileEditForm({
 }: CustomerProfileEditFormProps) {
   const router = useRouter();
   const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imageInputVersion, setImageInputVersion] = useState(0);
   const [profileImageError, setProfileImageError] = useState<string | null>(null);
   const [values, setValues] = useState(() => ({
     name: initialValues.name,
@@ -61,7 +60,7 @@ export function CustomerProfileEditForm({
   // 비밀번호 관리자가 현재 비밀번호만 자동완성해도 일반 프로필 수정은 막지 않습니다.
   // 새 비밀번호 입력을 시작한 경우에만 현재 비밀번호와 확인값을 함께 검증합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
-  const normalizedPhone = values.phone.replace(/\D/g, "");
+  const normalizedPhone = normalizePhoneDigits(values.phone);
 
   const errors: Partial<Record<TextField, string>> = {
     name: !values.name.trim()
@@ -89,11 +88,11 @@ export function CustomerProfileEditForm({
   const hasRegionError = hasSubmitted && region === null;
   const hasChanges =
     values.name.trim() !== initialValues.name.trim() ||
-    values.email.trim() !== initialValues.email.trim() ||
-    values.phone.trim() !== initialValues.phone.trim() ||
+    normalizeEmail(values.email) !== normalizeEmail(initialValues.email) ||
+    normalizedPhone !== normalizePhoneDigits(initialValues.phone) ||
     isChangingPassword ||
     profileImage !== null ||
-    !haveSameValues(serviceTypeIds, initialValues.serviceTypeIds) ||
+    !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds) ||
     region !== initialValues.region;
 
   const updateValue = (field: TextField, value: string) => {
@@ -129,14 +128,17 @@ export function CustomerProfileEditForm({
 
     setIsSubmitting(true);
     try {
-      await onSubmit(nextValues);
+      const savedProfile = await onSubmit(nextValues);
       setProfileImage(null);
-      setValues((current) => ({
-        ...current,
+      setImageInputVersion((current) => current + 1);
+      setValues({
+        name: savedProfile.name,
+        email: savedProfile.email,
+        phone: savedProfile.phone ?? "",
         currentPassword: "",
         newPassword: "",
         newPasswordConfirm: "",
-      }));
+      });
       setStatusMessage("프로필이 수정되었습니다.");
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
@@ -185,7 +187,7 @@ export function CustomerProfileEditForm({
           </div>
 
           <div className="flex flex-col">
-            <ProfileImageInput className={fieldClassName} file={profileImage} initialImageUrl={initialValues.profileImageUrl} disabled={isBusy} isLoading={isPending} onFileChange={(file) => { setProfileImage(file); setStatusMessage(""); }} onValidationErrorChange={setProfileImageError} />
+            <ProfileImageInput key={imageInputVersion} className={fieldClassName} file={profileImage} initialImageUrl={initialValues.profileImageUrl} disabled={isBusy} isLoading={isPending} onFileChange={(file) => { setProfileImage(file); setStatusMessage(""); }} onValidationErrorChange={setProfileImageError} />
 
             <fieldset className={`flex flex-col gap-4 ${fieldClassName}`}>
               <legend className="text-lg-semibold text-[var(--black-300)]">이용 서비스</legend>

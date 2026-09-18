@@ -44,5 +44,5 @@ export interface CustomerProfileEditFormProps {
   };
   isPending?: boolean;
   submissionError?: string;
-  onSubmit: (values: CustomerProfileEditFormValues) => Promise<void>;
+  onSubmit: (values: CustomerProfileEditFormValues) => Promise<CustomerProfile>;
 }

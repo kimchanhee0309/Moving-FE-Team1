@@ -52,7 +52,7 @@ export function CustomerProfileEditContent() {
       initialValues={toCustomerEditInitialValues(profileQuery.data)}
       isPending={mutation.isPending}
       submissionError={mutation.error ? getApiErrorMessage(mutation.error, "프로필을 수정하지 못했습니다.") : undefined}
-      onSubmit={async (values) => { await mutation.mutateAsync(values); }}
+      onSubmit={(values) => mutation.mutateAsync(values)}
     />
   );
 }

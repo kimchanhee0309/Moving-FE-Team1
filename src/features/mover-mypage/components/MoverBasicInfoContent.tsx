@@ -58,7 +58,7 @@ export function MoverBasicInfoContent() {
       }}
       isPending={mutation.isPending}
       submissionError={mutation.error ? getApiErrorMessage(mutation.error, "기본정보를 수정하지 못했습니다.") : undefined}
-      onSubmit={async (values) => { await mutation.mutateAsync(values); }}
+      onSubmit={(values) => mutation.mutateAsync(values)}
     />
   );
 }
