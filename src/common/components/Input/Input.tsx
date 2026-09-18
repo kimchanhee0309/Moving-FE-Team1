@@ -137,7 +137,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           disabled={isDisabled}
           aria-describedby={describedBy}
           aria-invalid={hasError || ariaInvalid || undefined}
-          className={`text-lg-regular min-w-0 flex-1 bg-transparent text-[var(--black-400)] outline-none placeholder:text-[var(--gray-300)] disabled:cursor-not-allowed disabled:text-[var(--gray-400)] ${className}`}
+          className={`app-text-input text-lg-regular min-w-0 flex-1 bg-transparent text-[var(--black-400)] outline-none placeholder:text-[var(--gray-300)] disabled:cursor-not-allowed disabled:text-[var(--gray-400)] ${className}`}
         />
 
         {/* 우측 요소 우선순위: loading → password toggle → 호출자가 전달한 아이콘 */}

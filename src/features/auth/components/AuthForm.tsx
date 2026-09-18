@@ -49,6 +49,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
   const fields = mode === "signup" ? SIGNUP_FIELDS : LOGIN_FIELDS;
   const errors = { ...validateAuthForm(values, mode), ...serverErrors };
   const isIncomplete = fields.some((field) => !values[field].trim());
+  const hasValidationError = fields.some((field) => Boolean(errors[field]));
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,12 +120,12 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
                 placeholder={FIELD_PLACEHOLDERS[field]}
                 error={touched[field] ? errors[field] : undefined}
                 onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
-                onChange={(event) => { setValues((current) => ({ ...current, [field]: event.target.value })); setServerErrors((current) => ({ ...current, [field]: undefined })); setSubmitError(""); }}
+                onChange={(event) => { setTouched((current) => ({ ...current, [field]: true })); setValues((current) => ({ ...current, [field]: event.target.value })); setServerErrors((current) => ({ ...current, [field]: undefined })); setSubmitError(""); }}
               />
             );
           })}
         </div>
-        <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete} isLoading={isPending}>
+        <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete || hasValidationError || isPending} isLoading={isPending}>
           {mode === "login" ? "로그인" : "시작하기"}
         </Button>
       </form>

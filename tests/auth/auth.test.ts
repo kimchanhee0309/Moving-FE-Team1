@@ -239,8 +239,15 @@ test("Google/Kakao/Naver 시작에 역할 및 안전한 redirect를 전송한다
 });
 
 test("프로필 등록·역할별 진입·안전하지 않은 목적지와 다른 역할 이동을 처리한다", () => {
-  assert.equal(resolveAuthenticatedPath({ ...customer, profileCompleted: false }, "/favorite"), "/customer-profile/register");
+  assert.equal(
+    resolveAuthenticatedPath({ ...customer, profileCompleted: false }, "/favorite?sort=recent"),
+    "/customer-profile/register?redirect=%2Ffavorite%3Fsort%3Drecent",
+  );
   assert.equal(resolveAuthenticatedPath({ ...customer, role: "MOVER", profileCompleted: false }), "/mover-profile/register");
+  assert.equal(
+    resolveAuthenticatedPath({ ...customer, role: "MOVER", profileCompleted: false }, "/requests"),
+    "/mover-profile/register?redirect=%2Frequests",
+  );
   assert.equal(resolveAuthenticatedPath({ ...customer, role: "MOVER" }), "/mover-mypage");
   assert.equal(resolveAuthenticatedPath(customer), "/mover-search");
   assert.equal(resolveAuthenticatedPath(customer, "/favorite?sort=recent"), "/favorite?sort=recent");

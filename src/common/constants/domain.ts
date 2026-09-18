@@ -22,14 +22,10 @@ export const SERVICE_TYPE = {
 
 export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE];
 
-/** 견적 상태
- *
- * PROPOSED: 기사님이 견적을 보냈지만 고객이 아직 선택하지 않은 상태
- * CONFIRMED: 고객이 해당 견적을 선택한 상태
- * REJECTED: 거절 처리된 기존 견적 데이터 상태
- *
- * 기사님의 요청 반려는 Quote.REJECTED가 아니라 RequestRejection으로 별도 관리
- */
+export function isServiceType(value: unknown): value is ServiceType {
+  return value === SERVICE_TYPE.SMALL || value === SERVICE_TYPE.HOME || value === SERVICE_TYPE.OFFICE;
+}
+
 export const QUOTE_STATUS = {
   PENDING: "PROPOSED",
   CONFIRMED: "CONFIRMED",

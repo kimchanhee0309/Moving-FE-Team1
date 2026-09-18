@@ -35,6 +35,8 @@ function AuthGuardContent({ role, children }: AuthGuardProps) {
   const loginPath = ROUTES.AUTH.LOGIN[role];
   const profileRegister = role === "MOVER"
     ? ROUTES.MOVER.PROFILE.REGISTER : ROUTES.CUSTOMER.PROFILE.REGISTER;
+  const profileRedirect = searchParams.get("redirect") ?? undefined;
+  const profileRegisterHref = authHref(profileRegister, destination);
   const access = checkAccess(role, path === profileRegister);
   const login = authHref(loginPath, destination);
   const hasRegisteredProfile = access === "allowed" && user?.profileCompleted && path === profileRegister;
@@ -43,11 +45,11 @@ function AuthGuardContent({ role, children }: AuthGuardProps) {
     if (access === "guest") {
       router.replace(login);
     } else if (access === "profile-required") {
-      router.replace(profileRegister);
+      router.replace(profileRegisterHref);
     } else if (hasRegisteredProfile && user) {
-      router.replace(resolveAuthenticatedPath(user));
+      router.replace(resolveAuthenticatedPath(user, profileRedirect));
     }
-  }, [access, hasRegisteredProfile, login, profileRegister, router, user]);
+  }, [access, hasRegisteredProfile, login, profileRedirect, profileRegisterHref, router, user]);
 
   if (access === "loading") {
     return <p role="status" className="p-8 text-center">로그인 정보를 확인하고 있습니다.</p>;
@@ -72,7 +74,7 @@ function AuthGuardContent({ role, children }: AuthGuardProps) {
   }
   if (access === "profile-required") {
     return <p role="status" className="p-8 text-center">
-      프로필 등록 화면으로 이동하고 있습니다. <Link href={profileRegister} className="underline">프로필 등록</Link>
+      프로필 등록 화면으로 이동하고 있습니다. <Link href={profileRegisterHref} className="underline">프로필 등록</Link>
     </p>;
   }
   if (hasRegisteredProfile) {
