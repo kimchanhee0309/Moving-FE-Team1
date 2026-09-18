@@ -26,7 +26,6 @@ import {
   SERVICE_TYPE_LABEL,
 } from "../mover-search.constants";
 import {
-  getDisplayedFavoriteCount,
   getMoverSearchViewer,
 } from "../mover-search.utils";
 import { CopyLinkToast } from "./CopyLinkToast";
@@ -53,6 +52,11 @@ export function MoverSearchDetailPageContent({
   const isCustomer = viewer === "customer";
   const canInteractFavorite = viewer === "guest" || viewer === "customer";
 
+  const [reviewPaging, setReviewPaging] = useState({ moverId, page: 1 });
+  const reviewPage = reviewPaging.moverId === moverId ? reviewPaging.page : 1;
+  const [isToastVisible, setIsToastVisible] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
   const {
     mover,
     isDetailPending,
@@ -60,18 +64,13 @@ export function MoverSearchDetailPageContent({
     refetchDetail,
     reviewSummary,
     isReviewPending,
-  } = useMoverSearchDetail(moverId);
+  } = useMoverSearchDetail(moverId, reviewPage);
   const favoritesQuery = useMoverSearchFavorites(user?.id, isCustomer);
   const designatedQuery = useMoverSearchDesignatedRequest(
     user?.id,
     isCustomer,
     mockHasGeneralQuote,
   );
-
-  const [reviewPaging, setReviewPaging] = useState({ moverId, page: 1 });
-  const reviewPage = reviewPaging.moverId === moverId ? reviewPaging.page : 1;
-  const [isToastVisible, setIsToastVisible] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   const detailHref = ROUTES.PUBLIC.MOVER_DETAIL(moverId);
   const isFavorite = favoritesQuery.favoriteIdSet.has(moverId);
@@ -100,6 +99,9 @@ export function MoverSearchDetailPageContent({
       return;
     }
     if (viewer !== "customer") {
+      return;
+    }
+    if (designatedQuery.isPending) {
       return;
     }
     if (!designatedQuery.hasGeneralQuote) {
@@ -159,15 +161,13 @@ export function MoverSearchDetailPageContent({
     );
   }
 
-  const displayedFavoriteCount = getDisplayedFavoriteCount(
-    mover.favoriteCount,
-    mover.id,
-    isFavorite,
-    isCustomer,
-  );
+  const displayedFavoriteCount = mover.favoriteCount;
   const primaryService = mover.serviceTypes[0] ?? mover.serviceType;
   const reviews = reviewSummary?.reviews ?? [];
   const ratingCounts = reviewSummary?.ratingCounts ?? [];
+  const reviewTotalPages = reviewSummary?.totalPages ?? 0;
+  const reviewTotalCount = reviewSummary?.totalCount ?? 0;
+  const reviewRating = reviewSummary?.averageRating ?? mover.rating;
 
   return (
     <div className="bg-[var(--gray-50)] pb-[110px] min-[1200px]:pb-16">
@@ -308,10 +308,12 @@ export function MoverSearchDetailPageContent({
             <hr className="w-full border-0 border-t border-[var(--line-200)]" />
 
             <MoverSearchDetailReviews
-              rating={mover.rating}
-              reviewCount={mover.reviewCount}
+              rating={reviewRating}
+              reviewCount={reviewTotalCount > 0 ? reviewTotalCount : mover.reviewCount}
               ratingCounts={ratingCounts}
               reviews={reviews}
+              totalCount={reviewTotalCount}
+              totalPages={reviewTotalPages}
               currentPage={reviewPage}
               onPageChange={(page) => setReviewPaging({ moverId, page })}
               isLoading={isReviewPending}

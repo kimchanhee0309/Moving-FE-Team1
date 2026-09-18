@@ -85,7 +85,35 @@ export interface MoverReviewRatingCount {
   count: number;
 }
 
+/** `GET /movers/:id` 성공 `data.mover`입니다. */
+export interface MoverSearchDetailDto extends MoverSearchItemDto {
+  serviceTypes: ServiceType[];
+  regions: string[];
+}
+
+/** `GET /movers/recommended` 성공 `data`입니다. */
+export interface MoverSearchRecommendedDto {
+  items: MoverSearchItemDto[];
+}
+
+/** `GET /movers/:moverId/reviews` 카드 DTO입니다. */
+export interface MoverReceivedReviewDto {
+  id: string;
+  rating: number;
+  content: string;
+  createdAt: string;
+  serviceType: string;
+  customer: {
+    id: string;
+    name: string;
+    profileImageUrl: string | null;
+  };
+}
+
 export interface MoverReviewSummary {
   reviews: MoverReview[];
   ratingCounts: MoverReviewRatingCount[];
+  totalCount: number;
+  totalPages: number;
+  averageRating: number;
 }

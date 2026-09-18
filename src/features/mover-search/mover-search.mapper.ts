@@ -1,15 +1,24 @@
 import { ApiError } from "@/common/api/error";
+import type { Pagination } from "@/common/api/types";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+import type { FavoriteMover } from "@/features/favorite/favorite.types";
 
 import {
+  EMPTY_MOVER_REVIEW_RATING_COUNTS,
   MOVER_SEARCH_PAGE_SIZE,
   REGION_SLUG_TO_API_VALUE,
 } from "./mover-search.constants";
 import type {
+  MoverDetail,
+  MoverReceivedReviewDto,
+  MoverReview,
+  MoverReviewSummary,
+  MoverSearchDetailDto,
   MoverSearchItemDto,
   MoverSearchListDto,
   MoverSearchListParams,
   MoverSearchPageResult,
+  MoverSearchRecommendedDto,
   MoverSearchResult,
 } from "./mover-search.types";
 
@@ -137,5 +146,166 @@ export function mapMoverSearchListResult(
     items: data.items.map(mapMoverSearchItem),
     nextPage: data.nextPage,
     totalCount: data.totalCount,
+  };
+}
+
+function isMoverSearchRecommendedDto(
+  value: unknown,
+): value is MoverSearchRecommendedDto {
+  return (
+    isRecord(value) &&
+    Array.isArray(value.items) &&
+    value.items.every(isMoverSearchItemDto)
+  );
+}
+
+function isMoverSearchDetailDto(value: unknown): value is MoverSearchDetailDto {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    Array.isArray(value.serviceTypes) &&
+    value.serviceTypes.every(isServiceType) &&
+    Array.isArray(value.regions) &&
+    value.regions.every(isNonEmptyString) &&
+    isMoverSearchItemDto(value)
+  );
+}
+
+function isPagination(value: unknown): value is Pagination {
+  return (
+    isRecord(value) &&
+    isPositiveInteger(value.page) &&
+    isPositiveInteger(value.pageSize) &&
+    isNonNegativeInteger(value.totalCount) &&
+    isNonNegativeInteger(value.totalPages)
+  );
+}
+
+function isMoverReceivedReviewDto(
+  value: unknown,
+): value is MoverReceivedReviewDto {
+  if (!isRecord(value) || !isRecord(value.customer)) {
+    return false;
+  }
+
+  const customer = value.customer;
+
+  return (
+    isNonEmptyString(value.id) &&
+    isPositiveInteger(value.rating) &&
+    value.rating <= 5 &&
+    typeof value.content === "string" &&
+    isNonEmptyString(value.createdAt) &&
+    typeof value.serviceType === "string" &&
+    isNonEmptyString(customer.id) &&
+    isNonEmptyString(customer.name) &&
+    (customer.profileImageUrl === null ||
+      typeof customer.profileImageUrl === "string")
+  );
+}
+
+function formatReviewWrittenAt(createdAt: string) {
+  return createdAt.slice(0, 10).replaceAll("-", ".");
+}
+
+function mapMoverReceivedReview(item: MoverReceivedReviewDto): MoverReview {
+  return {
+    id: item.id,
+    reviewerName: item.customer.name,
+    writtenAt: formatReviewWrittenAt(item.createdAt),
+    rating: item.rating,
+    content: item.content,
+  };
+}
+
+/** apiClient가 벗긴 `GET /movers/recommended` data를 카드 목록으로 검증·변환합니다. */
+export function mapMoverSearchRecommendedResult(
+  data: unknown,
+): MoverSearchResult[] {
+  if (!isMoverSearchRecommendedDto(data)) {
+    throw new ApiError(
+      200,
+      "INVALID_RESPONSE",
+      "추천 기사님 응답 형식이 올바르지 않습니다.",
+    );
+  }
+
+  return data.items.map(mapMoverSearchItem);
+}
+
+/** apiClient가 벗긴 `GET /movers/:id` data를 상세 화면 모델로 검증·변환합니다. */
+export function mapMoverSearchDetailResult(data: unknown): MoverDetail {
+  if (!isRecord(data) || !isMoverSearchDetailDto(data.mover)) {
+    throw new ApiError(
+      200,
+      "INVALID_RESPONSE",
+      "기사님 상세 응답 형식이 올바르지 않습니다.",
+    );
+  }
+
+  const mover = data.mover;
+  const serviceTypes =
+    mover.serviceTypes.length > 0 ? mover.serviceTypes : [mover.serviceType];
+  const regionValues =
+    mover.regions.length > 0 ? mover.regions : [mover.region];
+
+  return {
+    ...mapMoverSearchItem(mover),
+    serviceTypes,
+    regionValues,
+    // 상세 전용 긴 소개 필드가 없어 목록 description을 본문에 사용합니다.
+    detailDescription: mover.description,
+  };
+}
+
+/** apiClient가 벗긴 `GET /movers/:moverId/reviews` data를 상세 리뷰 페이지로 검증·변환합니다. */
+export function mapMoverReviewPageResult(data: unknown): MoverReviewSummary {
+  if (
+    !isRecord(data) ||
+    !Array.isArray(data.items) ||
+    !data.items.every(isMoverReceivedReviewDto) ||
+    !isPagination(data.pagination) ||
+    !isRecord(data.summary) ||
+    !isNonNegativeInteger(data.summary.reviewCount) ||
+    !(
+      data.summary.averageRating === null ||
+      isFiniteNumber(data.summary.averageRating)
+    )
+  ) {
+    throw new ApiError(
+      200,
+      "INVALID_RESPONSE",
+      "기사님 리뷰 응답 형식이 올바르지 않습니다.",
+    );
+  }
+
+  return {
+    reviews: data.items.map(mapMoverReceivedReview),
+    ratingCounts: EMPTY_MOVER_REVIEW_RATING_COUNTS,
+    totalCount: data.pagination.totalCount,
+    totalPages: data.pagination.totalPages,
+    averageRating: data.summary.averageRating ?? 0,
+  };
+}
+
+/** 찜 목록 카드를 찾기 사이드바 카드 모델로 맞춥니다. region은 사이드바에서 쓰지 않습니다. */
+export function mapFavoriteMoverToSearchResult(
+  mover: FavoriteMover,
+): MoverSearchResult {
+  return {
+    id: mover.id,
+    serviceType: mover.serviceType,
+    region: "",
+    moverName: mover.moverName,
+    introduction: mover.introduction,
+    description: mover.description,
+    profileImageUrl: mover.profileImageUrl,
+    rating: mover.rating,
+    reviewCount: mover.reviewCount,
+    careerYears: mover.careerYears,
+    confirmedCount: mover.confirmedCount,
+    favoriteCount: mover.favoriteCount,
   };
 }
