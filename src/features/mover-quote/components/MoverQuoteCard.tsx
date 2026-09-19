@@ -1,5 +1,13 @@
 "use client";
 
+/**
+ * 기사님이 보낸 견적 한 건을 카드로 표시
+ *
+ * 이사 요청이 COMPLETED 상태이면 완료 overlay를 노출하고,
+ * 상세보기 행동은 부모가 전달한 callback에 위임
+ *
+ * API 요청과 라우팅 경로 결정은 담당하지 않음
+ */
 import Image from "next/image";
 
 import {
@@ -18,6 +26,10 @@ interface MoverQuoteCardProps {
 export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
   const isConfirmed = quote.quoteStatus === QUOTE_STATUS.CONFIRMED;
 
+  /**
+   * 견적 자체의 상태가 아니라 이사 요청 상태를 기준으로 완료 overlay를 표시함
+   * 확정 견적이어도 이사일 전에는 완료 카드가 아님
+   */
   const isCompleted = quote.moveRequestStatus === MOVE_REQUEST_STATUS.COMPLETED;
 
   const priceLabel =
@@ -55,13 +67,21 @@ export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
       </h2>
 
       <div className="mt-6 flex items-start justify-between gap-6 max-[743px]:flex-col max-[743px]:gap-3">
-        <div className="flex min-w-0 items-end gap-3">
-          <div className="flex min-w-0 flex-col gap-1">
+        {/*
+         * 출발지는 콘텐츠 너비만큼 사용하고 최대 45%까지만 허용합니다.
+         * 따라서 화살표가 고정된 중앙이 아니라 출발지 텍스트 바로 뒤에
+         * 배치됩니다.
+         */}
+        <div className="flex min-w-0 flex-1 items-end gap-3 max-[743px]:w-full">
+          <div className="flex min-w-0 max-w-[45%] shrink-0 flex-col gap-1">
             <span className="text-[14px] leading-6 text-[var(--content-muted)]">
               출발지
             </span>
 
-            <strong className="truncate text-[16px] font-semibold leading-[26px] text-[var(--black-500)]">
+            <strong
+              className="block min-w-0 max-w-full truncate text-[16px] font-semibold leading-[26px] text-[var(--black-500)]"
+              title={quote.fromAddress}
+            >
               {quote.fromAddress}
             </strong>
           </div>
@@ -75,12 +95,15 @@ export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
             aria-hidden="true"
           />
 
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-[14px] leading-6 text-[var(--content-muted)]">
               도착지
             </span>
 
-            <strong className="truncate text-[16px] font-semibold leading-[26px] text-[var(--black-500)]">
+            <strong
+              className="block min-w-0 max-w-full truncate text-[16px] font-semibold leading-[26px] text-[var(--black-500)]"
+              title={quote.toAddress}
+            >
               {quote.toAddress}
             </strong>
           </div>
@@ -91,7 +114,7 @@ export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
             이사일
           </span>
 
-          <strong className="text-[16px] font-semibold leading-[26px] text-[var(--black-500)]">
+          <strong className="whitespace-nowrap text-[16px] font-semibold leading-[26px] text-[var(--black-500)]">
             {quote.moveDate}
           </strong>
         </div>
