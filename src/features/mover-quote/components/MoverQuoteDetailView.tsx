@@ -1,5 +1,11 @@
 "use client";
 
+/**
+ * 견적 상세 Query의 상태를 실제 상세 UI와 연결
+ *
+ * 상세 표현은 MoverQuoteDetail에 위임하고,
+ * 이 컴포넌트는 loading/error/not-found/success 분기만 담당
+ */
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
@@ -32,6 +38,10 @@ export function MoverQuoteDetailView({ quoteId }: MoverQuoteDetailViewProps) {
     );
   }
 
+  /**
+   * 요청은 성공했지만 data가 없는 비정상적인 상태도 별도 오류 화면으로
+   * 처리하여 빈 화면이 나타나지 않게 함
+   */
   if (!quoteQuery.data) {
     return (
       <ErrorState

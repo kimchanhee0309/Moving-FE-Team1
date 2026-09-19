@@ -1,3 +1,10 @@
+/**
+ * 기사님이 보낸 견적의 상세 정보를 표시합니다.
+ *
+ * 이 컴포넌트는 이미 검증·변환된 ViewModel을 받아 렌더링만 담당합니다.
+ * 데이터 조회와 오류 처리는 MoverQuoteDetailView가 담당합니다.
+ */
+
 import Image from "next/image";
 
 import {
@@ -32,6 +39,10 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
         </div>
       </header>
 
+      {/*
+       * 배너는 의미 있는 정보를 전달하지 않는 장식 이미지이므로
+       * background-image와 aria-hidden을 사용합니다.
+       */}
       <div
         aria-hidden="true"
         className={[
@@ -94,6 +105,7 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
                 <dt className="text-[var(--content-placeholder)]">
                   견적 요청일
                 </dt>
+
                 <dd className="font-medium text-[var(--black-400)]">
                   {quote.requestedAt}
                 </dd>
@@ -101,6 +113,7 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
 
               <div className="grid grid-cols-[100px_1fr] gap-6 max-[743px]:grid-cols-[90px_1fr]">
                 <dt className="text-[var(--content-placeholder)]">서비스</dt>
+
                 <dd className="font-medium text-[var(--black-400)]">
                   {SERVICE_TYPE_LABEL[quote.serviceType]}
                 </dd>
@@ -108,6 +121,7 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
 
               <div className="grid grid-cols-[100px_1fr] gap-6 max-[743px]:grid-cols-[90px_1fr]">
                 <dt className="text-[var(--content-placeholder)]">이용일</dt>
+
                 <dd className="font-medium text-[var(--black-400)]">
                   {quote.moveDate}
                 </dd>
@@ -115,14 +129,16 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
 
               <div className="grid grid-cols-[100px_1fr] gap-6 max-[743px]:grid-cols-[90px_1fr]">
                 <dt className="text-[var(--content-placeholder)]">출발지</dt>
-                <dd className="font-medium text-[var(--black-400)]">
+
+                <dd className="break-keep font-medium text-[var(--black-400)]">
                   {quote.fromAddress}
                 </dd>
               </div>
 
               <div className="grid grid-cols-[100px_1fr] gap-6 max-[743px]:grid-cols-[90px_1fr]">
                 <dt className="text-[var(--content-placeholder)]">도착지</dt>
-                <dd className="font-medium text-[var(--black-400)]">
+
+                <dd className="break-keep font-medium text-[var(--black-400)]">
                   {quote.toAddress}
                 </dd>
               </div>
