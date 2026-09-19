@@ -78,11 +78,27 @@ export function MoverProfileForm({
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isLoading || isSubmitting;
   const rawFieldErrors = getMoverTextErrors(textValues);
-  const hasTextError = Object.values(rawFieldErrors).some(Boolean);
+  const changedFields = {
+    nickname: !initialValues || textValues.nickname.trim() !== initialValues.nickname.trim(),
+    careerYears: !initialValues || textValues.careerYears.trim() !== initialValues.careerYears.trim(),
+    shortIntroduction:
+      !initialValues || textValues.shortIntroduction.trim() !== initialValues.shortIntroduction.trim(),
+    description: !initialValues || textValues.description.trim() !== initialValues.description.trim(),
+    serviceTypeIds: !initialValues || !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds),
+    regions: !initialValues || !haveSameSelection(regions, initialValues.regions),
+  };
+  const hasTextError = mode === "register"
+    ? Object.values(rawFieldErrors).some(Boolean)
+    : Boolean(
+        (changedFields.nickname && rawFieldErrors.nickname) ||
+          (changedFields.careerYears && rawFieldErrors.careerYears) ||
+          (changedFields.shortIntroduction && rawFieldErrors.shortIntroduction) ||
+          (changedFields.description && rawFieldErrors.description),
+      );
   const hasServiceError = (hasSubmitted || serviceTouched) && serviceTypeIds.length === 0;
   const hasRegionError = (hasSubmitted || regionTouched) && regions.length === 0;
   const isIncomplete =
-    Object.values(textValues).some((value) => !value.trim()) ||
+    (mode === "register" && Object.values(textValues).some((value) => !value.trim())) ||
     serviceTypeIds.length === 0 ||
     regions.length === 0 ||
     Boolean(profileImageError);
@@ -90,12 +106,12 @@ export function MoverProfileForm({
     mode === "register" ||
     !initialValues ||
     profileImage !== null ||
-    textValues.nickname.trim() !== initialValues.nickname.trim() ||
-    textValues.careerYears.trim() !== initialValues.careerYears.trim() ||
-    textValues.shortIntroduction.trim() !== initialValues.shortIntroduction.trim() ||
-    textValues.description.trim() !== initialValues.description.trim() ||
-    !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds) ||
-    !haveSameSelection(regions, initialValues.regions);
+    changedFields.nickname ||
+    changedFields.careerYears ||
+    changedFields.shortIntroduction ||
+    changedFields.description ||
+    changedFields.serviceTypeIds ||
+    changedFields.regions;
 
   const updateTextValue = (field: MoverTextField, value: string) => {
     setTouched((current) => ({ ...current, [field]: true }));
@@ -118,6 +134,7 @@ export function MoverProfileForm({
       description: textValues.description.trim(),
       serviceTypeIds,
       regions,
+      changedFields,
     };
 
     setIsSubmitting(true);
@@ -181,7 +198,9 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 placeholder="사이트에 노출될 별명을 입력해 주세요"
                 value={textValues.nickname}
-                error={touched.nickname || textValues.nickname ? rawFieldErrors.nickname : undefined}
+                error={mode === "register"
+                  ? touched.nickname || textValues.nickname ? rawFieldErrors.nickname : undefined
+                  : changedFields.nickname ? rawFieldErrors.nickname : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, nickname: true }))}
                 onChange={(event) => updateTextValue("nickname", event.currentTarget.value)}
@@ -199,7 +218,9 @@ export function MoverProfileForm({
                 inputMode="numeric"
                 placeholder="기사님의 경력을 입력해 주세요"
                 value={textValues.careerYears}
-                error={touched.careerYears || textValues.careerYears ? rawFieldErrors.careerYears : undefined}
+                error={mode === "register"
+                  ? touched.careerYears || textValues.careerYears ? rawFieldErrors.careerYears : undefined
+                  : changedFields.careerYears ? rawFieldErrors.careerYears : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, careerYears: true }))}
                 onChange={(event) => updateTextValue("careerYears", event.currentTarget.value)}
@@ -213,7 +234,9 @@ export function MoverProfileForm({
                 containerClassName={responsiveInputClass}
                 placeholder="한 줄 소개를 입력해 주세요"
                 value={textValues.shortIntroduction}
-                error={touched.shortIntroduction || textValues.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined}
+                error={mode === "register"
+                  ? touched.shortIntroduction || textValues.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined
+                  : changedFields.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, shortIntroduction: true }))}
                 onChange={(event) => updateTextValue("shortIntroduction", event.currentTarget.value)}
@@ -230,7 +253,9 @@ export function MoverProfileForm({
                 containerClassName="max-w-none min-[1200px]:[&>div]:px-6"
                 placeholder="상세 내용을 입력해 주세요"
                 value={textValues.description}
-                error={touched.description || textValues.description ? rawFieldErrors.description : undefined}
+                error={mode === "register"
+                  ? touched.description || textValues.description ? rawFieldErrors.description : undefined
+                  : changedFields.description ? rawFieldErrors.description : undefined}
                 disabled={isBusy}
                 onBlur={() => setTouched((current) => ({ ...current, description: true }))}
                 onChange={(event) => updateTextValue("description", event.currentTarget.value)}

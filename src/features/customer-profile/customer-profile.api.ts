@@ -60,14 +60,19 @@ export async function createCustomerProfile(values: CustomerProfileFormValues): 
 
 export async function updateCustomerProfile(values: CustomerProfileEditFormValues): Promise<CustomerProfile> {
   const formData = new FormData();
-  appendProfileFields(formData, values);
-  formData.append("name", values.name.trim());
-  formData.append("email", normalizeEmail(values.email));
-  formData.append("phone", normalizePhoneDigits(values.phone));
-  if (values.currentPassword && values.newPassword) {
-    formData.append("currentPassword", values.currentPassword);
-    formData.append("newPassword", values.newPassword);
+  const changed = values.changedFields;
+  if (values.profileImage) formData.append("profileImage", values.profileImage);
+  if (!changed || changed.serviceTypeIds) {
+    values.serviceTypeIds.forEach((serviceType) => formData.append("serviceTypes", serviceType));
   }
+  if ((!changed || changed.region) && values.region) formData.append("region", values.region);
+  if (!changed || changed.name) formData.append("name", values.name.trim());
+  if (!changed || changed.email) formData.append("email", normalizeEmail(values.email));
+  if (!changed || changed.phone) formData.append("phone", normalizePhoneDigits(values.phone));
+  if (values.currentPassword && (!changed || changed.email || values.newPassword)) {
+    formData.append("currentPassword", values.currentPassword);
+  }
+  if (values.newPassword) formData.append("newPassword", values.newPassword);
   return readProfile(await apiClient<unknown>("/customers/me/profile", { method: "PATCH", body: formData }));
 }
 

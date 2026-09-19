@@ -199,11 +199,7 @@ export function Gnb(props: GnbProps) {
               alt="무빙"
               width={66}
               height={34}
-              className={
-                props.isAuthenticated
-                  ? "hidden h-6.5 w-auto min-[1200px]:block min-[1200px]:h-8.5"
-                  : "block h-6.5 w-auto min-[1200px]:h-8.5"
-              }
+              className="block h-6.5 w-auto min-[1200px]:h-8.5"
             />
           </Link>
 
