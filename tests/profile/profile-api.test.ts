@@ -132,21 +132,22 @@ test("일반 유저 비밀번호 변경은 수정하지 않은 기존 기본정�
   });
 });
 
-test("일반 유저는 새 비밀번호 없이도 현재 비밀번호를 프로필 수정 API에 전달한다", async () => {
+test("일반 유저는 이메일 변경 시 현재 비밀번호를 프로필 수정 API에 전달한다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
     assert.ok(options.body instanceof FormData);
     assert.equal(options.body.get("currentPassword"), "CurrentPassword1!");
     assert.equal(options.body.has("newPassword"), false);
-    assert.equal(options.body.get("region"), "경기");
+    assert.equal(options.body.get("email"), "new-customer@example.com");
+    assert.equal(options.body.has("region"), false);
     return success({
       profile: {
         id: "customer-profile-1",
         name: "김지훈2",
-        email: "customer@example.com",
+        email: "new-customer@example.com",
         phone: "01012345678",
         profileImageUrl: null,
         serviceTypes: ["HOME"],
-        region: "경기",
+        region: "서울",
         createdAt: "2026-09-01T00:00:00.000Z",
         updatedAt: "2026-09-19T00:00:00.000Z",
       },
@@ -156,19 +157,19 @@ test("일반 유저는 새 비밀번호 없이도 현재 비밀번호를 프로�
   await updateCustomerProfile({
     profileImage: null,
     serviceTypeIds: ["HOME"],
-    region: "경기",
+    region: "서울",
     name: "김지훈2",
-    email: "customer@example.com",
+    email: "new-customer@example.com",
     phone: "01012345678",
     currentPassword: "CurrentPassword1!",
     newPassword: "",
     newPasswordConfirm: "",
     changedFields: {
       name: false,
-      email: false,
+      email: true,
       phone: false,
       serviceTypeIds: false,
-      region: true,
+      region: false,
     },
   });
 });
@@ -383,28 +384,28 @@ test("기사님 비밀번호 변경은 수정하지 않은 기존 기본정보�
   });
 });
 
-test("기사님은 새 비밀번호 없이도 현재 비밀번호를 기본정보 수정 API에 전달한다", async () => {
+test("기사님은 이메일 변경 시 현재 비밀번호를 기본정보 수정 API에 전달한다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
     assert.deepEqual(JSON.parse(String(options.body)), {
-      name: "새 이름",
+      email: "new-mover@example.com",
       currentPassword: "CurrentPassword1!",
     });
     return success({
       basicInfo: {
-        name: "새 이름",
-        email: "mover@example.com",
+        name: "김기사2",
+        email: "new-mover@example.com",
         phone: "01012345678",
       },
     });
   });
 
   await updateMoverBasicInfo({
-    name: "새 이름",
-    email: "mover@example.com",
+    name: "김기사2",
+    email: "new-mover@example.com",
     phone: "01012345678",
     currentPassword: "CurrentPassword1!",
     newPassword: "",
     newPasswordConfirm: "",
-    changedFields: { name: true, email: false, phone: false },
+    changedFields: { name: false, email: true, phone: false },
   });
 });

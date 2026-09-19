@@ -69,7 +69,9 @@ export async function updateCustomerProfile(values: CustomerProfileEditFormValue
   if (!changed || changed.name) formData.append("name", values.name.trim());
   if (!changed || changed.email) formData.append("email", normalizeEmail(values.email));
   if (!changed || changed.phone) formData.append("phone", normalizePhoneDigits(values.phone));
-  if (values.currentPassword) formData.append("currentPassword", values.currentPassword);
+  if (values.currentPassword && (!changed || changed.email || values.newPassword)) {
+    formData.append("currentPassword", values.currentPassword);
+  }
   if (values.newPassword) formData.append("newPassword", values.newPassword);
   return readProfile(await apiClient<unknown>("/customers/me/profile", { method: "PATCH", body: formData }));
 }

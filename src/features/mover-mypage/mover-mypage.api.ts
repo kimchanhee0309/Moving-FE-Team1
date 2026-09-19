@@ -122,7 +122,9 @@ export async function updateMoverBasicInfo(
   if (!changed || changed.phone) {
     payload.phone = values.phone.trim() ? normalizePhoneDigits(values.phone) : null;
   }
-  if (values.currentPassword) payload.currentPassword = values.currentPassword;
+  if (values.currentPassword && (!changed || changed.email || values.newPassword)) {
+    payload.currentPassword = values.currentPassword;
+  }
   if (values.newPassword) payload.newPassword = values.newPassword;
   return readBasicInfo(await apiClient<unknown>("/movers/me", {
     method: "PATCH",

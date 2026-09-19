@@ -62,16 +62,16 @@ export function MoverBasicInfoForm({
     email: normalizeEmail(values.email) !== normalizeEmail(initialValues.email),
     phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
   };
-  // 현재 비밀번호 자동완성만으로 기본정보 수정을 막지 않습니다.
-  // 새 비밀번호 입력을 시작한 경우에만 비밀번호 변경 검증을 활성화합니다.
+  // 이름·전화번호는 세션으로 수정하고, 이메일·비밀번호 변경만 재인증합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
+  const requiresCurrentPassword = changedFields.email || isChangingPassword;
 
   const errors: Partial<Record<BasicInfoField, string>> = {
     name: getNameError(values.name),
     email: getEmailError(values.email),
     phone: getPhoneError(values.phone),
     currentPassword:
-      isChangingPassword && !values.currentPassword
+      requiresCurrentPassword && !values.currentPassword
         ? "현재 비밀번호를 입력해 주세요."
         : values.currentPassword
           ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
@@ -210,10 +210,10 @@ export function MoverBasicInfoForm({
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               placeholder="현재 비밀번호를 입력해 주세요"
               value={values.currentPassword}
-              error={touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
+              error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
               helperText={
                 !currentPasswordError
-                  ? "현재 비밀번호 일치 여부는 수정하기를 누르면 확인됩니다."
+                  ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다."
                   : undefined
               }
               disabled={isBusy}

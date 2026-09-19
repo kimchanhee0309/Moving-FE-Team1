@@ -63,8 +63,7 @@ export function CustomerProfileEditForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isPending || isSubmitting;
-  // 현재 비밀번호 자동완성만으로 서비스·지역 수정을 막지 않습니다.
-  // 새 비밀번호 입력을 시작한 경우에만 비밀번호 변경 검증을 활성화합니다.
+  // 서비스·지역·일반 프로필 정보는 세션으로 수정하고, 이메일·비밀번호 변경만 재인증합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
   const normalizedPhone = normalizePhoneDigits(values.phone);
   const changedFields = {
@@ -74,13 +73,14 @@ export function CustomerProfileEditForm({
     serviceTypeIds: !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds),
     region: region !== initialValues.region,
   };
+  const requiresCurrentPassword = changedFields.email || isChangingPassword;
 
   const errors: Partial<Record<TextField, string>> = {
     name: getNameError(values.name),
     email: getEmailError(values.email),
     phone: getPhoneError(values.phone),
     currentPassword:
-      isChangingPassword && !values.currentPassword
+      requiresCurrentPassword && !values.currentPassword
         ? "현재 비밀번호를 입력해 주세요."
         : values.currentPassword
           ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
@@ -202,7 +202,7 @@ export function CustomerProfileEditForm({
               <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={changedFields.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
-              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? "현재 비밀번호 일치 여부는 수정하기를 누르면 확인됩니다." : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
+              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다." : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
             </div>
             <div className={fieldClassName}>
               <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
