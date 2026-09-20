@@ -49,10 +49,10 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
   const isModal = variant === "modal";
 
   /**
-   * 주소 영역과 이사일 영역을 각각 별도의 grid column으로 배치합니다.
+   * 주소 영역과 이사일 영역을 분리합니다.
    *
-   * 주소 영역은 남은 공간만 사용하고 이사일은 실제 콘텐츠 너비를
-   * 확보하므로, 주소가 길어도 이사일 영역을 침범하지 않습니다.
+   * 주소 영역은 남은 공간을 사용하고 이사일은 콘텐츠 너비를 확보하므로
+   * 주소가 길어도 이사일과 겹치지 않습니다.
    */
   const summaryClassName = isModal
     ? [
@@ -69,25 +69,38 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
       ].join(" ");
 
   /**
-   * 출발지와 도착지는 고정 너비를 사용하지 않습니다.
+   * 출발지 영역을 콘텐츠 크기만큼만 사용하게 하여 화살표가 출발지
+   * 텍스트 바로 뒤에 배치되도록 합니다.
    *
-   * 두 주소가 사용 가능한 공간을 동일하게 나눠 가지고,
-   * 공간이 부족한 경우 각 주소에서 말줄임 처리됩니다.
+   * 출발지가 너무 길면 최대 45%까지만 차지하고 말줄임 처리됩니다.
+   * 도착지는 남은 공간을 모두 사용합니다.
    */
-  const routeGroupClassName = [
-    "grid min-w-0 w-full",
-    "grid-cols-[minmax(0,1fr)_18px_minmax(0,1fr)]",
-    "items-end gap-3",
-  ].join(" ");
+  const departureItemClassName = [
+    "flex min-w-0 max-w-[45%] shrink-0 flex-col items-start",
+    isModal
+      ? "max-[743px]:flex-row max-[743px]:items-center max-[743px]:gap-2"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  const infoItemClassName = isModal
-    ? [
-        "flex min-w-0 flex-col items-start",
-        "max-[743px]:flex-row max-[743px]:items-center max-[743px]:gap-2",
-      ].join(" ")
-    : "flex min-w-0 flex-col items-start";
+  const arrivalItemClassName = [
+    "flex min-w-0 flex-1 flex-col items-start",
+    isModal
+      ? "max-[743px]:flex-row max-[743px]:items-center max-[743px]:gap-2"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  const moveDateItemClassName = [infoItemClassName, "shrink-0"].join(" ");
+  const moveDateItemClassName = [
+    "flex shrink-0 flex-col items-start",
+    isModal
+      ? "max-[743px]:flex-row max-[743px]:items-center max-[743px]:gap-2"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const infoValueClassName = isModal
     ? MODAL_INFO_VALUE_CLASS_NAME
@@ -95,8 +108,8 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
 
   return (
     <dl className={`w-full ${summaryClassName}`} aria-label="이사 요청 정보">
-      <div className={routeGroupClassName}>
-        <div className={infoItemClassName}>
+      <div className="flex min-w-0 w-full items-end gap-3">
+        <div className={departureItemClassName}>
           <dt className={INFO_LABEL_CLASS_NAME}>출발지</dt>
 
           <dd className={infoValueClassName} title={request.departureLabel}>
@@ -105,7 +118,7 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
         </div>
 
         <Image
-          className="h-[23px] w-[18px] shrink-0"
+          className="mb-0.5 h-[23px] w-[18px] shrink-0"
           src="/icons/mover-request/arrow-right.svg"
           alt=""
           width={18}
@@ -113,7 +126,7 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
           aria-hidden="true"
         />
 
-        <div className={infoItemClassName}>
+        <div className={arrivalItemClassName}>
           <dt className={INFO_LABEL_CLASS_NAME}>도착지</dt>
 
           <dd className={infoValueClassName} title={request.arrivalLabel}>
