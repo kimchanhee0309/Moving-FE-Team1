@@ -73,6 +73,11 @@ export function formatMoveDateDetail(iso: string): string {
   return `${date.getFullYear()}. ${pad2(date.getMonth() + 1)}. ${pad2(date.getDate())}(${week}) ${period} ${pad2(hour12)}:${pad2(date.getMinutes())}`;
 }
 
+/** BE 주소 앞 `[06236]` 같은 우편번호 표기를 화면용으로 제거합니다. */
+export function stripPostalCodePrefix(address: string): string {
+  return address.replace(/^\[[\d-]+\]\s*/, "").trim();
+}
+
 export function mapQuoteListItem(
   item: ApiQuoteListItem,
 ): CustomerQuoteListItemView {
@@ -103,8 +108,8 @@ export function mapActiveMoveRequest(
     id: moveRequest.id,
     serviceType: toServiceType(moveRequest.serviceType),
     requestedAt: formatDateLong(moveRequest.createdAt),
-    from: moveRequest.fromAddress,
-    to: moveRequest.toAddress,
+    from: stripPostalCodePrefix(moveRequest.fromAddress),
+    to: stripPostalCodePrefix(moveRequest.toAddress),
     moveDate: formatMoveDateWithWeekday(moveRequest.moveDate),
   };
 }
@@ -128,8 +133,8 @@ export function groupHistoryQuotes(
       id: moveRequestId,
       requestedAt: formatDateShortDots(item.moveRequest.createdAt),
       serviceType: toServiceType(item.moveRequest.serviceType),
-      from: item.moveRequest.fromAddress,
-      to: item.moveRequest.toAddress,
+      from: stripPostalCodePrefix(item.moveRequest.fromAddress),
+      to: stripPostalCodePrefix(item.moveRequest.toAddress),
       moveDate: formatMoveDateWithWeekday(item.moveRequest.moveDate),
       quotes: [quote],
     });
@@ -167,7 +172,7 @@ export function mapQuoteDetail(
     requestedAt: formatDateCompact(requestedAtIso),
     serviceLabel: SERVICE_TYPE_LABEL[serviceType],
     moveDateLabel: formatMoveDateDetail(item.moveRequest.moveDate),
-    from: item.moveRequest.fromAddress,
-    to: item.moveRequest.toAddress,
+    from: stripPostalCodePrefix(item.moveRequest.fromAddress),
+    to: stripPostalCodePrefix(item.moveRequest.toAddress),
   };
 }
