@@ -9,5 +9,9 @@ const kakaoJavascriptKey = process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY ?? "";
 
 export const ENV = {
   API_URL: apiUrl,
+<<<<<<< HEAD
   KAKAO_JAVASCRIPT_KEY: kakaoJavascriptKey,
+=======
+  KAKAO_JAVASCRIPT_KEY: process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY ?? "",
+>>>>>>> 2fdd279ba46b671d553cf9fe5dce5ceee4ef8c86
 } as const;

@@ -33,18 +33,19 @@ import type {
 const SERVICE_TYPES = new Set<string>(Object.values(SERVICE_TYPE));
 
 /**
- * 서버 응답 계약이 깨졌을 대 공통 INVALID_RESPONSE 오류를 발생시킴
+ * 서버 응답 계약이 깨졌을 때 공통 INVALID_RESPONSE 오류를 발생시킵니다.
  *
- * HTTP 요청 자체는 성공했지만 response data의 구조가 Swagger와 다른 경우 사용
+ * HTTP 요청 자체는 성공했지만 response data의 구조가
+ * Swagger와 다른 경우 사용합니다.
  */
 function invalidResponse(message: string): never {
   throw new ApiError(200, "INVALID_RESPONSE", message);
 }
 
 /**
- * unknown 값을 일반 JSON object로 좁힘
+ * unknown 값을 일반 JSON object로 좁힙니다.
  *
- * 배열과 null도 typeof 결과가 object이므로 명시적으로 제외함
+ * 배열과 null도 typeof 결과가 object이므로 명시적으로 제외합니다.
  */
 function readObject(value: unknown, message: string): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -145,12 +146,16 @@ function readReceivedRequestItem(value: unknown): ReceivedRequestApiItem {
 }
 
 /**
- * 상세 주소에서 카드에 표시할 시,도와 시,군,구까지만 추출
+ * 상세 주소에서 카드에 표시할 시·도와 시·군·구까지만 추출합니다.
  *
- * 원본 주소는 변경하지 않고 화면 표시값에만 적용
+ * 원본 주소는 변경하지 않고 화면 표시값에만 적용합니다.
  */
 function formatAddressSummary(address: string): string {
-  const addressParts = address.trim().split(/\s+/);
+  const addressWithoutPostalCode = address
+    .trim()
+    .replace(/^(?:\[\d{5}\]|\d{5})\s*/, "");
+
+  const addressParts = addressWithoutPostalCode.split(/\s+/);
 
   return addressParts.slice(0, 2).join(" ");
 }
@@ -300,12 +305,12 @@ function readCreatedRejection(value: unknown): CreatedRequestRejection {
 }
 
 /**
- * 기사님이 처리할 수 있는 받은 요청 목록을 조회
+ * 기사님이 처리할 수 있는 받은 요청 목록을 조회합니다.
  *
- * cursor는 useInfiniteQuery가 넘겨준 다음 페이지 식별자
- * 응답은 런타임 검증을 거친 뒤 카드용 ViewModel로 변환
+ * cursor는 useInfiniteQuery가 넘겨준 다음 페이지 식별자입니다.
+ * 응답은 런타임 검증을 거친 뒤 카드용 ViewModel로 변환합니다.
  *
- * @param query 검색,서비스,지정 여부,정렬,pagination 조건
+ * @param query 검색, 서비스, 지정 여부, 정렬, pagination 조건
  * @param signal Query 취소 시 fetch도 함께 취소하기 위한 AbortSignal
  */
 export async function fetchReceivedRequests(
@@ -331,10 +336,10 @@ export async function fetchReceivedRequests(
 }
 
 /**
- * 받은 요청에 새로운 PROPOSED 견적을 보냄
+ * 받은 요청에 새로운 PROPOSED 견적을 보냅니다.
  *
  * 성공하면 해당 요청은 받은 요청 목록에서 제외되고,
- * 보낸 견적 목록에 포함됨. 캐시 갱신은 mutation hook이 담당
+ * 보낸 견적 목록에 포함됩니다. 캐시 갱신은 mutation hook이 담당합니다.
  */
 export async function sendQuote(
   requestId: string,
@@ -352,16 +357,17 @@ export async function sendQuote(
 }
 
 /**
- * 받은 요청 반려
+ * 받은 요청을 반려합니다.
  *
- * Quote를 REJECTED로 만드는 API가 아니라 별도의 RequestRejection을 생성
+ * Quote를 REJECTED로 만드는 API가 아니라
+ * 별도의 RequestRejection 레코드를 생성합니다.
  */
 export async function rejectReceivedRequest(
   requestId: string,
   value: RejectRequestFormValue,
 ): Promise<CreatedRequestRejection> {
   const data = await apiClient<unknown>(
-    `/movers/me/received-requests/${requestId}/rejections`,
+    `/movers/me/received-requests/${requestId}/reject`,
     {
       method: "POST",
       body: JSON.stringify(value),

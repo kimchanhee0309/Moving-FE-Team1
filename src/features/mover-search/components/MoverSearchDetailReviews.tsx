@@ -6,7 +6,6 @@ import { Pagination } from "@/common/components/Pagination";
 import { ReviewListCard } from "@/common/components/ReviewListCard";
 import { ReviewProgressBar } from "@/common/components/ReviewProgressBar";
 
-import { MOVER_DETAIL_REVIEW_PAGE_SIZE } from "../mover-search.constants";
 import type { MoverReview, MoverReviewRatingCount } from "../mover-search.types";
 
 interface MoverSearchDetailReviewsProps {
@@ -14,6 +13,8 @@ interface MoverSearchDetailReviewsProps {
   reviewCount: number;
   ratingCounts: MoverReviewRatingCount[];
   reviews: MoverReview[];
+  totalCount: number;
+  totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
   isLoading: boolean;
@@ -26,16 +27,13 @@ export function MoverSearchDetailReviews({
   reviewCount,
   ratingCounts,
   reviews,
+  totalCount,
+  totalPages,
   currentPage,
   onPageChange,
   isLoading,
 }: MoverSearchDetailReviewsProps) {
   const maxCount = Math.max(...ratingCounts.map((item) => item.count), 0);
-  const totalPages = Math.ceil(reviews.length / MOVER_DETAIL_REVIEW_PAGE_SIZE);
-  const currentReviews = reviews.slice(
-    (currentPage - 1) * MOVER_DETAIL_REVIEW_PAGE_SIZE,
-    currentPage * MOVER_DETAIL_REVIEW_PAGE_SIZE,
-  );
   const filledStars = Math.min(Math.max(Math.round(rating), 0), 5);
 
   return (
@@ -47,7 +45,7 @@ export function MoverSearchDetailReviews({
         리뷰
       </h2>
 
-      {reviews.length === 0 && !isLoading ? (
+      {totalCount === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <p className="text-lg-semibold leading-7 text-[var(--black-500)]">
             아직 등록된 리뷰가 없어요!
@@ -99,7 +97,7 @@ export function MoverSearchDetailReviews({
           </div>
 
           <div className="mt-2">
-            {currentReviews.map((review) => (
+            {reviews.map((review) => (
               <ReviewListCard
                 key={review.id}
                 reviewerName={review.reviewerName}
@@ -112,24 +110,28 @@ export function MoverSearchDetailReviews({
             ))}
           </div>
 
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            size="sm"
-            className="mt-2 justify-center min-[1200px]:hidden"
-            ariaLabel="기사님 리뷰 페이지 이동"
-            onPageChange={onPageChange}
-            isLoading={isLoading}
-          />
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            size="lg"
-            className="mt-2 hidden justify-center min-[1200px]:flex"
-            ariaLabel="기사님 리뷰 페이지 이동"
-            onPageChange={onPageChange}
-            isLoading={isLoading}
-          />
+          {totalPages > 1 ? (
+            <>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                size="sm"
+                className="mt-2 justify-center min-[1200px]:hidden"
+                ariaLabel="기사님 리뷰 페이지 이동"
+                onPageChange={onPageChange}
+                isLoading={isLoading}
+              />
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                size="lg"
+                className="mt-2 hidden justify-center min-[1200px]:flex"
+                ariaLabel="기사님 리뷰 페이지 이동"
+                onPageChange={onPageChange}
+                isLoading={isLoading}
+              />
+            </>
+          ) : null}
         </>
       )}
     </section>

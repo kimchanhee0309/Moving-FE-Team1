@@ -5,7 +5,7 @@ import { changeAuthSession, subscribeAuthFailure } from "../../src/common/api/au
 import { ApiError } from "../../src/common/api/error";
 import { canRecoverAuthAccess, getAuthAccess } from "../../src/common/auth/access";
 import { getAuthSessionState } from "../../src/common/auth/session";
-import { authHref, resolveAuthenticatedPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
+import { authHref, clearAuthFieldError, resolveAuthenticatedPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
 const customer: AuthUser = { id: "customer-1", name: "테스트", email: "test@example.com", phone: null, role: "CUSTOMER", profileCompleted: true };
@@ -263,6 +263,37 @@ test("백엔드 휴대전화·이름·비밀번호 바이트 제한에 맞춰 �
   assert.ok(validateAuthForm({ ...values, name: "a".repeat(51) }, "signup").name);
   assert.ok(validateAuthForm({ ...values, password: "가".repeat(24) + "A1!" }, "signup").password);
   assert.deepEqual(validateAuthForm({ ...values, password: "old" }, "login"), {});
+});
+
+test("회원가입의 임의 입력은 이메일·전화번호·비밀번호·확인 오류를 모두 반환한다", () => {
+  const errors = validateAuthForm({
+    name: "eafafafa",
+    email: "feasfafaf",
+    phone: "feafafaff",
+    password: "1234567",
+    passwordConfirm: "7654321",
+  }, "signup");
+
+  assert.equal(errors.name, undefined);
+  assert.equal(errors.email, "올바른 이메일 형식으로 입력해 주세요.");
+  assert.equal(errors.phone, "올바른 휴대전화 번호를 입력해 주세요.");
+  assert.ok(errors.password);
+  assert.equal(errors.passwordConfirm, "비밀번호가 일치하지 않습니다.");
+});
+
+test("입력 중 서버 필드 오류를 지워도 클라이언트 검증 오류를 덮어쓰지 않는다", () => {
+  const clientErrors = validateAuthForm({
+    ...values,
+    email: "abc",
+  }, "signup");
+  const serverErrors = clearAuthFieldError({
+    email: "이미 가입된 이메일입니다.",
+    phone: "이미 가입된 휴대전화 번호입니다.",
+  }, "email");
+
+  assert.equal(serverErrors.email, undefined);
+  assert.equal(serverErrors.phone, "이미 가입된 휴대전화 번호입니다.");
+  assert.equal({ ...clientErrors, ...serverErrors }.email, "올바른 이메일 형식으로 입력해 주세요.");
 });
 
 test("Provider 인증 명령은 쿠키로 최신 /me 사용자까지 확인한다", async () => {

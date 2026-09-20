@@ -1,0 +1,58 @@
+/* Figma: Desktop 1:6566, Tablet 1:6526, Mobile 720:41141. */
+.landing { overflow: clip; background: var(--gray-50); }
+.hero { position: relative; isolation: isolate; height: 313px; }
+.heroPhoto { z-index: -2; object-fit: cover; object-position: center; opacity: 0.8; }
+/* Figma 이미지 fill의 두 오버레이를 background shorthand로 합성합니다. */
+.heroOverlay { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgb(0 0 0 / 24%), rgb(0 0 0 / 60%)), rgb(70 43 20 / 70%); }
+.heroContent { display: flex; flex-direction: column; align-items: center; padding: 74.62px 16px 0; text-align: center; color: var(--gray-50); }
+.truck { width: 100px; height: auto; object-fit: contain; margin-bottom: 20px; }
+.landing .title { font-size: 20px; line-height: 32px; }
+.landing .heroDescription { margin-top: 8px; font-size: 16px; line-height: 26px; color: var(--gray-300); }
+.types { position: relative; display: flex; flex-direction: column; gap: 34px; min-height: 374px; max-width: 1920px; margin: auto; padding: 53px 0 61px; }
+.typesTitle { padding: 0 32px; color: var(--content-strong); }
+.typesImage { display: block; width: 100%; aspect-ratio: 375 / 162; }
+.typesImage img { display: block; width: 100%; height: 100%; }
+.request { position: relative; width: 100%; margin: 0 auto 16px; aspect-ratio: 375 / 496; }
+.requestImage, .compareImage { display: block; width: 100%; height: 100%; }
+.requestImage img, .compareImage img { display: block; width: 100%; height: 100%; }
+/* 요청 섹션의 모든 Figma 원본 이미지에 제목이 포함되어 있어 접근성 트리에만 남깁니다. */
+.requestTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; color: var(--gray-50); }
+.compare { position: relative; width: 100%; max-width: 1920px; margin: auto; aspect-ratio: 375 / 1076; }
+/* 모바일·태블릿 Figma 원본에는 제목이 포함되어 있어 중복 렌더링을 막고 접근성 트리에만 남깁니다. */
+.compareTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; color: var(--content-strong); }
+/* 시작색은 Figma 랜딩 footer 전용 gradient이며 공용 팔레트를 변경하지 않습니다. */
+.footer { display: flex; min-height: 200px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 16px; background: linear-gradient(91deg, #f95d2e 3.3617%, var(--primary-400) 88.381%); color: var(--gray-50); }
+.appIcon { position: relative; width: 56px; height: 57.631px; }
+/* 내보낸 자산에는 그림자 여백이 포함됩니다. 실제 아이콘 크기는 위 wrapper 기준입니다. */
+.appIcon img { position: absolute; top: -12px; left: -28px; width: 112px; height: 113.631px; max-width: none; }
+.landing .footerText { font-size: 16px; line-height: 26px; text-align: center; }
+
+@media (min-width: 744px) {
+  .hero { height: 405px; }
+  .heroPhoto { object-position: center 31.955%; }
+  .heroContent { padding-top: 87px; }
+  .truck { width: 160px; height: auto; margin-bottom: 28px; }
+  /* 공용 typography가 layer 밖에 있어 페이지 selector로 우선순위를 한정합니다. */
+  .landing .title { font-size: 32px; line-height: 46px; }
+  .landing .heroDescription { margin-top: 16px; font-size: 18px; }
+  .types { min-height: 579px; gap: 40px; padding: 69px 32px 108.5px; }
+  .typesTitle { padding: 0; }
+  .typesImage { width: min(100%, 677px); aspect-ratio: 677 / 269.5; align-self: center; }
+  .request { width: calc(100% - 64px); max-width: 680px; aspect-ratio: 680 / 835; margin-bottom: 36px; }
+  .compare { aspect-ratio: 744 / 1008; }
+  .footer { min-height: 311px; gap: 32px; }
+  .appIcon { width: 100px; height: 102.913px; }
+  .appIcon img { width: 156px; height: 159px; }
+  .landing .footerText { font-size: 28px; line-height: 46px; }
+  .mobileBreak { display: none; }
+}
+
+@media (min-width: 1200px) {
+  .types { display: block; height: 509px; min-height: 509px; padding: 0; }
+  .typesTitle { position: absolute; top: 196px; left: max(32px, calc(50% - 543px)); }
+  .typesImage { position: absolute; top: 115px; right: max(32px, calc(50% - 617.25px)); width: 693px; aspect-ratio: 693 / 269.5; }
+  .request { max-width: 1402px; aspect-ratio: 1402 / 787; margin-bottom: 61px; }
+  .compare { aspect-ratio: 1920 / 1081; }
+  .compareTitle { position: absolute; width: auto; height: auto; padding: 0; margin: 0; overflow: visible; clip: auto; white-space: normal; border: 0; top: 14.1845%; left: 21.7188%; }
+  .footer { min-height: 355px; }
+}

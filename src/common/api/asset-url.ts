@@ -11,3 +11,8 @@ export function resolveApiAssetUrl(value: string | null): string | null {
     return null;
   }
 }
+
+/** next/image는 remotePatterns가 없으면 원격 URL에 `unoptimized`가 필요합니다. */
+export function isRemoteAssetUrl(value: string | null | undefined): boolean {
+  return typeof value === "string" && /^https?:\/\//.test(value);
+}

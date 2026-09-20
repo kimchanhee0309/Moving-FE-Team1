@@ -6,7 +6,9 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
-import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { getEmailError } from "@/common/validation/email";
+import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
 
 import type {
@@ -41,6 +43,8 @@ export function MoverBasicInfoForm({
   initialValues,
   isPending = false,
   submissionError,
+  currentPasswordError,
+  onCurrentPasswordChange,
   onSubmit,
 }: MoverBasicInfoFormProps) {
   const router = useRouter();
@@ -53,39 +57,54 @@ export function MoverBasicInfoForm({
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isPending || isSubmitting;
   const normalizedPhone = normalizePhoneDigits(values.phone);
-  // 비밀번호 관리자가 현재 비밀번호만 자동완성해도 일반 기본정보 수정은 막지 않습니다.
-  // 새 비밀번호 입력을 시작한 경우에만 현재 비밀번호와 확인값을 함께 검증합니다.
+  const changedFields = {
+    name: values.name.trim() !== initialValues.name.trim(),
+    email: normalizeEmail(values.email) !== normalizeEmail(initialValues.email),
+    phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
+  };
+  // 이름·전화번호는 세션으로 수정하고, 이메일·비밀번호 변경만 재인증합니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
+  const requiresCurrentPassword = changedFields.email || isChangingPassword;
 
   const errors: Partial<Record<BasicInfoField, string>> = {
-    name: !values.name.trim()
-      ? "이름을 입력해 주세요."
-      : values.name.trim().length > 50 ? "이름은 50자 이하여야 합니다." : undefined,
-    email: values.email.trim().length <= 255 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())
-      ? undefined
-      : "올바른 이메일 형식으로 입력해 주세요.",
-    phone: normalizedPhone.length > 0 && !/^01[016789]\d{7,8}$/.test(normalizedPhone)
-      ? "올바른 대한민국 전화번호를 입력해 주세요."
-      : undefined,
+    name: getNameError(values.name),
+    email: getEmailError(values.email),
+    phone: getPhoneError(values.phone),
     currentPassword:
-      isChangingPassword && !values.currentPassword
+      requiresCurrentPassword && !values.currentPassword
         ? "현재 비밀번호를 입력해 주세요."
-        : isChangingPassword ? getCurrentPasswordError(values.currentPassword) : undefined,
+        : values.currentPassword
+          ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
+          : undefined,
     newPassword:
-      isChangingPassword ? getNewPasswordError(values.newPassword) : undefined,
+      isChangingPassword && !values.newPassword
+        ? "새 비밀번호를 입력해 주세요."
+        : isChangingPassword
+          ? getNewPasswordError(values.newPassword)
+          : undefined,
     newPasswordConfirm:
-      isChangingPassword && values.newPassword !== values.newPasswordConfirm
-        ? "새 비밀번호가 일치하지 않습니다."
-        : undefined,
+      isChangingPassword && !values.newPasswordConfirm
+        ? "새 비밀번호를 다시 입력해 주세요."
+        : isChangingPassword && values.newPassword !== values.newPasswordConfirm
+          ? "새 비밀번호가 일치하지 않습니다."
+          : undefined,
   };
-  const hasError = Object.values(errors).some(Boolean);
+  const hasError = Boolean(
+    (changedFields.name && errors.name) ||
+      (changedFields.email && errors.email) ||
+      (changedFields.phone && errors.phone) ||
+      errors.currentPassword ||
+      errors.newPassword ||
+      errors.newPasswordConfirm,
+  );
   const hasChanges =
-    values.name.trim() !== initialValues.name.trim() ||
-    normalizeEmail(values.email) !== normalizeEmail(initialValues.email) ||
-    normalizedPhone !== normalizePhoneDigits(initialValues.phone) ||
+    changedFields.name ||
+    changedFields.email ||
+    changedFields.phone ||
     isChangingPassword;
 
   const updateValue = (field: BasicInfoField, value: string) => {
+    if (field === "currentPassword") onCurrentPasswordChange?.();
     setTouched((current) => ({ ...current, [field]: true }));
     setValues((current) => ({ ...current, [field]: value }));
     setStatusMessage("");
@@ -105,7 +124,7 @@ export function MoverBasicInfoForm({
 
     setIsSubmitting(true);
     try {
-      const savedBasicInfo = await onSubmit(values);
+      const savedBasicInfo = await onSubmit({ ...values, changedFields });
       setValues({
         ...savedBasicInfo,
         currentPassword: "",
@@ -141,10 +160,10 @@ export function MoverBasicInfoForm({
               inputSize="sm"
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               value={values.name}
-              error={touched.name ? errors.name : undefined}
+              error={changedFields.name ? errors.name : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, name: true }))}
-              onChange={(event) => updateValue("name", event.target.value)}
+              onChange={(event) => updateValue("name", event.currentTarget.value)}
             />
             </div>
             <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:py-8">
@@ -156,10 +175,10 @@ export function MoverBasicInfoForm({
               inputSize="sm"
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               value={values.email}
-              error={touched.email ? errors.email : undefined}
+              error={changedFields.email ? errors.email : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, email: true }))}
-              onChange={(event) => updateValue("email", event.target.value)}
+              onChange={(event) => updateValue("email", event.currentTarget.value)}
             />
             </div>
             <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:border-b-0 min-[1200px]:py-8">
@@ -172,10 +191,10 @@ export function MoverBasicInfoForm({
               inputSize="sm"
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               value={values.phone}
-              error={touched.phone ? errors.phone : undefined}
+              error={changedFields.phone ? errors.phone : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, phone: true }))}
-              onChange={(event) => updateValue("phone", event.target.value)}
+              onChange={(event) => updateValue("phone", event.currentTarget.value)}
             />
             </div>
           </div>
@@ -191,10 +210,15 @@ export function MoverBasicInfoForm({
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               placeholder="현재 비밀번호를 입력해 주세요"
               value={values.currentPassword}
-              error={touched.currentPassword ? errors.currentPassword : undefined}
+              error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
+              helperText={
+                !currentPasswordError
+                  ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다."
+                  : undefined
+              }
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))}
-              onChange={(event) => updateValue("currentPassword", event.target.value)}
+              onChange={(event) => updateValue("currentPassword", event.currentTarget.value)}
             />
             </div>
             <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:py-8">
@@ -207,10 +231,10 @@ export function MoverBasicInfoForm({
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               placeholder="새 비밀번호를 입력해 주세요"
               value={values.newPassword}
-              error={touched.newPassword ? errors.newPassword : undefined}
+              error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))}
-              onChange={(event) => updateValue("newPassword", event.target.value)}
+              onChange={(event) => updateValue("newPassword", event.currentTarget.value)}
             />
             </div>
             <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:border-b-0 min-[1200px]:py-8">
@@ -223,10 +247,10 @@ export function MoverBasicInfoForm({
               containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
               placeholder="새 비밀번호를 다시 입력해 주세요"
               value={values.newPasswordConfirm}
-              error={touched.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
+              error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
               disabled={isBusy}
               onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))}
-              onChange={(event) => updateValue("newPasswordConfirm", event.target.value)}
+              onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)}
             />
             </div>
           </div>

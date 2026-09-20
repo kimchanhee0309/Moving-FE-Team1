@@ -1,26 +1,34 @@
 "use client";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { moverSearchQueryKeys } from "../mover-search.constants";
+import { ApiError } from "@/common/api/error";
+import { moveRequestKeys } from "@/features/move-request/constants/move-request.constants";
 import {
-  getMockMoverDetail,
-  getMockMoverReviews,
-  MOCK_CUSTOMER_HAS_GENERAL_QUOTE,
-  MOCK_DESIGNATED_MOVER_IDS,
-  readStoredDesignatedMoverIds,
-  writeStoredDesignatedMoverIds,
-} from "../mover-search.mock";
+  createDesignatedRequest,
+  fetchActiveMoveRequest,
+} from "@/features/move-request/move-request.api";
 
-export function useMoverSearchDetail(moverId: string) {
+import { fetchMoverDetail, fetchMoverReviews } from "../mover-search.api";
+import { moverSearchQueryKeys } from "../mover-search.constants";
+
+export function useMoverSearchDetail(moverId: string, reviewPage: number) {
   const detailQuery = useQuery({
     queryKey: moverSearchQueryKeys.detail(moverId),
-    queryFn: () => getMockMoverDetail(moverId),
+    queryFn: ({ signal }) => fetchMoverDetail(moverId, signal),
+    enabled: moverId.length > 0,
   });
   const reviewQuery = useQuery({
-    queryKey: moverSearchQueryKeys.reviews(moverId),
-    queryFn: () => getMockMoverReviews(moverId),
+    queryKey: moverSearchQueryKeys.reviews(moverId, reviewPage),
+    queryFn: ({ signal }) => fetchMoverReviews(moverId, reviewPage, signal),
+    enabled: moverId.length > 0,
+    placeholderData: keepPreviousData,
   });
 
   return {
@@ -35,6 +43,10 @@ export function useMoverSearchDetail(moverId: string) {
   };
 }
 
+/**
+ * 지정 견적은 활성 일반 요청이 있을 때만 POST합니다.
+ * 지정된 기사님 목록 API가 없어 완료 표시는 이번 세션의 성공·이미 지정(409)만 반영합니다.
+ */
 export function useMoverSearchDesignatedRequest(
   userId: string | undefined,
   enabled: boolean,
@@ -42,16 +54,18 @@ export function useMoverSearchDesignatedRequest(
 ) {
   const queryClient = useQueryClient();
   const designatedKey = moverSearchQueryKeys.designated(userId ?? "anonymous");
-  const quoteKey = moverSearchQueryKeys.generalQuote(userId ?? "anonymous");
 
   const designatedQuery = useQuery({
     queryKey: designatedKey,
-    queryFn: async (): Promise<string[]> => readStoredDesignatedMoverIds(),
+    queryFn: async (): Promise<string[]> => [],
     enabled: Boolean(userId) && enabled,
+    initialData: [],
+    staleTime: Infinity,
   });
-  const quoteQuery = useQuery({
-    queryKey: quoteKey,
-    queryFn: async () => MOCK_CUSTOMER_HAS_GENERAL_QUOTE,
+  const activeQuery = useQuery({
+    queryKey: moveRequestKeys.active(),
+    queryFn: fetchActiveMoveRequest,
+    select: (data) => data.moveRequest,
     enabled: Boolean(userId) && enabled,
   });
 
@@ -60,25 +74,58 @@ export function useMoverSearchDesignatedRequest(
     [designatedQuery.data],
   );
 
+  const markDesignated = useCallback(
+    (moverId: string) => {
+      queryClient.setQueryData<string[]>(designatedKey, (current) => {
+        const ids = current ?? [];
+        return ids.includes(moverId) ? ids : [...ids, moverId];
+      });
+    },
+    [designatedKey, queryClient],
+  );
+
+  const designatedMutation = useMutation({
+    mutationFn: async (moverId: string) => {
+      const moveRequest = activeQuery.data;
+      if (!moveRequest) {
+        throw new ApiError(
+          409,
+          "MOVE_REQUEST_NOT_FOUND",
+          "일반 견적 요청이 있어야 지정 요청을 보낼 수 있습니다.",
+        );
+      }
+
+      try {
+        await createDesignatedRequest(moveRequest.id, moverId);
+      } catch (error) {
+        if (
+          error instanceof ApiError &&
+          error.code === "DESIGNATED_REQUEST_ALREADY_EXISTS"
+        ) {
+          return;
+        }
+        throw error;
+      }
+    },
+    onSuccess: (_data, moverId) => {
+      markDesignated(moverId);
+    },
+  });
+
   const completeDesignated = useCallback(
     (moverId: string) => {
-      if (!userId) {
+      if (!userId || designatedMutation.isPending) {
         return;
       }
 
-      queryClient.setQueryData<string[]>(designatedKey, (current) => {
-        const ids = current ?? [...MOCK_DESIGNATED_MOVER_IDS];
-        const nextIds = ids.includes(moverId) ? ids : [...ids, moverId];
-        writeStoredDesignatedMoverIds(nextIds);
-        return nextIds;
-      });
+      designatedMutation.mutate(moverId);
     },
-    [designatedKey, queryClient, userId],
+    [designatedMutation, userId],
   );
 
   return {
-    isPending: designatedQuery.isPending || quoteQuery.isPending,
-    hasGeneralQuote: hasGeneralQuoteOverride || quoteQuery.data === true,
+    isPending: designatedQuery.isPending || activeQuery.isPending,
+    hasGeneralQuote: hasGeneralQuoteOverride || Boolean(activeQuery.data),
     designatedIdSet,
     completeDesignated,
   };

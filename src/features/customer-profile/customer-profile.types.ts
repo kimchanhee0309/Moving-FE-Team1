@@ -36,6 +36,13 @@ export interface CustomerProfileEditFormValues extends CustomerProfileFormValues
   currentPassword: string;
   newPassword: string;
   newPasswordConfirm: string;
+  changedFields?: {
+    name: boolean;
+    email: boolean;
+    phone: boolean;
+    serviceTypeIds: boolean;
+    region: boolean;
+  };
 }
 
 export interface CustomerProfileEditFormProps {
@@ -44,5 +51,7 @@ export interface CustomerProfileEditFormProps {
   };
   isPending?: boolean;
   submissionError?: string;
+  currentPasswordError?: string;
+  onCurrentPasswordChange?: () => void;
   onSubmit: (values: CustomerProfileEditFormValues) => Promise<CustomerProfile>;
 }

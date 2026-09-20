@@ -31,6 +31,13 @@ export async function fetchFavoriteMovers(
 }
 
 /**
+ * POST /favorites/:moverId — 특정 기사님을 찜합니다. 이미 찜이면 409입니다.
+ */
+export async function addFavoriteMover(moverId: string): Promise<void> {
+  await apiClient<unknown>(`/favorites/${moverId}`, { method: "POST" });
+}
+
+/**
  * DELETE /favorites/:moverId — 본인 찜만 해제합니다. 성공 시 204(Body 없음).
  */
 export async function removeFavoriteMover(moverId: string): Promise<void> {

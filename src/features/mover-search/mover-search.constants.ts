@@ -1,6 +1,9 @@
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 
-import type { MoverSearchSortValue } from "./mover-search.types";
+import type {
+  MoverReviewRatingCount,
+  MoverSearchSortValue,
+} from "./mover-search.types";
 
 export const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "소형이사",
@@ -33,7 +36,13 @@ export const REGION_FILTER_OPTIONS = [
   { value: "ulsan", label: "울산" },
   { value: "busan", label: "부산" },
   { value: "jeju", label: "제주" },
-];
+] as const;
+
+/** UI 필터 slug(`seoul`) → `GET /movers` `regions` 한글 값(`서울`). BE `MOVER_REGIONS`와 동일합니다. */
+export const REGION_SLUG_TO_API_VALUE: Readonly<Record<string, string>> =
+  Object.fromEntries(
+    REGION_FILTER_OPTIONS.map((option) => [option.value, option.label]),
+  );
 
 export const SORT_OPTIONS: { value: MoverSearchSortValue; label: string }[] = [
   { value: "reviewCount", label: "리뷰 많은순" },
@@ -68,20 +77,33 @@ export const moverSearchQueryKeys = {
     [...moverSearchQueryKeys.all, "favorites", userId] as const,
   detail: (moverId: string) =>
     [...moverSearchQueryKeys.all, "detail", moverId] as const,
-  reviews: (moverId: string) =>
-    [...moverSearchQueryKeys.all, "reviews", moverId] as const,
+  reviews: (moverId: string, page: number) =>
+    [...moverSearchQueryKeys.all, "reviews", moverId, page] as const,
   designated: (userId: string) =>
     [...moverSearchQueryKeys.all, "designated", userId] as const,
-  generalQuote: (userId: string) =>
-    [...moverSearchQueryKeys.all, "general-quote", userId] as const,
 };
 
 export const MOVER_DETAIL_REVIEW_PAGE_SIZE = 5;
+
+/** BE 리뷰 summary에 별점 분포가 없을 때, 여러 페이지인 경우 진행 바를 0으로 둡니다. */
+export const EMPTY_MOVER_REVIEW_RATING_COUNTS: MoverReviewRatingCount[] = [
+  { score: 5, count: 0 },
+  { score: 4, count: 0 },
+  { score: 3, count: 0 },
+  { score: 2, count: 0 },
+  { score: 1, count: 0 },
+];
 
 export function createMoverDetailShareUrl(origin: string, detailHref: string) {
   return `${origin}${detailHref}`;
 }
 
-export function createKakaoShareUrl(detailUrl: string) {
-  return `https://story.kakao.com/s/share?url=${encodeURIComponent(detailUrl)}`;
-}
+/** 카카오 JS SDK 2.8.3. integrity는 공식 CDN 파일 SHA-384입니다. */
+export const KAKAO_JS_SDK_SRC =
+  "https://t1.kakaocdn.net/kakao_js_sdk/2.8.3/kakao.min.js";
+
+export const KAKAO_JS_SDK_INTEGRITY =
+  "sha384-oroumrnFVE0xtgqyDZJARgERibXg2C28380uaUZz2kHDS5CR7tu20eGiOU6GkTpy";
+
+export const KAKAO_SHARE_FALLBACK_IMAGE_PATH =
+  "/images/mover-search/profile-placeholder.png";

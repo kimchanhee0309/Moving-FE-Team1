@@ -2,14 +2,16 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import { useState } from "react";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import {
   EmptyState,
   ErrorState,
   LoadingState,
 } from "@/common/components/page-state";
-import type { ServiceType } from "@/common/constants/domain";
+import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
 import { authHref } from "@/features/auth/auth.utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -19,16 +21,15 @@ import {
   useMoverSearchDetail,
 } from "../hooks/useMoverSearchDetail";
 import { useMoverSearchFavorites } from "../hooks/useMoverSearchSidebar";
+import { getKakaoShareImageUrl, shareMoverDetailToKakao } from "../kakao-share";
 import {
-  createKakaoShareUrl,
   createMoverDetailShareUrl,
+  KAKAO_JS_SDK_INTEGRITY,
+  KAKAO_JS_SDK_SRC,
   REGION_FILTER_OPTIONS,
   SERVICE_TYPE_LABEL,
 } from "../mover-search.constants";
-import {
-  getDisplayedFavoriteCount,
-  getMoverSearchViewer,
-} from "../mover-search.utils";
+import { getMoverSearchViewer } from "../mover-search.utils";
 import { CopyLinkToast } from "./CopyLinkToast";
 import { DesignatedRequestGuideModal } from "./DesignatedRequestGuideModal";
 import { MoverSearchDetailReviews } from "./MoverSearchDetailReviews";
@@ -53,6 +54,11 @@ export function MoverSearchDetailPageContent({
   const isCustomer = viewer === "customer";
   const canInteractFavorite = viewer === "guest" || viewer === "customer";
 
+  const [reviewPaging, setReviewPaging] = useState({ moverId, page: 1 });
+  const reviewPage = reviewPaging.moverId === moverId ? reviewPaging.page : 1;
+  const [isToastVisible, setIsToastVisible] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
   const {
     mover,
     isDetailPending,
@@ -60,18 +66,13 @@ export function MoverSearchDetailPageContent({
     refetchDetail,
     reviewSummary,
     isReviewPending,
-  } = useMoverSearchDetail(moverId);
+  } = useMoverSearchDetail(moverId, reviewPage);
   const favoritesQuery = useMoverSearchFavorites(user?.id, isCustomer);
   const designatedQuery = useMoverSearchDesignatedRequest(
     user?.id,
     isCustomer,
     mockHasGeneralQuote,
   );
-
-  const [reviewPaging, setReviewPaging] = useState({ moverId, page: 1 });
-  const reviewPage = reviewPaging.moverId === moverId ? reviewPaging.page : 1;
-  const [isToastVisible, setIsToastVisible] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   const detailHref = ROUTES.PUBLIC.MOVER_DETAIL(moverId);
   const isFavorite = favoritesQuery.favoriteIdSet.has(moverId);
@@ -102,6 +103,9 @@ export function MoverSearchDetailPageContent({
     if (viewer !== "customer") {
       return;
     }
+    if (designatedQuery.isPending) {
+      return;
+    }
     if (!designatedQuery.hasGeneralQuote) {
       setIsGuideOpen(true);
       return;
@@ -122,11 +126,21 @@ export function MoverSearchDetailPageContent({
   };
 
   const handleShareKakao = () => {
-    window.open(
-      createKakaoShareUrl(getShareUrl()),
-      "_blank",
-      "noopener,noreferrer",
-    );
+    if (!mover) {
+      return;
+    }
+
+    const url = getShareUrl();
+    const didShare = shareMoverDetailToKakao({
+      url,
+      moverName: mover.moverName,
+      introduction: mover.introduction,
+      imageUrl: getKakaoShareImageUrl(mover.profileImageUrl, window.location.origin),
+    });
+
+    if (!didShare) {
+      void handleCopyLink();
+    }
   };
 
   const handleShareFacebook = () => {
@@ -159,18 +173,23 @@ export function MoverSearchDetailPageContent({
     );
   }
 
-  const displayedFavoriteCount = getDisplayedFavoriteCount(
-    mover.favoriteCount,
-    mover.id,
-    isFavorite,
-    isCustomer,
-  );
-  const primaryService = mover.serviceTypes[0] ?? mover.serviceType;
+  const displayedFavoriteCount = mover.favoriteCount;
+  const serviceTypes =
+    mover.serviceTypes.length > 0 ? mover.serviceTypes : [mover.serviceType];
   const reviews = reviewSummary?.reviews ?? [];
   const ratingCounts = reviewSummary?.ratingCounts ?? [];
+  const reviewTotalPages = reviewSummary?.totalPages ?? 0;
+  const reviewTotalCount = reviewSummary?.totalCount ?? 0;
+  const reviewRating = reviewSummary?.averageRating ?? mover.rating;
 
   return (
     <div className="bg-[var(--gray-50)] pb-[110px] min-[1200px]:pb-16">
+      <Script
+        src={KAKAO_JS_SDK_SRC}
+        integrity={KAKAO_JS_SDK_INTEGRITY}
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
       <CopyLinkToast
         isVisible={isToastVisible}
         onClose={() => setIsToastVisible(false)}
@@ -209,6 +228,7 @@ export function MoverSearchDetailPageContent({
               height={134}
               className="size-full object-contain"
               priority
+              unoptimized={isRemoteAssetUrl(mover.profileImageUrl)}
             />
           </div>
 
@@ -217,7 +237,14 @@ export function MoverSearchDetailPageContent({
               <div className="flex flex-col gap-8">
               <div className="flex flex-col gap-4 min-[744px]:gap-5">
                 <div className="flex flex-col gap-2 min-[744px]:gap-3">
-                  <ServiceTypeChip serviceType={primaryService} />
+                  <div className="flex flex-wrap items-center gap-1 min-[744px]:gap-2">
+                    {serviceTypes.map((serviceType) => (
+                      <ServiceTypeChip
+                        key={serviceType}
+                        serviceType={serviceType}
+                      />
+                    ))}
+                  </div>
                   <p className="text-2lg-semibold text-[var(--black-300)] min-[744px]:text-2xl-semibold">
                     {mover.introduction}
                   </p>
@@ -308,10 +335,12 @@ export function MoverSearchDetailPageContent({
             <hr className="w-full border-0 border-t border-[var(--line-200)]" />
 
             <MoverSearchDetailReviews
-              rating={mover.rating}
-              reviewCount={mover.reviewCount}
+              rating={reviewRating}
+              reviewCount={reviewTotalCount > 0 ? reviewTotalCount : mover.reviewCount}
               ratingCounts={ratingCounts}
               reviews={reviews}
+              totalCount={reviewTotalCount}
+              totalPages={reviewTotalPages}
               currentPage={reviewPage}
               onPageChange={(page) => setReviewPaging({ moverId, page })}
               isLoading={isReviewPending}
@@ -354,14 +383,26 @@ function getRegionLabel(value: string) {
 }
 
 function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
+  const icon =
+    serviceType === SERVICE_TYPE.OFFICE
+      ? "/icons/mover-search/ic-solid-company.svg"
+      : "/icons/ic-solid-box.svg";
+  const backgroundClass =
+    serviceType === SERVICE_TYPE.OFFICE
+      ? "bg-[#ffeef0]"
+      : "bg-[var(--primary-100)]";
+
   return (
-    <span className="inline-flex h-[26px] w-fit items-center gap-0.5 rounded bg-[var(--primary-100)] py-0.5 pr-[7px] pl-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)] min-[744px]:h-8 min-[744px]:gap-1 min-[744px]:rounded-md min-[744px]:py-1 min-[744px]:pr-[7px] min-[744px]:pl-[5px]">
+    <span
+      className={`inline-flex h-[26px] w-fit items-center gap-0.5 rounded py-0.5 pr-[7px] pl-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)] min-[744px]:h-8 min-[744px]:gap-1 min-[744px]:rounded-md min-[744px]:py-1 min-[744px]:pr-[7px] min-[744px]:pl-[5px] ${backgroundClass}`}
+    >
       <Image
-        src="/icons/ic-solid-box.svg"
+        src={icon}
         alt=""
         width={20}
         height={20}
         className="size-5"
+        unoptimized
       />
       <span className="text-sm-semibold text-[var(--primary-400)] min-[744px]:text-md-semibold">
         {SERVICE_TYPE_LABEL[serviceType]}
