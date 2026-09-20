@@ -6,4 +6,5 @@ if (!apiUrl) {
 
 export const ENV = {
   API_URL: apiUrl,
+  KAKAO_JAVASCRIPT_KEY: process.env.NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY ?? "",
 } as const;
