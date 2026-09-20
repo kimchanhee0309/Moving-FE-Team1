@@ -2,7 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import {
+  getApiErrorMessage,
+  getCurrentPasswordMismatchError,
+} from "@/common/api/get-error-message";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { patchCachedAuthUser } from "@/features/auth/auth.cache";
@@ -47,11 +50,19 @@ export function CustomerProfileEditContent() {
     );
   }
 
+  const currentPasswordError = getCurrentPasswordMismatchError(mutation.error);
+
   return (
     <CustomerProfileEditForm
       initialValues={toCustomerEditInitialValues(profileQuery.data)}
       isPending={mutation.isPending}
-      submissionError={mutation.error ? getApiErrorMessage(mutation.error, "프로필을 수정하지 못했습니다.") : undefined}
+      currentPasswordError={currentPasswordError}
+      submissionError={
+        mutation.error && !currentPasswordError
+          ? getApiErrorMessage(mutation.error, "프로필을 수정하지 못했습니다.")
+          : undefined
+      }
+      onCurrentPasswordChange={() => mutation.reset()}
       onSubmit={(values) => mutation.mutateAsync(values)}
     />
   );

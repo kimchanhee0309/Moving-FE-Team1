@@ -115,15 +115,17 @@ export async function getMoverReviews(page: number, pageSize: number, signal?: A
 export async function updateMoverBasicInfo(
   values: MoverBasicInfoFormValues,
 ): Promise<MoverBasicInfo> {
-  const payload: Record<string, string | null> = {
-    name: values.name.trim(),
-    email: normalizeEmail(values.email),
-    phone: values.phone.trim() ? normalizePhoneDigits(values.phone) : null,
-  };
-  if (values.currentPassword && values.newPassword) {
-    payload.currentPassword = values.currentPassword;
-    payload.newPassword = values.newPassword;
+  const payload: Record<string, string | null> = {};
+  const changed = values.changedFields;
+  if (!changed || changed.name) payload.name = values.name.trim();
+  if (!changed || changed.email) payload.email = normalizeEmail(values.email);
+  if (!changed || changed.phone) {
+    payload.phone = values.phone.trim() ? normalizePhoneDigits(values.phone) : null;
   }
+  if (values.currentPassword && (!changed || changed.email || values.newPassword)) {
+    payload.currentPassword = values.currentPassword;
+  }
+  if (values.newPassword) payload.newPassword = values.newPassword;
   return readBasicInfo(await apiClient<unknown>("/movers/me", {
     method: "PATCH",
     body: JSON.stringify(payload),
