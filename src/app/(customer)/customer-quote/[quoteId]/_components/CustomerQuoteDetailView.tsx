@@ -1,13 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
+import { CopyLinkToast } from "@/common/components/CopyLinkToast";
 import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
 import { QUOTE_STATUS } from "@/common/constants/domain";
+import { shareToKakaoTalk } from "@/common/utils/kakao-share";
 
 import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
 
@@ -133,21 +135,34 @@ export function CustomerQuoteDetailView({
   const priceLabel = `${quote.price.toLocaleString("ko-KR")}원`;
   const ratingLabel = quote.rating.toFixed(1);
 
+  const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
+
   const getShareUrl = () => {
     return window.location.href;
   };
 
   const handleCopyLink = async () => {
-    await navigator.clipboard.writeText(getShareUrl());
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      setIsCopyToastVisible(true);
+    } catch {
+      setIsCopyToastVisible(false);
+    }
   };
 
   const handleShareKakao = () => {
-    const url = encodeURIComponent(getShareUrl());
-    window.open(
-      `https://story.kakao.com/s/share?url=${url}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    const shareUrl = getShareUrl();
+    void shareToKakaoTalk({
+      url: shareUrl,
+      title: `${quote.moverName} 기사님 견적서`,
+      description: quote.message || "무빙에서 견적서를 확인해 보세요.",
+      imageUrl: quote.profileImageUrl,
+      buttonTitle: "견적서 보기",
+    }).catch(() => {
+      window.alert(
+        "카카오톡 공유를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      );
+    });
   };
 
   const handleShareFacebook = () => {
@@ -161,6 +176,10 @@ export function CustomerQuoteDetailView({
 
   return (
     <main className="min-h-screen bg-[var(--gray-50)]">
+      <CopyLinkToast
+        isVisible={isCopyToastVisible}
+        onClose={() => setIsCopyToastVisible(false)}
+      />
       <header className="bg-[var(--gray-50)] py-8 shadow-[0_2px_10px_rgba(248,248,248,0.1)]">
         <div
           className={[
