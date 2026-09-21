@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
@@ -195,6 +196,7 @@ function MoverProfile({
           fill
           sizes={`${size}px`}
           className="object-cover"
+          unoptimized={isRemoteAssetUrl(src)}
         />
       )}
     </div>
