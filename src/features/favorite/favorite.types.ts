@@ -42,7 +42,7 @@ export interface FavoriteListResult {
 /**
  * 찜 목록 화면용 뷰 모델입니다.
  * MoverSearchCard props에 맞추며, API에 없는 confirmedCount는 0입니다.
- * serviceTypes는 찾기 사이드바 칩용이고, FavoritePage는 대표 serviceType만 씁니다.
+ * serviceTypes는 카드 칩·찾기 사이드바용입니다. FavoritePage는 serviceTypes를 카드에 전달합니다.
  */
 export interface FavoriteMover {
   id: string;

@@ -73,6 +73,80 @@ function FavoriteCheckbox({
 }
 
 /**
+ * 카드 우상단 선택 컨트롤입니다.
+ * 주변 56px은 상세 이동·선택·호버가 없는 데드존이고, 가운데 20px만 선택됩니다.
+ * 공용 MoverSearchCard는 수정하지 않기 위해 페이지에서 별도로 둡니다.
+ */
+function FavoriteCardSelectControl({
+  checked,
+  disabled,
+  moverName,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  moverName: string;
+  onChange: (isSelected: boolean) => void;
+}) {
+  return (
+    <div
+      className="absolute top-3 right-3 z-20 flex size-14 cursor-default items-center justify-center min-[744px]:top-4 min-[744px]:right-5"
+      onClick={(event) => {
+        event.stopPropagation();
+        if (event.target === event.currentTarget) {
+          event.preventDefault();
+        }
+      }}
+      onMouseDown={(event) => {
+        event.stopPropagation();
+      }}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
+    >
+      <label className="relative flex size-5 cursor-pointer items-center justify-center">
+        <span className="sr-only">{moverName} 기사님 선택</span>
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          className="peer absolute inset-0 z-10 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+        />
+        <span
+          className={[
+            CHECKBOX_BOX_CLASS,
+            checked
+              ? "border-[var(--primary-400)]! bg-[var(--primary-400)]!"
+              : "",
+          ].join(" ")}
+          aria-hidden="true"
+        >
+          {checked ? (
+            <svg
+              viewBox="0 0 12 12"
+              className="size-3 text-[var(--gray-50)]"
+              fill="none"
+            >
+              <path
+                d="M2 6.2L4.8 9L10 3"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : null}
+        </span>
+      </label>
+    </div>
+  );
+}
+
+/**
  * 찜한 기사님 페이지입니다.
  * GET /favorites 무한 스크롤 목록·DELETE 선택 삭제만 담당하며
  * 기사님 찾기 찜 토글은 연동하지 않습니다.
@@ -292,26 +366,47 @@ export function FavoritePage() {
               {movers.map((mover) => (
                 <li
                   key={mover.id}
-                  className="flex w-full justify-center min-[744px]:block"
+                  className="relative flex w-full justify-center min-[744px]:block"
                 >
-                  <MoverSearchCard
-                    serviceType={mover.serviceType}
-                    moverName={mover.moverName}
-                    introduction={mover.introduction}
-                    description={mover.description}
-                    profileImageUrl={mover.profileImageUrl}
-                    rating={mover.rating}
-                    reviewCount={mover.reviewCount}
-                    careerYears={mover.careerYears}
-                    confirmedCount={mover.confirmedCount}
-                    favoriteCount={mover.favoriteCount}
-                    selectable
-                    isSelected={selectedIds.includes(mover.id)}
-                    onSelectChange={(isSelected) =>
-                      handleSelectChange(mover.id, isSelected)
-                    }
-                    className="min-[744px]:w-full!"
-                  />
+                  <div className="relative w-full max-w-[327px] min-[744px]:max-w-none">
+                    <MoverSearchCard
+                      serviceType={mover.serviceType}
+                      serviceTypes={mover.serviceTypes}
+                      moverName={mover.moverName}
+                      introduction={mover.introduction}
+                      description={mover.description}
+                      profileImageUrl={mover.profileImageUrl}
+                      rating={mover.rating}
+                      reviewCount={mover.reviewCount}
+                      careerYears={mover.careerYears}
+                      confirmedCount={mover.confirmedCount}
+                      favoriteCount={mover.favoriteCount}
+                      className="min-[744px]:w-full!"
+                    />
+                    <FavoriteCardSelectControl
+                      checked={selectedIds.includes(mover.id)}
+                      disabled={isBusy}
+                      moverName={mover.moverName}
+                      onChange={(isSelected) =>
+                        handleSelectChange(mover.id, isSelected)
+                      }
+                    />
+                    {/*
+                      상세 Link를 L자로 나눠 우상단 64×64에는 Link가 없어
+                      hover(pointer)도 뜨지 않습니다.
+                    */}
+                    <Link
+                      href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
+                      aria-label={`${mover.moverName} 기사님 상세 보기`}
+                      className="absolute inset-y-0 left-0 right-16 z-10 cursor-pointer rounded-l-2xl min-[744px]:rounded-l-[20px]"
+                    />
+                    <Link
+                      href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      className="absolute top-16 right-0 bottom-0 z-10 w-16 cursor-pointer rounded-br-2xl min-[744px]:rounded-br-[20px]"
+                    />
+                  </div>
                 </li>
               ))}
             </ul>
