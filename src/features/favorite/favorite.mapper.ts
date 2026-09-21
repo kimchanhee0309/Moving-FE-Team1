@@ -1,3 +1,4 @@
+import { resolveApiAssetUrl } from "@/common/api/asset-url";
 import { ApiError } from "@/common/api/error";
 import type { Pagination } from "@/common/api/types";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
@@ -140,7 +141,8 @@ export function mapFavoriteMoverToCard(mover: FavoriteMoverDto): FavoriteMover {
     introduction: mover.shortIntroduction,
     // API에 상세 소개가 없어 한줄 소개를 재사용합니다.
     description: mover.shortIntroduction,
-    profileImageUrl: mover.profileImageUrl,
+    // BE는 상대 경로(`/uploads/...`)를 줄 수 있어 API origin으로 변환합니다.
+    profileImageUrl: resolveApiAssetUrl(mover.profileImageUrl),
     rating: mover.averageRating ?? 0,
     reviewCount: mover.reviewCount,
     careerYears: mover.careerYears,
