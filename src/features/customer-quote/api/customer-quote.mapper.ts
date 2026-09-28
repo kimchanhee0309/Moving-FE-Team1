@@ -1,3 +1,4 @@
+import { resolveApiAssetUrl } from "@/common/api/asset-url";
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 
@@ -91,7 +92,7 @@ export function mapQuoteListItem(
       item.mover.shortIntroduction?.trim() ||
       "고객님의 물품을 안전하게 운송해 드립니다.",
     moverName: item.mover.nickname,
-    moverProfileImageUrl: item.mover.profileImageUrl,
+    moverProfileImageUrl: resolveApiAssetUrl(item.mover.profileImageUrl),
     rating: item.mover.averageRating ?? 0,
     reviewCount: item.mover.reviewCount,
     careerYears: item.mover.careerYears,
@@ -162,7 +163,8 @@ export function mapQuoteDetail(
       "고객님의 물품을 안전하게 운송해 드립니다.",
     moverName: item.mover.nickname,
     profileImageUrl:
-      item.mover.profileImageUrl ?? DEFAULT_MOVER_PROFILE_IMAGE,
+      resolveApiAssetUrl(item.mover.profileImageUrl) ??
+      DEFAULT_MOVER_PROFILE_IMAGE,
     rating: item.mover.averageRating ?? 0,
     reviewCount: item.mover.reviewCount,
     careerYears: item.mover.careerYears,

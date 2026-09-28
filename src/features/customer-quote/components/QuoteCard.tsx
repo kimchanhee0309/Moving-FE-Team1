@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
 
@@ -8,6 +9,8 @@ const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
   [SERVICE_TYPE.HOME]: "가정이사",
   [SERVICE_TYPE.OFFICE]: "사무실이사",
 };
+
+const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
 export interface QuoteCardProps {
   serviceType: ServiceType;
@@ -107,8 +110,7 @@ export function QuoteCard({
   className,
 }: QuoteCardProps) {
   const serviceTypeLabel = SERVICE_TYPE_LABEL[serviceType];
-  const profileSrc =
-    moverProfileImageUrl ?? "/images/mover-profile-placeholder.png";
+  const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
   const priceLabel = `${price.toLocaleString("ko-KR")}원`;
   const ratingLabel = rating.toFixed(1);
 
@@ -200,6 +202,7 @@ export function QuoteCard({
                   width={50}
                   height={50}
                   className="size-full object-cover"
+                  unoptimized={isRemoteAssetUrl(profileSrc)}
                 />
               </div>
 
@@ -335,7 +338,8 @@ export function QuoteCard({
           disabled={isConfirmDisabled}
           className={[
             "order-1 flex h-[54px] w-full items-center justify-center rounded-xl bg-[var(--primary-400)] p-4",
-            "text-lg-semibold text-center text-[var(--gray-50)]",
+            "text-lg-semibold text-center text-[var(--gray-50)] transition-colors",
+            "enabled:hover:bg-[#e04829]",
             "min-[558px]:order-2 min-[558px]:min-w-0 min-[558px]:flex-1",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
             "disabled:cursor-not-allowed disabled:opacity-50",

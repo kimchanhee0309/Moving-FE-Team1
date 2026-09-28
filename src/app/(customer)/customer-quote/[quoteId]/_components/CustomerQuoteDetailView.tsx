@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, type ReactNode } from "react";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import { CopyLinkToast } from "@/common/components/CopyLinkToast";
 import {
   DESIGNATED_REQUEST_CHIP,
@@ -212,6 +213,7 @@ export function CustomerQuoteDetailView({
                 width={134}
                 height={134}
                 className="size-[134px] object-cover"
+                unoptimized={isRemoteAssetUrl(quote.profileImageUrl)}
               />
             </div>
 
@@ -348,7 +350,8 @@ export function CustomerQuoteDetailView({
                   disabled={isConfirmPending || !onConfirm}
                   className={[
                     "mt-[29px] flex h-16 w-full items-center justify-center rounded-2xl bg-[var(--primary-400)] p-4",
-                    "text-2lg-semibold text-[var(--gray-50)]",
+                    "text-2lg-semibold text-[var(--gray-50)] transition-colors",
+                    "enabled:hover:bg-[#e04829]",
                     "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                   ].join(" ")}
