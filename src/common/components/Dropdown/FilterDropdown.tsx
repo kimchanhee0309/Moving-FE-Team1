@@ -74,8 +74,11 @@ export function FilterDropdown({
 
   const handleSelect = (value: string) => {
     if (value === FILTER_ALL_VALUE) {
-      onChange([], { isAllSelected: true });
-      closeAndRestoreFocus();
+      // 일반 옵션과 같이 재클릭하면 해제한다. 멀티 선택은 목록을 연 채로 토글한다.
+      onChange([], { isAllSelected: !isAllSelected });
+      if (selectionMode === "single") {
+        closeAndRestoreFocus();
+      }
       return;
     }
 
@@ -154,10 +157,11 @@ export function FilterDropdown({
           ariaLabel={`${label} 필터 옵션`}
           className={[
             "rounded-2xl",
+            // 2열 한 칸을 1열 패널(sm 140 / md 160)과 맞춘 뒤 패딩·간격만 더한다.
             layout === "two-column"
               ? size === "sm"
-                ? "w-[236px]"
-                : "w-72"
+                ? "w-[296px]"
+                : "w-[336px]"
               : size === "sm"
                 ? "min-w-[140px]"
                 : "min-w-40",

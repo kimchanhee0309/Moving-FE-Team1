@@ -64,41 +64,44 @@ export function MoverSearchToolbar({
       />
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <FilterDropdown
-            label="지역"
-            options={REGION_FILTER_OPTIONS}
-            values={regionValues}
-            isAllSelected={isAllRegions}
-            onChange={(values, meta) =>
-              onRegionChange(values, meta.isAllSelected)
-            }
-            isOpen={openMenu === "region"}
-            onOpenChange={(isOpen) =>
-              onOpenMenuChange(isOpen ? "region" : null)
-            }
-            layout="two-column"
-            size={dropdownSize}
-          />
-          <FilterDropdown
-            label="서비스"
-            options={SERVICE_FILTER_OPTIONS}
-            values={serviceValues}
-            isAllSelected={isAllServices}
-            onChange={(values, meta) =>
-              onServiceChange(values, meta.isAllSelected)
-            }
-            isOpen={openMenu === "service"}
-            onOpenChange={(isOpen) =>
-              onOpenMenuChange(isOpen ? "service" : null)
-            }
-            size={dropdownSize}
-          />
+        <div className="flex flex-wrap items-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <FilterDropdown
+              label="지역"
+              options={REGION_FILTER_OPTIONS}
+              values={regionValues}
+              isAllSelected={isAllRegions}
+              onChange={(values, meta) =>
+                onRegionChange(values, meta.isAllSelected)
+              }
+              isOpen={openMenu === "region"}
+              onOpenChange={(isOpen) =>
+                onOpenMenuChange(isOpen ? "region" : null)
+              }
+              layout="two-column"
+              size={dropdownSize}
+            />
+            <FilterDropdown
+              label="서비스"
+              options={SERVICE_FILTER_OPTIONS}
+              values={serviceValues}
+              isAllSelected={isAllServices}
+              onChange={(values, meta) =>
+                onServiceChange(values, meta.isAllSelected)
+              }
+              isOpen={openMenu === "service"}
+              onOpenChange={(isOpen) =>
+                onOpenMenuChange(isOpen ? "service" : null)
+              }
+              size={dropdownSize}
+            />
+          </div>
+          {/* 데스크톱에서만 보이는 초기화. 서비스 필터와의 간격은 25px */}
           <button
             type="button"
             onClick={onReset}
             disabled={!canReset}
-            className="text-lg-medium hidden text-[var(--gray-300)] disabled:cursor-not-allowed disabled:opacity-40 min-[1200px]:inline"
+            className="text-lg-medium hidden text-[var(--gray-300)] disabled:cursor-not-allowed disabled:opacity-40 min-[1200px]:ml-[25px] min-[1200px]:inline"
           >
             초기화
           </button>
