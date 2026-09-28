@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { ButtonHTMLAttributes } from "react";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 import type { ServiceType } from "@/common/constants/domain";
 
@@ -116,6 +117,7 @@ function Avatar({ src, moverName, className }: AvatarProps) {
           "object-cover",
           isDefaultImage && "translate-y-[11%] scale-150",
         )}
+        unoptimized={isRemoteAssetUrl(src)}
       />
     </div>
   );

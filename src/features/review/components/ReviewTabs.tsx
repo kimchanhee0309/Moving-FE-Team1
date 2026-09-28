@@ -54,6 +54,7 @@ function getTabLabelClassName(isSelected: boolean) {
 /**
  * 리뷰 목록 라우트 내비게이션입니다.
  * 경로가 다른 페이지로 이동하므로 tablist가 아니라 nav + aria-current를 사용합니다.
+ * 패딩은 Figma 탭(24/72/360), 초광폭은 max-w-[1920px]로 Desktop 프레임을 넘지 않게 합니다.
  */
 export function ReviewTabs({ value }: ReviewTabsProps) {
   return (
@@ -61,14 +62,21 @@ export function ReviewTabs({ value }: ReviewTabsProps) {
       aria-label="리뷰 목록"
       className={[
         "w-full border-b border-[var(--line-100)] bg-[var(--gray-50)]",
-        "px-6",
-        "min-[744px]:px-[72px] min-[744px]:shadow-[0_2px_5px_rgba(248,248,248,0.2)]",
-        // 세로 여백·그림자는 GNB PC(lg), 가로는 Figma Desktop(1200)
+        "min-[744px]:shadow-[0_2px_5px_rgba(248,248,248,0.2)]",
+        // 세로 여백·그림자는 GNB PC(lg)
         "lg:pt-4 lg:shadow-[0_2px_5px_rgba(248,248,248,0.1)]",
-        "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
       ].join(" ")}
     >
-      <div className="flex items-center gap-6 lg:gap-8">
+      <div
+        className={[
+          "mx-auto flex w-full max-w-[1920px] items-center gap-6",
+          // Figma tab: Mobile 24 · Tablet 72 · Desktop 360(1920)
+          "px-6",
+          "min-[744px]:px-[72px]",
+          "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
+          "lg:gap-8",
+        ].join(" ")}
+      >
         {ITEMS.map((item) => {
           const isSelected = item.id === value;
 

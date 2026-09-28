@@ -1,3 +1,4 @@
+import { resolveApiAssetUrl } from "@/common/api/asset-url";
 import { ApiError } from "@/common/api/error";
 import type { Pagination } from "@/common/api/types";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
@@ -167,7 +168,8 @@ export function mapWritableReviewToItem(
     moverName: item.mover.nickname,
     // API에 한줄/상세 소개가 없어 빈 문자열로 둡니다.
     moverIntroduction: "",
-    profileImageUrl: item.mover.profileImageUrl,
+    // BE는 상대 경로(`/uploads/...`)를 줄 수 있어 API origin으로 변환합니다.
+    profileImageUrl: resolveApiAssetUrl(item.mover.profileImageUrl),
     serviceType: toServiceType(item.moveRequest.serviceType),
     departure: toDisplayRegionAddress(item.moveRequest.fromAddress),
     arrival: toDisplayRegionAddress(item.moveRequest.toAddress),
@@ -184,7 +186,8 @@ export function mapWrittenReviewToItem(
     id: item.id,
     moverName: item.mover.nickname,
     moverIntroduction: "",
-    profileImageUrl: item.mover.profileImageUrl,
+    // BE는 상대 경로(`/uploads/...`)를 줄 수 있어 API origin으로 변환합니다.
+    profileImageUrl: resolveApiAssetUrl(item.mover.profileImageUrl),
     serviceType: toServiceType(item.moveRequest.serviceType),
     departure: toDisplayRegionAddress(item.moveRequest.fromAddress),
     arrival: toDisplayRegionAddress(item.moveRequest.toAddress),

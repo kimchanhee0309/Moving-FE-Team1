@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useId, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
@@ -231,6 +232,7 @@ function ProfileAvatar({
           fill
           sizes={isDefault ? "75px" : "50px"}
           className="object-cover"
+          unoptimized={isRemoteAssetUrl(src)}
         />
       </div>
     </div>
