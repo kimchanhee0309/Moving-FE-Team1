@@ -1,5 +1,6 @@
 import Image from "next/image";
 
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
 
@@ -14,6 +15,8 @@ const SERVICE_TYPE_ICON: Record<ServiceType, string> = {
   [SERVICE_TYPE.HOME]: "/icons/ic-solid-box.svg",
   [SERVICE_TYPE.OFFICE]: "/icons/ic-solid-company.svg",
 };
+
+const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
 export interface QuoteHistoryCardProps {
   serviceType: ServiceType;
@@ -108,8 +111,7 @@ export function QuoteHistoryCard({
 }: QuoteHistoryCardProps) {
   const serviceTypeLabel = SERVICE_TYPE_LABEL[serviceType];
   const serviceTypeIcon = SERVICE_TYPE_ICON[serviceType];
-  const profileSrc =
-    moverProfileImageUrl ?? "/images/mover-profile-placeholder.png";
+  const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
   const priceLabel = `${price.toLocaleString("ko-KR")}원`;
   const ratingLabel = rating.toFixed(1);
 
@@ -225,6 +227,7 @@ export function QuoteHistoryCard({
                     width={50}
                     height={50}
                     className="size-full object-cover"
+                    unoptimized={isRemoteAssetUrl(profileSrc)}
                   />
                 </div>
 
