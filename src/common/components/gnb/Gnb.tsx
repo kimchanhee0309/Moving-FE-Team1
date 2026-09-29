@@ -22,6 +22,7 @@ const FOCUS_RING =
 
 export function Gnb(props: GnbProps) {
   const {
+    isLoading = false,
     hasUnreadNotification = false,
     notificationItems = [],
     onNotificationClick,
@@ -45,10 +46,12 @@ export function Gnb(props: GnbProps) {
 
   // 로그인 여부에 따라 좁혀진 값을 미리 뽑아 두면, 아래 JSX/handler에서 `props.isAuthenticated`
   // discriminated union을 매번 다시 좁히지 않고도 안전하게 재사용할 수 있다.
-  const authenticatedUser = props.isAuthenticated ? props.user : null;
-  const onLogout = props.isAuthenticated ? props.onLogout : undefined;
+  const authenticatedUser = !isLoading && props.isAuthenticated ? props.user : null;
+  const onLogout = !isLoading && props.isAuthenticated ? props.onLogout : undefined;
 
-  const navItems = authenticatedUser
+  const navItems = isLoading
+    ? []
+    : authenticatedUser
     ? GNB_NAV_ITEMS_BY_ROLE[authenticatedUser.role]
     : GNB_GUEST_NAV_ITEMS;
   const profileMenuItems = authenticatedUser
@@ -203,23 +206,39 @@ export function Gnb(props: GnbProps) {
             />
           </Link>
 
-          <nav aria-label="주요 메뉴" className="hidden min-[1200px]:block">
-            <ul className="flex list-none items-center gap-10 m-0 p-0">
-              {navItems.map((item) => (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={`text-2lg-bold inline-flex h-22 items-center justify-center whitespace-nowrap py-4 text-(--black-500)! no-underline hover:text-(--primary-400)! ${FOCUS_RING}`}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          {isLoading ? (
+            <div aria-hidden="true" className="hidden items-center gap-10 min-[1200px]:flex">
+              <span className="h-5 w-18 animate-pulse rounded-md bg-(--gray-100)" />
+              <span className="h-5 w-20 animate-pulse rounded-md bg-(--gray-100)" />
+              <span className="h-5 w-22 animate-pulse rounded-md bg-(--gray-100)" />
+            </div>
+          ) : (
+            <nav aria-label="주요 메뉴" className="hidden min-[1200px]:block">
+              <ul className="flex list-none items-center gap-10 m-0 p-0">
+                {navItems.map((item) => (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`text-2lg-bold inline-flex h-22 items-center justify-center whitespace-nowrap py-4 text-(--black-500)! no-underline hover:text-(--primary-400)! ${FOCUS_RING}`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          )}
         </div>
 
         <div className="flex shrink-0 items-center gap-6 min-[1200px]:gap-8">
+          {isLoading && (
+            <div
+              role="status"
+              aria-label="로그인 정보 확인 중"
+              className="hidden h-11 w-29 animate-pulse rounded-xl bg-(--gray-100) min-[1200px]:block"
+            />
+          )}
+
           {authenticatedUser && (
             <>
               <div className="relative flex items-center">
@@ -304,7 +323,7 @@ export function Gnb(props: GnbProps) {
             </>
           )}
 
-          {!props.isAuthenticated && (
+          {!isLoading && !props.isAuthenticated && (
             <Link
               href={loginHref}
               className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50)! no-underline hover:bg-(--primary-500) min-[1200px]:inline-flex ${FOCUS_RING}`}
@@ -320,6 +339,7 @@ export function Gnb(props: GnbProps) {
             aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
             aria-expanded={isMenuOpen}
             aria-controls={menuId}
+            disabled={isLoading}
             className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:hidden ${FOCUS_RING}`}
           >
             <Image
@@ -333,7 +353,7 @@ export function Gnb(props: GnbProps) {
         </div>
       </div>
 
-      {isMenuOpen && (
+      {isMenuOpen && !isLoading && (
         <GnbMobileMenu
           menuId={menuId}
           navItems={navItems}

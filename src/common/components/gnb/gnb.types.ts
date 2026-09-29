@@ -170,6 +170,8 @@ export interface GnbNotificationMenuProps {
 }
 
 interface GnbBaseProps {
+  /** 최초 세션 확인 중 게스트 로그인 버튼이 잠깐 노출되지 않도록 GNB 자리만 로딩 상태로 유지한다. */
+  isLoading?: boolean;
   /** 읽지 않은 알림이 있는지 여부. `true`면 알림 아이콘에 점(dot)을 표시한다. 기본값 `false`. */
   hasUnreadNotification?: boolean;
   /**

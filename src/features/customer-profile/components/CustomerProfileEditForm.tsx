@@ -17,6 +17,7 @@ import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/va
 import { getEmailError } from "@/common/validation/email";
 import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
+import { AccountWithdrawalButton } from "@/features/auth/components/AccountWithdrawalButton";
 
 import type {
   CustomerProfileEditFormProps,
@@ -174,16 +175,18 @@ export function CustomerProfileEditForm({
   };
 
   const inputClassName = "max-w-none min-[1200px]:[&>div]:h-16";
-  const fieldClassName = "border-b border-[var(--line-100)] py-6 min-[1200px]:py-8";
+  const inputSectionClassName = "border-b border-[var(--line-100)] py-6";
+  const selectionSectionClassName =
+    "border-b border-[var(--line-100)] py-6 min-[1200px]:py-8";
   const buttonClassName =
-    "min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
+    "h-[54px] min-h-[54px] min-[1200px]:h-[60px] min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
 
   return (
     <main className="min-h-[calc(100vh-54px)] bg-[var(--gray-50)] px-6 min-[744px]:min-h-[calc(100vh-88px)] min-[744px]:px-0">
       <form
         noValidate
         aria-busy={isBusy}
-        className="mx-auto flex w-full max-w-[327px] flex-col pb-8 pt-10 min-[744px]:pt-8 min-[1200px]:max-w-[1120px] min-[1200px]:pb-[60px] min-[1200px]:pt-[88px]"
+        className="mx-auto flex w-full max-w-[327px] flex-col pb-8 pt-10 min-[744px]:pt-8 min-[1200px]:max-w-[1120px] min-[1200px]:pb-8 min-[1200px]:pt-[63px]"
         onSubmit={handleSubmit}
       >
         <h1 className="text-xl-bold border-b border-[var(--line-100)] pb-6 text-[var(--black-400)] min-[1200px]:text-3xl-bold min-[1200px]:pb-12">
@@ -192,50 +195,51 @@ export function CustomerProfileEditForm({
 
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
           <div className="flex flex-col">
-            <div className={fieldClassName}>
+            <div className={inputSectionClassName}>
               <Input name="name" label="이름" inputSize="sm" containerClassName={inputClassName} value={values.name} error={changedFields.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
             </div>
-            <div className={fieldClassName}>
+            <div className={inputSectionClassName}>
               <Input name="email" label="이메일" type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={changedFields.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.currentTarget.value)} />
             </div>
-            <div className={fieldClassName}>
+            <div className={inputSectionClassName}>
               <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={changedFields.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
             </div>
-            <div className={fieldClassName}>
+            <div className={inputSectionClassName}>
               <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다." : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
             </div>
-            <div className={fieldClassName}>
+            <div className={inputSectionClassName}>
               <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
             </div>
-            <div className={`${fieldClassName} min-[1200px]:border-b-0`}>
+            <div className={`${inputSectionClassName} min-[1200px]:border-b-0`}>
               <Input name="newPasswordConfirm" label="새 비밀번호 확인" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 다시 입력해 주세요" value={values.newPasswordConfirm} error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
             </div>
           </div>
 
           <div className="flex flex-col">
-            <ProfileImageInput key={imageInputVersion} className={fieldClassName} file={profileImage} initialImageUrl={initialValues.profileImageUrl} disabled={isBusy} isLoading={isPending} onFileChange={(file) => { setProfileImage(file); setStatusMessage(""); }} onValidationErrorChange={setProfileImageError} />
+            <ProfileImageInput key={imageInputVersion} className={selectionSectionClassName} file={profileImage} initialImageUrl={initialValues.profileImageUrl} disabled={isBusy} isLoading={isPending} onFileChange={(file) => { setProfileImage(file); setStatusMessage(""); }} onValidationErrorChange={setProfileImageError} />
 
-            <fieldset className={`flex flex-col gap-4 ${fieldClassName}`}>
-              <legend className="text-lg-semibold text-[var(--black-300)]">이용 서비스</legend>
-              <p className="text-xs-regular text-[var(--gray-400)]">* 이용 서비스는 중복 선택 가능하며, 언제든 수정 가능해요!</p>
-              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} ariaLabel="이용 서비스 선택" ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTouched(true); setServiceTypeIds(nextValues); setStatusMessage(""); }} />
+            <section className={`flex flex-col min-[1200px]:min-h-[208px] ${selectionSectionClassName}`} aria-labelledby="customer-edit-service-title">
+              <h2 id="customer-edit-service-title" className="text-lg-semibold text-[var(--black-300)]">이용 서비스</h2>
+              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">*견적 요청 시 이용 서비스를 선택할 수 있어요.</p>
+              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} className="mt-4 min-[1200px]:mt-8 min-[1200px]:gap-[14px]" ariaLabel="이용 서비스 선택" ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTouched(true); setServiceTypeIds(nextValues); setStatusMessage(""); }} />
               {hasServiceError ? <p id="customer-edit-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">이용 서비스를 한 개 이상 선택해 주세요.</p> : null}
-            </fieldset>
+            </section>
 
-            <fieldset className="flex flex-col gap-4 py-6 min-[1200px]:py-8">
-              <legend className="text-lg-semibold text-[var(--black-300)]">내가 사는 지역</legend>
-              <p className="text-xs-regular text-[var(--gray-400)]">* 내가 사는 지역은 언제든 수정 가능해요!</p>
-              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required ariaLabel="거주 지역 선택" ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegionTouched(true); setRegion(nextRegion); setStatusMessage(""); }} />
+            <section className="flex flex-col py-6 min-[1200px]:py-8" aria-labelledby="customer-edit-region-title">
+              <h2 id="customer-edit-region-title" className="text-lg-semibold text-[var(--black-300)]">내가 사는 지역</h2>
+              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">*견적 요청 시 지역을 설정할 수 있어요.</p>
+              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required className="mt-4 min-[1200px]:mt-8 min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]" ariaLabel="거주 지역 선택" ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegionTouched(true); setRegion(nextRegion); setStatusMessage(""); }} />
               {hasRegionError ? <p id="customer-edit-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">지역을 선택해 주세요.</p> : null}
-            </fieldset>
+            </section>
 
             {submissionError ? <p role="alert" className="text-md-medium mb-3 rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">{submissionError}</p> : null}
             {statusMessage ? <p role="status" className="text-md-medium mb-3 rounded-xl bg-[var(--primary-100)] px-4 py-3 text-[var(--primary-400)]">{statusMessage}</p> : null}
 
-            <div className="flex flex-col gap-2 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
+            <div className="flex flex-col gap-2 min-[1200px]:mt-16 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
               <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError || serviceTypeIds.length === 0 || region === null || Boolean(profileImageError)} isLoading={isBusy} className={`min-[1200px]:order-2 ${buttonClassName}`}>수정하기</Button>
               <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${buttonClassName}`} onClick={() => router.push(ROUTES.HOME)}>취소</Button>
             </div>
+            <AccountWithdrawalButton className="mt-4 min-[1200px]:mt-5" buttonClassName={buttonClassName} disabled={isBusy} />
           </div>
         </div>
       </form>

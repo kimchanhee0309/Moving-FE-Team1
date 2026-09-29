@@ -150,17 +150,20 @@ export function MoverProfileForm({
     }
   };
 
-  const responsiveInputClass = "max-w-none min-[1200px]:[&>div]:h-16";
+  const responsiveInputClass =
+    "max-w-none min-[1200px]:gap-4 min-[1200px]:[&>label]:flex min-[1200px]:[&>label]:min-h-8 min-[1200px]:[&>label]:items-center min-[1200px]:[&>div]:h-16";
+  const responsiveTextareaClass =
+    "max-w-none min-[1200px]:gap-4 min-[1200px]:[&>label]:flex min-[1200px]:[&>label]:min-h-8 min-[1200px]:[&>label]:items-center min-[1200px]:[&>div]:px-6";
   const sectionClass = "border-b border-[var(--line-100)] py-6 min-[1200px]:py-8";
   const responsiveButtonClass =
-    "min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
+    "h-[54px] min-h-[54px] min-[1200px]:h-[60px] min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
 
   return (
     <main className="min-h-[calc(100vh-54px)] bg-[var(--gray-50)] px-6 min-[744px]:min-h-[calc(100vh-88px)] min-[744px]:px-0">
       <form
         noValidate
         aria-busy={isBusy}
-        className="mx-auto flex min-h-[calc(100vh-54px)] w-full max-w-[327px] flex-col pb-6 pt-8 min-[744px]:min-h-[calc(100vh-88px)] min-[744px]:pt-6 min-[1200px]:max-w-[1120px] min-[1200px]:pb-[30px] min-[1200px]:pt-[88px]"
+        className="mx-auto flex min-h-[calc(100vh-54px)] w-full max-w-[327px] flex-col pb-6 pt-8 min-[744px]:min-h-[calc(100vh-88px)] min-[744px]:pt-6 min-[1200px]:max-w-[1120px] min-[1200px]:pb-[13px] min-[1200px]:pt-[63px]"
         onSubmit={handleSubmit}
       >
         <header className="border-b border-[var(--line-100)] pb-6 min-[1200px]:pb-12">
@@ -250,7 +253,7 @@ export function MoverProfileForm({
                 label="상세 설명"
                 required
                 inputSize="sm"
-                containerClassName="max-w-none min-[1200px]:[&>div]:px-6"
+                containerClassName={responsiveTextareaClass}
                 placeholder="상세 내용을 입력해 주세요"
                 value={textValues.description}
                 error={mode === "register"
@@ -262,16 +265,17 @@ export function MoverProfileForm({
               />
             </div>
 
-            <fieldset className={`flex flex-col gap-4 ${sectionClass}`}>
-              <legend className="text-lg-semibold text-[var(--black-300)]">
+            <section className={`flex flex-col gap-4 min-[1200px]:min-h-[160px] ${sectionClass}`} aria-labelledby="mover-service-title">
+              <h2 id="mover-service-title" className="text-lg-semibold text-[var(--black-300)]">
                 제공 서비스 <span className="text-[var(--primary-400)]" aria-hidden="true">*</span>
-              </legend>
+              </h2>
               <ProfileMultiSelectChipGroup
                 options={PROFILE_SERVICE_OPTIONS}
                 values={serviceTypeIds}
                 size="md"
                 disabled={isBusy}
                 isInvalid={hasServiceError}
+                className="min-[1200px]:gap-[14px]"
                 ariaLabel="제공 서비스 선택"
                 ariaDescribedBy={hasServiceError ? "mover-service-error" : undefined}
                 onValuesChange={(nextValues) => {
@@ -285,18 +289,19 @@ export function MoverProfileForm({
                   제공 서비스를 한 개 이상 선택해 주세요.
                 </p>
               ) : null}
-            </fieldset>
+            </section>
 
-            <fieldset className="flex flex-col gap-4 py-6 min-[1200px]:py-8">
-              <legend className="text-lg-semibold text-[var(--black-300)]">
+            <section className="flex flex-col gap-4 py-6 min-[1200px]:py-8" aria-labelledby="mover-region-title">
+              <h2 id="mover-region-title" className="text-lg-semibold text-[var(--black-300)]">
                 서비스 가능 지역 <span className="text-[var(--primary-400)]" aria-hidden="true">*</span>
-              </legend>
+              </h2>
               <ProfileMultiSelectChipGroup
                 options={PROFILE_REGION_OPTIONS}
                 values={regions}
                 size="md"
                 disabled={isBusy}
                 isInvalid={hasRegionError}
+                className="min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]"
                 ariaLabel="서비스 가능 지역 선택"
                 ariaDescribedBy={hasRegionError ? "mover-region-error" : undefined}
                 onValuesChange={(nextValues) => {
@@ -310,7 +315,7 @@ export function MoverProfileForm({
                   서비스 가능 지역을 한 개 이상 선택해 주세요.
                 </p>
               ) : null}
-            </fieldset>
+            </section>
 
             {submissionError ? (
               <p role="alert" className="text-md-medium mb-3 rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">
@@ -328,11 +333,11 @@ export function MoverProfileForm({
                 시작하기
               </Button>
             ) : (
-              <div className="flex flex-col gap-2 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
+              <div className="flex flex-col gap-2 min-[1200px]:mt-10 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
                 <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isIncomplete || hasTextError || isBusy} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
                   수정하기
                 </Button>
-                <Button type="button" size="sm" variant="outlined" fullWidth className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => window.history.back()}>
+                <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => window.history.back()}>
                   취소
                 </Button>
               </div>

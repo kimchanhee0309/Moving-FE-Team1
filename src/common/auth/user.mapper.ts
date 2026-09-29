@@ -16,3 +16,12 @@ export function readUser(data: unknown): AuthUser {
   throw new ApiError(200, "INVALID_RESPONSE", "사용자 응답 형식이 올바르지 않습니다.");
 }
 
+/** 선택적 세션 응답의 명시적인 비회원 null 또는 검증된 사용자 DTO를 반환합니다. */
+export function readOptionalUser(data: unknown): AuthUser | null {
+  if (typeof data === "object" && data !== null && "user" in data && data.user === null) {
+    return null;
+  }
+
+  return readUser(data);
+}
+

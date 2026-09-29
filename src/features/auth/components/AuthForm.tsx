@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
 import { ApiError } from "@/common/api/error";
+import { useModal } from "@/providers/ModalProvider";
 
-import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, SocialProvider } from "../auth.types";
+import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, RecoveryMode, SocialProvider } from "../auth.types";
 import { authHref, clearAuthFieldError, normalizePhone, validateAuthForm } from "../auth.utils";
+import { FindAccountModal, ForgotPasswordModal } from "./AccountRecoveryModal";
 
 interface AuthFormProps extends AuthScreenProps {
   /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
@@ -21,16 +23,21 @@ interface AuthFormProps extends AuthScreenProps {
   isPending: boolean;
 }
 
-const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "" };
-const SIGNUP_FIELDS: AuthField[] = ["name", "email", "phone", "password", "passwordConfirm"];
+const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "", recoveryQuestion: "", recoveryAnswer: "" };
+const SIGNUP_FIELDS: AuthField[] = ["name", "email", "phone", "password", "passwordConfirm", "recoveryQuestion", "recoveryAnswer"];
 const LOGIN_FIELDS: AuthField[] = ["email", "password"];
 const SOCIAL_PROVIDERS: { provider: SocialProvider; label: string; image: string }[] = [
   { provider: "google", label: "Google", image: "google.svg" },
   { provider: "kakao", label: "카카오", image: "kakao.svg" },
   { provider: "naver", label: "네이버", image: "naver.svg" },
 ];
-const FIELD_LABELS: Record<AuthField, string> = { name: "이름", email: "이메일", phone: "전화번호", password: "비밀번호", passwordConfirm: "비밀번호 확인" };
-const FIELD_PLACEHOLDERS: Record<AuthField, string> = { name: "성함을 입력해 주세요", email: "이메일을 입력해 주세요", phone: "숫자만 입력해 주세요", password: "비밀번호를 입력해 주세요", passwordConfirm: "비밀번호를 다시 한번 입력해 주세요" };
+const FIELD_LABELS: Record<AuthField, string> = { name: "이름", email: "이메일", phone: "전화번호", password: "비밀번호", passwordConfirm: "비밀번호 확인", recoveryQuestion: "비밀번호 복구 질문", recoveryAnswer: "복구 답변" };
+const FIELD_PLACEHOLDERS: Record<AuthField, string> = { name: "성함을 입력해 주세요", email: "이메일을 입력해 주세요", phone: "숫자만 입력해 주세요", password: "비밀번호를 입력해 주세요", passwordConfirm: "비밀번호를 다시 한번 입력해 주세요", recoveryQuestion: "질문을 선택해 주세요", recoveryAnswer: "기억하기 쉬운 답변을 입력해 주세요" };
+const RECOVERY_QUESTIONS = [
+  { value: "CHILDHOOD_NICKNAME", label: "어린 시절 별명은 무엇인가요?" },
+  { value: "MEMORABLE_PLACE", label: "가장 기억에 남는 장소는 어디인가요?" },
+  { value: "PERSONAL_PHRASE", label: "나만 기억하는 문구는 무엇인가요?" },
+] as const;
 
 // 오류 행을 항상 예약해 blur 후 다음 입력/버튼이 이동하지 않게 합니다.
 // !는 공통 Input의 크기 클래스와 전역 typography보다 Auth 인스턴스 값을 우선하며 공통 구현은 바꾸지 않습니다.
@@ -40,16 +47,33 @@ const AUTH_FIELD_CLASS = "grid! max-w-none! gap-0! grid-rows-[auto_54px_minmax(2
  * 공통 Input을 이용한 화면 검증/오류 focus/중복 제출 방지를 담당합니다.
  * API 요청과 전역 인증 상태는 Provider/컨테이너에 위임합니다.
  */
-export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin, isPending }: AuthFormProps) {
+export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmitValues, onSocialLogin, isPending }: AuthFormProps) {
+  const { openModal, closeModal } = useModal();
   const [values, setValues] = useState(INITIAL_VALUES);
   const [touched, setTouched] = useState<Partial<Record<AuthField, boolean>>>({});
   const [serverErrors, setServerErrors] = useState<AuthFormErrors>({});
   const [submitError, setSubmitError] = useState("");
   const submitLock = useRef(false);
+  const initialRecoveryOpened = useRef(false);
   const fields = mode === "signup" ? SIGNUP_FIELDS : LOGIN_FIELDS;
   const errors = { ...validateAuthForm(values, mode), ...serverErrors };
   const isIncomplete = fields.some((field) => !values[field].trim());
   const hasValidationError = fields.some((field) => Boolean(errors[field]));
+
+  const openRecoveryModal = useCallback((initialMode: RecoveryMode) => {
+    openModal(
+      initialMode === "find-account"
+        ? <FindAccountModal initialRole={role} onClose={closeModal} />
+        : <ForgotPasswordModal initialRole={role} onClose={closeModal} />,
+      { ariaLabel: initialMode === "find-account" ? "아이디 찾기" : "비밀번호 찾기" },
+    );
+  }, [closeModal, openModal, role]);
+
+  useEffect(() => {
+    if (mode !== "login" || !initialRecoveryMode || initialRecoveryOpened.current) return;
+    initialRecoveryOpened.current = true;
+    openRecoveryModal(initialRecoveryMode);
+  }, [initialRecoveryMode, mode, openRecoveryModal]);
 
   function handleFieldChange(field: AuthField, value: string) {
     // React가 상태 updater를 실행할 때까지 event 객체를 보관하지 않고,
@@ -87,7 +111,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
         if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = "이미 가입된 이메일입니다. 로그인해 주세요.";
         if (error.code === "PHONE_ALREADY_EXISTS") fieldErrors.phone = "이미 가입된 휴대전화 번호입니다.";
         setServerErrors(fieldErrors);
-        setSubmitError(error.code === "INVALID_CREDENTIALS" ? "이메일·비밀번호와 계정 유형을 확인해 주세요." : error.message);
+        setSubmitError(error.status === 429 ? "로그인에 5회 실패해 잠시 로그인이 제한되었습니다. 비밀번호 찾기를 이용해 주세요." : error.code === "INVALID_CREDENTIALS" ? "이메일·비밀번호와 계정 유형을 확인해 주세요." : error.message);
       } else {
         setSubmitError(error instanceof TypeError ? "서버에 연결하지 못했습니다. 네트워크 연결을 확인해 주세요." : "요청을 완료하지 못했습니다. 다시 시도해 주세요.");
       }
@@ -110,6 +134,28 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
       <form noValidate onSubmit={handleSubmit} aria-busy={isPending} className="flex flex-col gap-3 min-[744px]:gap-6">
         <div className="flex flex-col gap-0">
           {fields.map((field) => {
+            if (field === "recoveryQuestion") {
+              const shouldShowError = Boolean(touched[field] || values[field]);
+              return (
+                <div key={field} className="grid max-w-none gap-0 grid-rows-[auto_54px_minmax(20px,auto)] min-[744px]:grid-rows-[auto_54px_minmax(32px,auto)]">
+                  <label htmlFor="auth-recoveryQuestion" className="mb-2 text-sm leading-6 font-normal min-[744px]:mb-4 min-[744px]:text-xl min-[744px]:leading-8">{FIELD_LABELS[field]}</label>
+                  <select
+                    id="auth-recoveryQuestion"
+                    name="recoveryQuestion"
+                    aria-required="true"
+                    value={values.recoveryQuestion}
+                    disabled={isPending}
+                    className="h-[54px] w-full rounded-2xl border border-[var(--gray-200)] bg-white px-4 text-base outline-none focus:border-[var(--primary-400)] disabled:opacity-60 min-[744px]:text-lg"
+                    onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
+                    onChange={(event) => handleFieldChange(field, event.currentTarget.value)}
+                  >
+                    <option value="">질문을 선택해 주세요</option>
+                    {RECOVERY_QUESTIONS.map((question) => <option key={question.value} value={question.value}>{question.label}</option>)}
+                  </select>
+                  {shouldShowError && errors[field] ? <p className="pt-1 text-xs leading-4 text-[var(--secondary-red-200)] min-[744px]:leading-5">{errors[field]}</p> : null}
+                </div>
+              );
+            }
             const isPassword = field === "password" || field === "passwordConfirm";
             const shouldShowError = Boolean(touched[field] || values[field]);
             return (
@@ -120,7 +166,7 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
                 label={FIELD_LABELS[field]}
                 aria-required="true"
                 type={isPassword ? "password" : field === "email" ? "email" : field === "phone" ? "tel" : "text"}
-                autoComplete={isPassword ? (mode === "login" ? "current-password" : "new-password") : field === "phone" ? "tel" : field === "email" ? "email" : "name"}
+                autoComplete={field === "recoveryAnswer" ? "off" : isPassword ? (mode === "login" ? "current-password" : "new-password") : field === "phone" ? "tel" : field === "email" ? "email" : "name"}
                 inputMode={field === "phone" ? "tel" : field === "email" ? "email" : undefined}
                 inputSize="md"
                 containerClassName={AUTH_FIELD_CLASS}
@@ -146,7 +192,13 @@ export function AuthForm({ role, mode, redirectTo, onSubmitValues, onSocialLogin
           {mode === "login" ? "이메일로 회원가입하기" : "로그인"}
         </Link>
       </p>
-      <section className="mt-12" aria-label="SNS 로그인">
+      {mode === "login" && (
+        <nav className="mt-3 flex justify-center gap-4 text-xs text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm [&_button]:cursor-pointer [&_button]:rounded-sm [&_button]:underline [&_button]:underline-offset-4 [&_button]:focus-visible:outline-3 [&_button]:focus-visible:outline-offset-3 [&_button]:focus-visible:outline-[var(--primary-400)]" aria-label="계정 찾기">
+          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("find-account")}>아이디 찾기</button>
+          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("forgot-password")}>비밀번호 찾기</button>
+        </nav>
+      )}
+      <section className={mode === "login" ? "mt-9 min-[744px]:mt-10" : "mt-12"} aria-label="SNS 로그인">
         <p className="text-center text-xs leading-[18px] text-(--black-100) min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200)">SNS 계정으로 간편 가입하기</p>
         <div className="mt-6 flex items-center justify-center gap-6 min-[744px]:mt-8 min-[744px]:gap-8">
           {SOCIAL_PROVIDERS.map(({ provider, label, image }) => (

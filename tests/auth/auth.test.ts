@@ -5,18 +5,23 @@ import { changeAuthSession, subscribeAuthFailure } from "../../src/common/api/au
 import { ApiError } from "../../src/common/api/error";
 import { canRecoverAuthAccess, getAuthAccess } from "../../src/common/auth/access";
 import { getAuthSessionState } from "../../src/common/auth/session";
-import { authHref, clearAuthFieldError, resolveAuthenticatedPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
+import { authHref, clearAuthFieldError, resolveAuthenticatedPath, resolveCredentialsPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
 const customer: AuthUser = { id: "customer-1", name: "테스트", email: "test@example.com", phone: null, role: "CUSTOMER", profileCompleted: true };
-const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!" };
+const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!", recoveryQuestion: "PERSONAL_PHRASE" as const, recoveryAnswer: " moving answer " };
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
 let apiClient: typeof import("../../src/common/api/client").apiClient;
 let beginSocialLogin: typeof import("../../src/features/auth/auth.api").beginSocialLogin;
 let fetchSession: typeof import("../../src/features/auth/auth.api").fetchSession;
 let logoutSession: typeof import("../../src/features/auth/auth.api").logoutSession;
+let withdrawAccountSession: typeof import("../../src/features/auth/auth.api").withdrawAccountSession;
 let submitCredentials: typeof import("../../src/features/auth/auth.api").submitCredentials;
 let authenticateCredentials: typeof import("../../src/features/auth/auth.api").authenticateCredentials;
+let findAccount: typeof import("../../src/features/auth/auth.api").findAccount;
+let fetchRecoveryQuestion: typeof import("../../src/features/auth/auth.api").fetchRecoveryQuestion;
+let verifyRecoveryAnswer: typeof import("../../src/features/auth/auth.api").verifyRecoveryAnswer;
+let confirmPasswordReset: typeof import("../../src/features/auth/auth.api").confirmPasswordReset;
 const success = (data: unknown) => Response.json({ success: true, data });
 const failure = (code: string, status = 401) => Response.json({ success: false, error: { code, message: code } }, { status });
 const pathname = (input: RequestInfo | URL) => new URL(input instanceof Request ? input.url : String(input)).pathname;
@@ -25,7 +30,7 @@ before(async () => {
   // 이 테스트는 실제 서버/개인 환경설정을 사용하지 않고 모든 HTTP 경계를 모의합니다.
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:4000";
   ({ apiClient } = await import("../../src/common/api/client"));
-  ({ beginSocialLogin, fetchSession, logoutSession, submitCredentials, authenticateCredentials } = await import("../../src/features/auth/auth.api"));
+  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, findAccount, fetchRecoveryQuestion, verifyRecoveryAnswer, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
   Object.defineProperty(globalThis, "window", { value: {}, configurable: true });
 });
 beforeEach(async () => { await changeAuthSession(async () => undefined); });
@@ -39,6 +44,35 @@ test("잘못된 자격 증명 및 Auth endpoint 401은 Refresh하지 않는다",
     await assert.rejects(apiClient(path), (error: unknown) => error instanceof ApiError && error.code === "INVALID_CREDENTIALS");
   }
   assert.deepEqual(paths, ["/auth/login", "/auth/signup", "/auth/refresh", "/auth/oauth/google"]);
+});
+
+test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전송한다", async () => {
+  const requests: Array<{ path: string; body: unknown }> = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    requests.push({ path: pathname(input), body: JSON.parse(String(options.body)) });
+    if (pathname(input) === "/auth/recovery/account") {
+      return success({ found: true, loginId: "test@example.com", loginMethod: "EMAIL" });
+    }
+    if (pathname(input) === "/auth/recovery/question") return success({ available: true, question: "PERSONAL_PHRASE", loginMethod: "EMAIL" });
+    if (pathname(input) === "/auth/recovery/question/verify") return success({ resetToken: "reset-token" });
+    return success(null);
+  });
+
+  assert.deepEqual(await findAccount({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" }), {
+    found: true,
+    loginId: "test@example.com",
+    loginMethod: "EMAIL",
+  });
+  await fetchRecoveryQuestion({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" });
+  assert.equal(await verifyRecoveryAnswer({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER", recoveryAnswer: "answer" }), "reset-token");
+  await confirmPasswordReset("reset-token", "NextPassword1!");
+
+  assert.deepEqual(requests, [
+    { path: "/auth/recovery/account", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
+    { path: "/auth/recovery/question", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
+    { path: "/auth/recovery/question/verify", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER", recoveryAnswer: "answer" } },
+    { path: "/auth/recovery/password/confirm", body: { token: "reset-token", newPassword: "NextPassword1!" } },
+  ]);
 });
 
 for (const code of ["ACCESS_TOKEN_EXPIRED", "ACCESS_TOKEN_MISSING"]) {
@@ -148,7 +182,7 @@ test("공유 갱신에서 한 소비자가 취소되어도 다른 소비자는 �
   assert.deepEqual(await completed, { ok: true }); assert.equal(refreshes, 1);
 });
 
-test("로그아웃 시작 전 및 도중 시작한 늦은 /me가 인증을 복구하지 않는다", async () => {
+test("로그아웃 시작 전 및 도중 시작한 늦은 세션 조회가 인증을 복구하지 않는다", async () => {
   const gate = Promise.withResolvers<void>();
   const logoutGate = Promise.withResolvers<void>();
   const logoutStarted = Promise.withResolvers<void>();
@@ -195,8 +229,14 @@ test("필드 오류·Headers·쿼리·FormData 계약을 보존한다", async ()
 });
 
 test("비회원·인증 실패·네트워크 오류를 구분하고 잘못된 DTO를 거절한다", async () => {
-  mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => failure(pathname(input) === "/auth/refresh" ? "REFRESH_TOKEN_MISSING" : "ACCESS_TOKEN_MISSING"));
+  const guestPaths: string[] = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    guestPaths.push(pathname(input));
+    assert.equal(options.method, "POST");
+    return success({ user: null });
+  });
   assert.deepEqual(await fetchSession(), { user: null, failure: null });
+  assert.deepEqual(guestPaths, ["/auth/refresh/session"]);
   mock.restoreAll();
   mock.method(globalThis, "fetch", async () => failure("ACCESS_TOKEN_INVALID"));
   const invalid = await fetchSession(); assert.equal(invalid.user, null); assert.ok(invalid.failure instanceof ApiError);
@@ -208,6 +248,48 @@ test("비회원·인증 실패·네트워크 오류를 구분하고 잘못된 DT
   await assert.rejects(fetchSession(), (error: unknown) => error instanceof ApiError && error.code === "INVALID_RESPONSE");
 });
 
+test("유효한 Refresh로 복구된 선택 세션 사용자를 로그인 상태로 읽는다", async () => {
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    assert.equal(pathname(input), "/auth/refresh/session");
+    assert.equal(options.method, "POST");
+    return success({ user: customer });
+  });
+
+  assert.deepEqual(await fetchSession(), { user: customer, failure: null });
+});
+
+test("회원 탈퇴는 현재 비밀번호를 본인 DELETE 요청으로만 전송한다", async () => {
+  const bodies: unknown[] = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    assert.equal(pathname(input), "/auth/me");
+    assert.equal(options.method, "DELETE");
+    bodies.push(JSON.parse(String(options.body)));
+    return success(null);
+  });
+
+  await withdrawAccountSession("Password1!");
+  await withdrawAccountSession("");
+  assert.deepEqual(bodies, [
+    { currentPassword: "Password1!" },
+    {},
+  ]);
+});
+
+test("회원 탈퇴의 잘못된 현재 비밀번호는 Refresh 없이 필드 오류로 전달한다", async () => {
+  const paths: string[] = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => {
+    paths.push(pathname(input));
+    return failure("INVALID_CURRENT_PASSWORD");
+  });
+
+  await assert.rejects(
+    withdrawAccountSession("wrong-password"),
+    (error: unknown) =>
+      error instanceof ApiError && error.code === "INVALID_CURRENT_PASSWORD",
+  );
+  assert.deepEqual(paths, ["/auth/me"]);
+});
+
 test("두 역할 이메일 가입/로그인의 DTO와 data.user를 사용한다", async () => {
   for (const role of ["CUSTOMER", "MOVER"] as const) {
     for (const mode of ["signup", "login"] as const) {
@@ -215,7 +297,7 @@ test("두 역할 이메일 가입/로그인의 DTO와 data.user를 사용한다"
         assert.equal(pathname(input), "/auth/" + mode);
         assert.equal(options.method, "POST");
         const payload: unknown = JSON.parse(String(options.body));
-        assert.deepEqual(payload, { email: "test@example.com", password: values.password, role, ...(mode === "signup" ? { name: "테스트", phone: values.phone } : {}) });
+        assert.deepEqual(payload, { email: "test@example.com", password: values.password, role, ...(mode === "signup" ? { name: "테스트", phone: values.phone, recoveryQuestion: values.recoveryQuestion, recoveryAnswer: "moving answer" } : {}) });
         return success({ user: { ...customer, role } });
       });
       assert.equal((await submitCredentials(mode, role, values)).user.role, role); mock.restoreAll();
@@ -257,6 +339,19 @@ test("프로필 등록·역할별 진입·안전하지 않은 목적지와 다�
   for (const path of ["https://evil.example", "//evil.example", "/\\evil.example", "/login/customer", "/auth/callback", "/signup/mover", "/a\n"]) assert.equal(safeAuthRedirect(path), undefined);
 });
 
+test("이메일 회원가입은 잘못된 완료 플래그가 와도 역할별 프로필 등록으로 이동한다", () => {
+  assert.equal(
+    resolveCredentialsPath("signup", customer, "/favorite?sort=recent"),
+    "/customer-profile/register?redirect=%2Ffavorite%3Fsort%3Drecent",
+  );
+  assert.equal(
+    resolveCredentialsPath("signup", { ...customer, role: "MOVER" }, "/requests"),
+    "/mover-profile/register?redirect=%2Frequests",
+  );
+  assert.equal(resolveCredentialsPath("login", customer), "/mover-search");
+  assert.equal(resolveCredentialsPath("login", { ...customer, role: "MOVER" }), "/mover-mypage");
+});
+
 test("백엔드 휴대전화·이름·비밀번호 바이트 제한에 맞춰 검증한다", () => {
   assert.deepEqual(validateAuthForm(values, "signup"), {});
   assert.ok(validateAuthForm({ ...values, phone: "0212345678" }, "signup").phone);
@@ -272,6 +367,8 @@ test("회원가입의 임의 입력은 이메일·전화번호·비밀번호·�
     phone: "feafafaff",
     password: "1234567",
     passwordConfirm: "7654321",
+    recoveryQuestion: "",
+    recoveryAnswer: "",
   }, "signup");
 
   assert.equal(errors.name, undefined);
@@ -312,7 +409,7 @@ test("가입 응답이 성공해도 쿠키 세션이 없으면 로그인 완료�
     if (path === "/auth/signup") return success({ user: customer });
     return failure(path === "/auth/refresh" ? "REFRESH_TOKEN_MISSING" : "ACCESS_TOKEN_MISSING");
   });
-  await assert.rejects(authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone }),
+  await assert.rejects(authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone, recoveryQuestion: values.recoveryQuestion, recoveryAnswer: values.recoveryAnswer }),
     (error: unknown) => error instanceof ApiError && error.code === "AUTH_SESSION_UNAVAILABLE");
 });
 
@@ -360,7 +457,7 @@ test("OAuth 시작 응답의 잘못된 주소와 다른 공급자 주소를 거�
   }
 });
 
-test("캐시된 세션의 /me 재조회가 네트워크 오류여도 로그인 표시를 유지하고 복구한다", async () => {
+test("캐시된 세션 재조회가 네트워크 오류여도 로그인 표시를 유지하고 복구한다", async () => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const queryKey = ["auth", "session"];
   const options = { queryKey, queryFn: () => fetchSession(), staleTime: 0 };

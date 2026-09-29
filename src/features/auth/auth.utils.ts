@@ -38,6 +38,8 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
     if (!values.passwordConfirm || values.password !== values.passwordConfirm) {
       errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
     }
+    if (!values.recoveryQuestion) errors.recoveryQuestion = "비밀번호 복구 질문을 선택해 주세요.";
+    if (values.recoveryAnswer.trim().length < 2) errors.recoveryAnswer = "복구 답변을 2자 이상 입력해 주세요.";
   }
   return errors;
 }
@@ -79,4 +81,23 @@ export function resolveAuthenticatedPath(user: AuthUser, redirectTo?: string): s
   const isOwn = ownPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const isRegister = pathname === ROUTES.CUSTOMER.PROFILE.REGISTER || pathname === ROUTES.MOVER.PROFILE.REGISTER;
   return (isPublic || isOwn) && !isRegister ? target : defaultPath;
+}
+
+/**
+ * 이메일 회원가입은 백엔드가 역할 프로필을 만들지 않으므로, 응답/캐시의 완료 플래그와 무관하게
+ * 최초 1회는 반드시 역할별 프로필 등록 화면으로 보냅니다. 로그인은 서버의 최신 완료 상태를 따릅니다.
+ */
+export function resolveCredentialsPath(
+  mode: AuthMode,
+  user: AuthUser,
+  redirectTo?: string,
+): string {
+  if (mode === "signup") {
+    const registerPath = user.role === "MOVER"
+      ? ROUTES.MOVER.PROFILE.REGISTER
+      : ROUTES.CUSTOMER.PROFILE.REGISTER;
+    return authHref(registerPath, redirectTo);
+  }
+
+  return resolveAuthenticatedPath(user, redirectTo);
 }

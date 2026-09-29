@@ -1,8 +1,14 @@
 import Image from "next/image";
 
+import {
+  CompareLandingCta,
+  MoveTypeCta,
+  RequestLandingCta,
+} from "@/features/landing/components/MoveTypeCta";
+
 import styles from "./page.module.css";
 
-/** Figma의 375/744/1920 화면별 이미지를 동일한 breakpoint에서 전환합니다. */
+/** Figma의 375/744/1920 랜딩 배치를 유지하고 상호작용·등장 효과만 별도 CTA로 보강합니다. */
 export default function HomePage() {
   return (
     <main className={styles.landing}>
@@ -22,30 +28,18 @@ export default function HomePage() {
         <h2 id="move-types-title" className={`text-xl-bold ${styles.title} ${styles.typesTitle}`}>
           번거로운 선정과정,<br />이사 유형부터 선택해요
         </h2>
-        <picture className={styles.typesImage}>
-          <source media="(min-width: 1200px)" srcSet="/images/landing/types-desktop.png" />
-          <source media="(min-width: 744px)" srcSet="/images/landing/types-tablet.png" />
-          <Image src="/images/landing/types-mobile.png" alt="소형이사, 가정이사, 기업·사무실 이사 중 필요한 유형을 선택할 수 있습니다." width={1499} height={648} sizes="(min-width: 1200px) 693px, (min-width: 744px) 677px, 100vw" unoptimized />
-        </picture>
+        <MoveTypeCta />
       </section>
 
       <section className={styles.request} aria-labelledby="request-title">
-        <picture className={styles.requestImage}>
-          <source media="(min-width: 1200px)" srcSet="/images/landing/request-desktop.png" />
-          <source media="(min-width: 744px)" srcSet="/images/landing/request-tablet.png" />
-          <Image src="/images/landing/request-mobile-frame.png" alt="이사 정보와 서비스 내용을 확인하는 견적 요청 화면 예시" width={1500} height={1984} sizes="(min-width: 1200px) 1402px, (min-width: 744px) 680px, 100vw" unoptimized />
-        </picture>
+        <RequestLandingCta />
         <h2 id="request-title" className={`text-xl-bold ${styles.title} ${styles.requestTitle}`}>
           원하는 이사 서비스를 요청하고<br />견적을 받아보세요
         </h2>
       </section>
 
       <section className={styles.compare} aria-labelledby="compare-title">
-        <picture className={styles.compareImage}>
-          <source media="(min-width: 1200px)" srcSet="/images/landing/landing-compare.png" />
-          <source media="(min-width: 744px)" srcSet="/images/landing/compare-tablet.png" />
-          <Image src="/images/landing/compare-mobile.png" alt="여러 기사님의 평점, 경력과 견적 금액을 비교하는 화면 예시" width={1500} height={4304} sizes="100vw" unoptimized />
-        </picture>
+        <CompareLandingCta />
         <h2 id="compare-title" className={`text-xl-bold ${styles.title} ${styles.compareTitle}`}>
           여러 업체의 견적을<br />한눈에 비교하고 선택해요
         </h2>
