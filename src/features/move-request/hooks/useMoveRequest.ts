@@ -91,6 +91,10 @@ export function useUpdateMoveRequest() {
  * 없으므로, `fetchActiveMoveRequest`와 같은 shape(`{ moveRequest: null }`)을 직접 채워 넣는다 —
  * 이렇게 해야 `useActiveMoveRequest`의 `select`가 즉시 "활성 요청 없음"으로 읽고
  * `MoveRequestPage`가 다시 `MoveRequestForm`(생성 폼)으로 돌아간다.
+ *
+ * `useUpdateMoveRequest`와 같은 이유로 `customer-quote`의 별도 캐시도 함께 정리한다 — 삭제는
+ * BE에서 연결된 Quote까지 cascade로 같이 지워지므로, "내 견적 관리"의 대기 견적 목록에도 이제
+ * 존재하지 않는 견적 카드가 남아있지 않도록 invalidate한다.
  */
 export function useDeleteMoveRequest() {
   const queryClient = useQueryClient();
@@ -99,6 +103,10 @@ export function useDeleteMoveRequest() {
     mutationFn: (moveRequestId: string) => deleteMoveRequest(moveRequestId),
     onSuccess: () => {
       queryClient.setQueryData(moveRequestKeys.active(), { moveRequest: null });
+      queryClient.setQueryData(customerQuoteQueryKeys.activeMoveRequest(), null);
+      void queryClient.invalidateQueries({
+        queryKey: customerQuoteQueryKeys.pendingList(),
+      });
     },
   });
 }
