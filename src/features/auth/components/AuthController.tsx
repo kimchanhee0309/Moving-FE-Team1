@@ -34,7 +34,7 @@ export function AuthController(props: AuthScreenProps) {
         password: values.password,
       };
       const { user } = await credentials.mutateAsync(props.mode === "signup"
-        ? { ...input, mode: "signup", name: values.name, phone: values.phone, recoveryQuestion: values.recoveryQuestion as Exclude<typeof values.recoveryQuestion, "">, recoveryAnswer: values.recoveryAnswer }
+        ? { ...input, mode: "signup", name: values.name, phone: values.phone }
         : { ...input, mode: "login" });
       router.replace(resolveCredentialsPath(props.mode, user, props.redirectTo));
     }}

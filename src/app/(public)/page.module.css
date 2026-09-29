@@ -11,7 +11,7 @@
 
 .types { position: relative; display: flex; flex-direction: column; gap: 34px; min-height: 374px; max-width: 1920px; margin: auto; padding: 53px 0 61px; }
 .typesTitle { padding: 0 32px; color: var(--content-strong); }
-.typesCta { --orbit-x-front: 112px; --orbit-x-back: 132px; --orbit-x-front-negative: -112px; --orbit-x-back-negative: -132px; position: relative; display: block; width: 100%; aspect-ratio: 375 / 162; overflow: hidden; perspective: 900px; }
+.typesCta { --orbit-x-front: 112px; --orbit-x-back: 132px; --orbit-x-front-negative: -112px; --orbit-x-back-negative: -132px; position: relative; display: block; width: 100%; height: 190px; overflow: hidden; perspective: 900px; }
 .moveTypeOrbit { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
 .moveTypeOrbitItem { position: absolute; top: 50%; left: 50%; width: 108px; height: 146px; transform: translate3d(-50%, -50%, 0); transform-style: preserve-3d; animation: move-types-orbit 15s linear infinite; will-change: transform, opacity; }
 .moveTypeCard { display: flex; width: 100%; min-width: 0; height: 100%; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 2px solid transparent; border-radius: 18px; background: #f8f7f6; padding: 8px 4px 14px; color: var(--content-strong); cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease; }
@@ -45,7 +45,7 @@
 .compareCardHotspotFour { display: none; }
 /* 요청 섹션의 모든 Figma 원본 이미지에 제목이 포함되어 있어 접근성 트리에만 남깁니다. */
 .requestTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; color: var(--gray-50); }
-.compare { position: relative; width: 100%; max-width: 1920px; margin: auto; aspect-ratio: 375 / 1076; }
+.compare { position: relative; width: 100%; margin: auto; aspect-ratio: 375 / 1076; }
 /* 모바일·태블릿 Figma 원본에는 제목이 포함되어 있어 중복 렌더링을 막고 접근성 트리에만 남깁니다. */
 .compareTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; color: var(--content-strong); }
 
@@ -110,7 +110,7 @@
   .landing .heroDescription { margin-top: 16px; font-size: 18px; }
   .types { min-height: 579px; gap: 40px; padding: 69px 32px 108.5px; }
   .typesTitle { padding: 0; }
-  .typesCta { --orbit-x-front: 200px; --orbit-x-back: 240px; --orbit-x-front-negative: -200px; --orbit-x-back-negative: -240px; width: min(100%, 677px); aspect-ratio: 677 / 269.5; align-self: center; }
+  .typesCta { --orbit-x-front: 200px; --orbit-x-back: 240px; --orbit-x-front-negative: -200px; --orbit-x-back-negative: -240px; width: min(100%, 677px); height: 300px; align-self: center; }
   .moveTypeOrbitItem { width: 196px; height: 230px; }
   .moveTypeCard { height: 230px; border-radius: 24px; padding: 18px 10px 24px; }
   .moveTypeImageSmall { height: 108px; margin-bottom: 6px; }
@@ -139,7 +139,7 @@
 @media (min-width: 1200px) {
   .types { display: block; height: 509px; min-height: 509px; padding: 0; }
   .typesTitle { position: absolute; top: 196px; left: max(32px, calc(50% - 543px)); }
-  .typesCta { position: absolute; top: 115px; right: max(32px, calc(50% - 617.25px)); width: 693px; aspect-ratio: 693 / 269.5; }
+  .typesCta { position: absolute; top: 100px; right: max(32px, calc(50% - 617.25px)); width: 693px; height: 310px; }
   .request { max-width: 1402px; aspect-ratio: 5609 / 3148; margin-bottom: 61px; }
   .compare { aspect-ratio: 7681 / 4324; }
   .requestCardHotspot { top: 7.6239%; left: 10.1997%; width: 37.0185%; height: 86.6582%; border-radius: 24px; }

@@ -13,7 +13,7 @@ Provider 순서는 `QueryProvider → AuthProvider → ModalProvider → 모든 
 - `POST /auth/logout`: 두 서버 인증 쿠키를 삭제하고 Query와 완료된 개인 mutation 캐시를 정리합니다.
 - `DELETE /auth/me`: 이메일 계정의 현재 비밀번호 또는 OAuth 계정의 현재 세션으로 탈퇴하고 같은 캐시를 정리합니다.
 - `POST /auth/recovery/account`: 이름·이메일·역할로 로그인 ID와 계정 방식을 확인합니다.
-- `POST /auth/recovery/question`, `/question/verify`: 가입 시 등록한 질문·답변을 확인하고 15분 재설정 토큰을 받습니다.
+- `POST /auth/recovery/password/code`, `/code/verify`: 이메일로 받은 6자리 코드를 확인하고 15분 재설정 토큰을 받습니다. OAuth 계정은 가입한 SNS의 계정 복구를 안내합니다.
 - `POST /auth/recovery/password/confirm`: 기존 비밀번호를 노출하지 않고 공통 모달에서 새 비밀번호로 교체합니다. OAuth 계정은 가입한 SNS로 로그인합니다.
 - `GET /auth/oauth/:provider?role=...&format=json`: 공급자 인증 URL과 state 쿠키를 받아 이동합니다.
 - 공급자 callback은 백엔드가 처리하고 프론트 `/auth/callback`에서 선택적 세션 endpoint로 최신 사용자를 확인합니다.

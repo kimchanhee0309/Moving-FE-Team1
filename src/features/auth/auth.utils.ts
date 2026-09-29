@@ -38,8 +38,6 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
     if (!values.passwordConfirm || values.password !== values.passwordConfirm) {
       errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
     }
-    if (!values.recoveryQuestion) errors.recoveryQuestion = "비밀번호 복구 질문을 선택해 주세요.";
-    if (values.recoveryAnswer.trim().length < 2) errors.recoveryAnswer = "복구 답변을 2자 이상 입력해 주세요.";
   }
   return errors;
 }
