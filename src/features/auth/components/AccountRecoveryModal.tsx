@@ -29,6 +29,14 @@ interface AccountRecoveryModalProps {
 type RecoveryModalEntryProps = Omit<AccountRecoveryModalProps, "mode">;
 const FIELD_CLASS = "max-w-none [&>div]:h-[54px]!";
 
+function formatExpiryDuration(totalSeconds: number) {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds}초`;
+  if (seconds === 0) return `${minutes}분`;
+  return `${minutes}분 ${seconds}초`;
+}
+
 function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: AccountRecoveryModalProps) {
   const { setModalDismissible } = useModal();
   const [role, setRole] = useState<UserRole>(initialRole);
@@ -36,6 +44,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
   const [email, setEmail] = useState("");
   const [challengeId, setChallengeId] = useState("");
   const [code, setCode] = useState("");
+  const [codeExpiresInSeconds, setCodeExpiresInSeconds] = useState(0);
   const [resendSeconds, setResendSeconds] = useState(0);
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -59,6 +68,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
   function resetRecoveryStep() {
     setChallengeId("");
     setCode("");
+    setCodeExpiresInSeconds(0);
     setResendSeconds(0);
     setResetToken("");
     setNewPassword("");
@@ -74,12 +84,17 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
       setError("SNS 계정으로 가입했습니다. 비밀번호는 해당 SNS에서 관리하므로, 가입한 SNS의 비밀번호 찾기에서 재설정한 뒤 다시 로그인해 주세요.");
       return;
     }
-    if (response.delivery !== "EMAIL" || !response.challengeId) {
+    if (
+      response.delivery !== "EMAIL"
+      || !response.challengeId
+      || response.expiresInSeconds === null
+    ) {
       setError("입력한 정보와 일치하는 이메일 계정을 찾지 못했습니다.");
       return;
     }
     setChallengeId(response.challengeId);
     setCode("");
+    setCodeExpiresInSeconds(response.expiresInSeconds);
     setResendSeconds(response.resendAfterSeconds ?? 60);
   }
 
@@ -142,7 +157,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
 
       <header className="px-8 text-center">
         <h2 id="account-recovery-title" className="text-2xl-bold text-[var(--black-400)]">{title}</h2>
-        {!resetToken && !isComplete ? <p className="text-sm-regular mt-3 text-[var(--gray-500)]">{mode === "find-account" ? "가입할 때 입력한 이름과 이메일을 확인해 주세요." : challengeId ? `${email}로 보낸 6자리 인증코드를 5분 안에 입력해 주세요.` : "가입한 이름과 이메일로 인증코드를 받아 새 비밀번호를 설정해요."}</p> : null}
+        {!resetToken && !isComplete ? <p className="text-sm-regular mt-3 text-[var(--gray-500)]">{mode === "find-account" ? "가입할 때 입력한 이름과 이메일을 확인해 주세요." : challengeId ? `${email}로 보낸 6자리 인증코드를 ${formatExpiryDuration(codeExpiresInSeconds)} 안에 입력해 주세요.` : "가입한 이름과 이메일로 인증코드를 받아 새 비밀번호를 설정해요."}</p> : null}
       </header>
 
       {isComplete ? (

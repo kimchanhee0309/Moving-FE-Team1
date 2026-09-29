@@ -53,7 +53,7 @@ test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전�
     if (pathname(input) === "/auth/recovery/account") {
       return success({ found: true, loginId: "test@example.com", loginMethod: "EMAIL" });
     }
-    if (pathname(input) === "/auth/recovery/password/code") return success({ delivery: "EMAIL", challengeId: "11111111-1111-4111-8111-111111111111", expiresInSeconds: 300, resendAfterSeconds: 60 });
+    if (pathname(input) === "/auth/recovery/password/code") return success({ delivery: "EMAIL", challengeId: "11111111-1111-4111-8111-111111111111", expiresInSeconds: 330, resendAfterSeconds: 60 });
     if (pathname(input) === "/auth/recovery/password/code/verify") return success({ resetToken: "reset-token" });
     return success(null);
   });
@@ -63,7 +63,15 @@ test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전�
     loginId: "test@example.com",
     loginMethod: "EMAIL",
   });
-  await requestPasswordResetCode({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" });
+  assert.deepEqual(
+    await requestPasswordResetCode({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" }),
+    {
+      delivery: "EMAIL",
+      challengeId: "11111111-1111-4111-8111-111111111111",
+      expiresInSeconds: 330,
+      resendAfterSeconds: 60,
+    },
+  );
   assert.equal(await verifyPasswordResetCode("11111111-1111-4111-8111-111111111111", "123456"), "reset-token");
   await confirmPasswordReset("reset-token", "NextPassword1!");
 
