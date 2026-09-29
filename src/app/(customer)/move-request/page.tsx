@@ -13,8 +13,18 @@ import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { MoveDateCalendar } from "@/features/move-request/components/MoveDateCalendar";
 import { MoveTypeCard } from "@/features/move-request/components/MoveTypeCard";
 import { useAddressSearch } from "@/features/move-request/hooks/useAddressSearch";
-import { useActiveMoveRequest, useCreateMoveRequest } from "@/features/move-request/hooks/useMoveRequest";
-import { formatAddressForApi, formatMoveDateForApi } from "@/features/move-request/move-request.utils";
+import {
+  useActiveMoveRequest,
+  useCreateMoveRequest,
+  useUpdateMoveRequest,
+} from "@/features/move-request/hooks/useMoveRequest";
+import type { MoveRequestDto } from "@/features/move-request/move-request.types";
+import {
+  formatAddressForApi,
+  formatMoveDateLabel,
+  formatMoveDateForApi,
+  parseAddressFromApi,
+} from "@/features/move-request/move-request.utils";
 
 import { MoveRequestBlockedState } from "./_components/MoveRequestBlockedState";
 
@@ -62,15 +72,6 @@ const ADDRESS_MODAL_TITLE: Record<AddressSlot, string> = {
   from: "출발지를 선택해주세요",
   to: "도착지를 선택해주세요",
 };
-
-/**
- * `이사 예정일` 트리거/헤더에 쓰는 표시용 날짜 문자열을 만든다("2025년 7월 1일").
- * 서버에 보낼 payload 포맷(ISO 문자열 등)은 API 계약이 확정된 뒤 별도로 만든다 — 이 함수는
- * 화면 표시 전용이며 서버 전송용 직렬화에 재사용하지 않는다.
- */
-function formatMoveDateLabel(date: Date): string {
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-}
 
 interface MobileStepIndicatorProps {
   /** 지금 보여주는 단계. 이 값과 같은 dot만 강조되고, 지나온 단계도 다시 회색으로 돌아간다(Figma 원본 그대로). */
@@ -161,8 +162,12 @@ interface MobileMoveRequestWizardProps {
   toAddress: AddressResult | null;
   onOpenAddressModal: (slot: AddressSlot) => void;
   onSubmit: () => void;
-  /** `POST /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
+  /** `POST`/`PATCH /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
   isSubmitting: boolean;
+  /** 제출 버튼 문구("견적 요청하기"/"수정하기"). `mode`에 따라 호출부(`MoveRequestForm`)가 결정한다. */
+  submitLabel: string;
+  /** 제출 중 버튼 문구("요청 중..."/"수정 중..."). */
+  submittingLabel: string;
 }
 
 /**
@@ -186,6 +191,8 @@ function MobileMoveRequestWizard({
   onOpenAddressModal,
   onSubmit,
   isSubmitting,
+  submitLabel,
+  submittingLabel,
 }: MobileMoveRequestWizardProps) {
   const { title, subtitle } = STEP_COPY[step];
 
@@ -267,7 +274,7 @@ function MobileMoveRequestWizard({
                 onClick={onSubmit}
                 className="flex h-[54px] flex-1 items-center justify-center rounded-xl bg-(--primary-400) text-lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
               >
-                {isSubmitting ? "요청 중..." : "견적 요청하기"}
+                {isSubmitting ? submittingLabel : submitLabel}
               </button>
             )}
           </>
@@ -289,8 +296,12 @@ interface DesktopMoveRequestFormProps {
   onOpenAddressModal: (slot: AddressSlot) => void;
   canSubmit: boolean;
   onSubmit: () => void;
-  /** `POST /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
+  /** `POST`/`PATCH /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
   isSubmitting: boolean;
+  /** 제출 버튼 문구("견적 요청하기"/"수정하기"). `mode`에 따라 호출부(`MoveRequestForm`)가 결정한다. */
+  submitLabel: string;
+  /** 제출 중 버튼 문구("요청 중..."/"수정 중..."). */
+  submittingLabel: string;
 }
 
 /**
@@ -319,6 +330,8 @@ function DesktopMoveRequestForm({
   canSubmit,
   onSubmit,
   isSubmitting,
+  submitLabel,
+  submittingLabel,
 }: DesktopMoveRequestFormProps) {
   return (
     <div className="hidden min-[744px]:block">
@@ -402,7 +415,7 @@ function DesktopMoveRequestForm({
               onClick={onSubmit}
               className="flex h-16 w-[200px] items-center justify-center rounded-2xl bg-(--primary-400) text-2lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
             >
-              {isSubmitting ? "요청 중..." : "견적 요청하기"}
+              {isSubmitting ? submittingLabel : submitLabel}
             </button>
           </div>
         </div>
@@ -412,13 +425,36 @@ function DesktopMoveRequestForm({
 }
 
 /**
+ * 활성 요청(`MoveRequestDto`)을 `MoveRequestForm`의 초기값(`MoveRequestFormValues` + id)으로
+ * 바꾼다. 주소는 BE가 하나의 문자열로 합쳐 내려주므로(`fromAddress`/`toAddress`) 검색 모달이
+ * 다시 열렸을 때 쓸 `AddressResult`로 `parseAddressFromApi`가 역변환한다(정확한 역변환이 불가능한
+ * 이유는 그 함수의 TODO 주석 참고).
+ */
+function toEditInitialValues(moveRequest: MoveRequestDto) {
+  return {
+    id: moveRequest.id,
+    serviceType: moveRequest.serviceType,
+    moveDate: new Date(moveRequest.moveDate),
+    fromAddress: parseAddressFromApi(moveRequest.fromAddress),
+    toAddress: parseAddressFromApi(moveRequest.toAddress),
+  };
+}
+
+/**
  * 견적 요청 페이지 진입점입니다. `GET /customers/me/move-requests/active` 조회 결과로
- * 활성 견적 요청이 있으면 폼 대신 `MoveRequestBlockedState`(Figma `견적요청_disabled`)만
- * 보여주고, 없으면 실제 입력 폼(`MoveRequestForm`)을 보여준다. 두 화면은 서로 다른 상태를
- * 다루므로 분기를 이 얇은 컴포넌트에서만 하고 폼의 로컬 state는 `MoveRequestForm`에만 두었다.
+ * 활성 견적 요청이 있으면 `MoveRequestBlockedState`(현재 요청 카드 + 수정하기/삭제하기)를,
+ * 없으면 생성 폼(`MoveRequestForm`)을 보여준다.
+ *
+ * "수정하기"는 별도 화면이 아니라 생성할 때 쓴 것과 같은 `MoveRequestForm`을 `mode="edit"`로
+ * 재사용한다(사용자 명시 요청) — 그래서 "지금 수정 모드로 전환됐는지"만 이 얇은 페이지가
+ * `isEditing` 로컬 state로 들고 활성 요청 유무와 조합해 셋 중 하나(카드/수정 폼/생성 폼)를
+ * 고른다. 수정 성공(`onEditSuccess`)·취소(`onCancelEdit`) 모두 `isEditing`을 다시 false로
+ * 돌려 카드 화면으로 복귀시키며, 성공 시에는 `useUpdateMoveRequest`가 활성 요청 캐시를 이미
+ * 새 값으로 채워둔 뒤라 카드에 수정된 내용이 바로 보인다.
  */
 export default function MoveRequestPage() {
   const { data: activeMoveRequest, isPending, isError, refetch } = useActiveMoveRequest();
+  const [isEditing, setIsEditing] = useState(false);
 
   if (isPending) {
     return (
@@ -439,8 +475,24 @@ export default function MoveRequestPage() {
     );
   }
 
+  if (activeMoveRequest && isEditing) {
+    return (
+      <MoveRequestForm
+        mode="edit"
+        initialValues={toEditInitialValues(activeMoveRequest)}
+        onEditSuccess={() => setIsEditing(false)}
+        onCancelEdit={() => setIsEditing(false)}
+      />
+    );
+  }
+
   if (activeMoveRequest) {
-    return <MoveRequestBlockedState />;
+    return (
+      <MoveRequestBlockedState
+        moveRequest={activeMoveRequest}
+        onEditRequest={() => setIsEditing(true)}
+      />
+    );
   }
 
   return <MoveRequestForm />;
@@ -467,13 +519,46 @@ export default function MoveRequestPage() {
  * 확정하는 용도라 "동 이름만 입력해도 그 동에 속한 도로명주소가 전부 나와야 한다"는 요구를 만족하지
  * 못해 교체했다. juso.go.kr API 키는 이 프록시 안에서만 서버 환경변수로 쓰이며 클라이언트 번들에
  * 노출되지 않는다.
+ *
+ * 생성/수정 겸용: `mode`(기본 "create")와 `initialValues`로 "수정하기" 흐름을 최소 확장한다.
+ * `mode="edit"`일 때는 `initialValues`로 각 state를 채워서 열고, 제출 시 `POST` 대신
+ * `useUpdateMoveRequest`(`PATCH`)를 호출하며 성공 후에는 `/customer-quote`로 이동하지 않고
+ * `onEditSuccess`를 호출해 `MoveRequestPage`가 다시 카드 화면(`MoveRequestBlockedState`)을
+ * 보여주게 한다. `onCancelEdit`은 아무것도 저장하지 않고 같은 카드 화면으로 돌아가는 탈출구다
+ * (Figma에 수정 모드 자체가 아직 없어 정확한 취소 동선은 확인되지 않았다 — 작업 보고 참고).
  */
-function MoveRequestForm() {
+interface MoveRequestFormProps {
+  mode?: "create" | "edit";
+  initialValues?: {
+    id: string;
+    serviceType: ServiceType;
+    moveDate: Date;
+    fromAddress: AddressResult;
+    toAddress: AddressResult;
+  };
+  onEditSuccess?: () => void;
+  onCancelEdit?: () => void;
+}
+
+function MoveRequestForm({
+  mode = "create",
+  initialValues,
+  onEditSuccess,
+  onCancelEdit,
+}: MoveRequestFormProps = {}) {
+  const isEditMode = mode === "edit" && initialValues !== undefined;
+
   const [step, setStep] = useState<MoveRequestStep>(1);
-  const [serviceType, setServiceType] = useState<ServiceType | null>(null);
-  const [moveDate, setMoveDate] = useState<Date | null>(null);
-  const [fromAddress, setFromAddress] = useState<AddressResult | null>(null);
-  const [toAddress, setToAddress] = useState<AddressResult | null>(null);
+  const [serviceType, setServiceType] = useState<ServiceType | null>(
+    initialValues?.serviceType ?? null,
+  );
+  const [moveDate, setMoveDate] = useState<Date | null>(initialValues?.moveDate ?? null);
+  const [fromAddress, setFromAddress] = useState<AddressResult | null>(
+    initialValues?.fromAddress ?? null,
+  );
+  const [toAddress, setToAddress] = useState<AddressResult | null>(
+    initialValues?.toAddress ?? null,
+  );
 
   const [isDateDropdownOpen, setIsDateDropdownOpen] = useState(false);
 
@@ -516,6 +601,10 @@ function MoveRequestForm() {
 
   const router = useRouter();
   const createMoveRequestMutation = useCreateMoveRequest();
+  const updateMoveRequestMutation = useUpdateMoveRequest();
+  const isSubmitting = isEditMode
+    ? updateMoveRequestMutation.isPending
+    : createMoveRequestMutation.isPending;
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
@@ -525,26 +614,58 @@ function MoveRequestForm() {
 
     setSubmitError(null);
 
+    const payload = {
+      serviceType,
+      moveDate: formatMoveDateForApi(moveDate),
+      // 상세주소(동/호수) 입력칸이 아직 없어 지금은 검색 결과만으로 조합한다(move-request.utils.ts 참고).
+      fromAddress: formatAddressForApi(fromAddress),
+      toAddress: formatAddressForApi(toAddress),
+    };
+
     try {
-      await createMoveRequestMutation.mutateAsync({
-        serviceType,
-        moveDate: formatMoveDateForApi(moveDate),
-        // 상세주소(동/호수) 입력칸이 아직 없어 지금은 검색 결과만으로 조합한다(move-request.utils.ts 참고).
-        fromAddress: formatAddressForApi(fromAddress),
-        toAddress: formatAddressForApi(toAddress),
-      });
+      if (isEditMode && initialValues) {
+        await updateMoveRequestMutation.mutateAsync({
+          moveRequestId: initialValues.id,
+          payload,
+        });
+        onEditSuccess?.();
+        return;
+      }
+
+      await createMoveRequestMutation.mutateAsync(payload);
       router.push(ROUTES.CUSTOMER.QUOTE.PENDING);
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
-        setSubmitError("이미 진행 중인 견적 요청이 있어요. 완료 후 다시 시도해주세요.");
+        setSubmitError(
+          isEditMode
+            ? "요청을 수정하지 못했어요. 잠시 후 다시 시도해주세요."
+            : "이미 진행 중인 견적 요청이 있어요. 완료 후 다시 시도해주세요.",
+        );
         return;
       }
-      setSubmitError("견적 요청에 실패했어요. 잠시 후 다시 시도해주세요.");
+      setSubmitError(
+        isEditMode
+          ? "견적 요청 수정에 실패했어요. 잠시 후 다시 시도해주세요."
+          : "견적 요청에 실패했어요. 잠시 후 다시 시도해주세요.",
+      );
     }
   };
 
   return (
     <main className="min-h-screen bg-(--background-100)">
+      {isEditMode ? (
+        <div className="flex justify-center px-6 pt-4">
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            disabled={isSubmitting}
+            className="text-sm-medium text-(--gray-500) underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            수정 취소하고 돌아가기
+          </button>
+        </div>
+      ) : null}
+
       {submitError ? (
         <p role="alert" className="px-6 pt-4 text-center text-sm-medium text-(--secondary-red-200)">
           {submitError}
@@ -562,7 +683,9 @@ function MoveRequestForm() {
         toAddress={toAddress}
         onOpenAddressModal={openAddressModal}
         onSubmit={handleSubmit}
-        isSubmitting={createMoveRequestMutation.isPending}
+        isSubmitting={isSubmitting}
+        submitLabel={isEditMode ? "수정하기" : "견적 요청하기"}
+        submittingLabel={isEditMode ? "수정 중..." : "요청 중..."}
       />
 
       <DesktopMoveRequestForm
@@ -577,7 +700,9 @@ function MoveRequestForm() {
         onOpenAddressModal={openAddressModal}
         canSubmit={canSubmit}
         onSubmit={handleSubmit}
-        isSubmitting={createMoveRequestMutation.isPending}
+        isSubmitting={isSubmitting}
+        submitLabel={isEditMode ? "수정하기" : "견적 요청하기"}
+        submittingLabel={isEditMode ? "수정 중..." : "요청 중..."}
       />
 
       <AddressSearchModal

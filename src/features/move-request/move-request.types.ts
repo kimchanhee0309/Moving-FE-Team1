@@ -31,6 +31,16 @@ export interface CreateMoveRequestPayload {
 }
 
 /**
+ * `PATCH /customers/me/move-requests/:moveRequestId` 요청 Body입니다.
+ *
+ * TODO(feature-implementer, 확인 담당: 노진우): 이 PATCH/DELETE 엔드포인트는 이 작업과 같은 시점에
+ * 다른 agent가 BE에 추가 중이라 아직 Swagger로 최종 확정하지 못했다. `POST /customers/me/move-requests`와
+ * 대칭이라는 전제로 body를 그대로 맞췄으니, 실제 계약이 확정되면 이 타입과 `move-request.api.ts`의
+ * `updateMoveRequest`를 함께 재확인해야 한다.
+ */
+export type UpdateMoveRequestPayload = CreateMoveRequestPayload;
+
+/**
  * `POST /customers/me/move-requests/:moveRequestId/designated-requests` 성공
  * `data.designatedRequest`입니다.
  */

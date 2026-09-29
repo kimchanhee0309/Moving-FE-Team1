@@ -29,3 +29,39 @@ export function formatAddressForApi(address: AddressResult, detailAddress = ""):
 
   return `[${address.zonecode}] ${address.roadAddress}${detailSegment} (${address.jibunAddress})`;
 }
+
+/**
+ * `이사 예정일` 표시용 날짜 문자열을 만든다("2025년 7월 1일"). 원래 `page.tsx`(`MoveRequestForm`)
+ * 안에만 있던 로컬 함수였는데, 활성 요청 카드(`MoveRequestBlockedState`)에서도 같은 형식으로
+ * `moveDate`를 보여줘야 해서 공용 유틸로 옮겼다 — 서버 전송용 직렬화(`formatMoveDateForApi`)와는
+ * 별개이며 화면 표시 전용이다.
+ */
+export function formatMoveDateLabel(date: Date): string {
+  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+/**
+ * `formatAddressForApi`의 역변환입니다. BE가 내려주는 `MoveRequestDto.fromAddress`/`toAddress`
+ * (`[{zonecode}] {roadAddress} {detailAddress} ({jibunAddress})`)를 다시 `AddressResult`로 쪼갠다 —
+ * "수정하기"로 생성 wizard를 다시 열 때 출발지/도착지 검색 모달(`AddressSearchModal`)에 기존
+ * 선택 상태를 넘겨주기 위해서만 쓴다.
+ *
+ * TODO(feature-implementer, 확인 담당: 노진우): 상세주소(`detailAddress`) 입력칸이 아직 없어
+ * `formatAddressForApi`가 항상 빈 문자열을 채우는 전제로 만든 파서라, `roadAddress`와
+ * `detailAddress`를 구분하지 못하고 괄호 앞부분을 통째로 `roadAddress`에 담는다. 상세주소
+ * 입력칸이 생기면(Todoist "견적 요청 - 상세주소 입력칸 추가" 작업) 이 파서도 함께 갱신해야 한다.
+ * 형식이 예상과 다르면(정규식 매치 실패) 원본 문자열을 그대로 `roadAddress`에 넣어 화면이
+ * 깨지지 않게만 한다.
+ */
+const ADDRESS_API_FORMAT = /^\[(.+)\]\s(.+)\s\((.+)\)$/;
+
+export function parseAddressFromApi(formattedAddress: string): AddressResult {
+  const match = formattedAddress.match(ADDRESS_API_FORMAT);
+
+  if (!match) {
+    return { zonecode: "", roadAddress: formattedAddress, jibunAddress: "" };
+  }
+
+  const [, zonecode, roadAddress, jibunAddress] = match;
+  return { zonecode, roadAddress, jibunAddress };
+}
