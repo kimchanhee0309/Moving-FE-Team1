@@ -23,6 +23,7 @@ import {
   formatAddressForApi,
   formatMoveDateLabel,
   formatMoveDateForApi,
+  isPastOrTodayMoveDate,
   parseAddressFromApi,
 } from "@/features/move-request/move-request.utils";
 
@@ -197,7 +198,9 @@ function MobileMoveRequestWizard({
   const { title, subtitle } = STEP_COPY[step];
 
   const canGoNextFromStep1 = serviceType !== null;
-  const canGoNextFromStep2 = moveDate !== null;
+  // "수정하기"로 열면 예전 moveDate가 그대로 채워지는데, 시간이 지나 이미 오늘/과거가 됐을 수
+  // 있다 — 그대로 다음 단계로 넘어가게 두면 결국 제출 시 BE가 400으로 거절한다(실제 확인함).
+  const canGoNextFromStep2 = moveDate !== null && !isPastOrTodayMoveDate(moveDate);
   const canSubmitStep3 = fromAddress !== null && toAddress !== null;
 
   return (
@@ -596,8 +599,15 @@ function MoveRequestForm({
     closeAddressModal();
   };
 
+  // "수정하기"로 열면 예전 moveDate가 그대로 채워지는데, 시간이 지나 이미 오늘/과거가 됐을 수
+  // 있다 — 그대로 제출하면 BE가 400으로 거절한다(실제 확인함). 데스크톱은 단계 구분 없이
+  // 이 canSubmit 하나로 제출 버튼을 막으므로 여기서도 같이 확인해야 한다.
   const canSubmit =
-    serviceType !== null && moveDate !== null && fromAddress !== null && toAddress !== null;
+    serviceType !== null &&
+    moveDate !== null &&
+    !isPastOrTodayMoveDate(moveDate) &&
+    fromAddress !== null &&
+    toAddress !== null;
 
   const router = useRouter();
   const createMoveRequestMutation = useCreateMoveRequest();

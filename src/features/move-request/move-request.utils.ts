@@ -18,6 +18,11 @@ export function formatMoveDateForApi(date: Date): string {
  * 형식: `[{zonecode}] {roadAddress} {detailAddress} ({jibunAddress})`
  * (Moving BE `docs/move-request-api.md` 2번 섹션 기준)
  *
+ * `zonecode`/`jibunAddress`가 비어 있으면 그 대괄호/괄호 자체를 생략한다 — 그렇지 않으면
+ * `parseAddressFromApi`가 옛날 형식(대괄호/괄호 없는 순수 텍스트) 주소를 역파싱할 때 채워 넣는
+ * 빈 문자열이 "수정하기"로 재제출될 때 `[] 서울특별시 ... ()`처럼 빈 대괄호/괄호가 그대로 화면에
+ * 노출되는 문제가 있었다(실제 seed 데이터로 재현·확인함).
+ *
  * TODO(feature-implementer, 확인 담당: 노진우): 상세주소(동/호수) 입력칸이 아직 이 페이지에 없어
  * `detailAddress`를 항상 빈 문자열로 채운다 — Todoist "견적 요청 - 상세주소 입력칸 추가 및 주소 조합 로직"
  * 작업이 끝나면 실제 입력값을 전달하도록 호출부를 교체해야 한다. 상세주소 입력칸이 생기기 전까지만
@@ -26,8 +31,10 @@ export function formatMoveDateForApi(date: Date): string {
 export function formatAddressForApi(address: AddressResult, detailAddress = ""): string {
   const trimmedDetail = detailAddress.trim();
   const detailSegment = trimmedDetail ? ` ${trimmedDetail}` : "";
+  const zonecodeSegment = address.zonecode ? `[${address.zonecode}] ` : "";
+  const jibunSegment = address.jibunAddress ? ` (${address.jibunAddress})` : "";
 
-  return `[${address.zonecode}] ${address.roadAddress}${detailSegment} (${address.jibunAddress})`;
+  return `${zonecodeSegment}${address.roadAddress}${detailSegment}${jibunSegment}`;
 }
 
 /**
@@ -38,6 +45,23 @@ export function formatAddressForApi(address: AddressResult, detailAddress = ""):
  */
 export function formatMoveDateLabel(date: Date): string {
   return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+}
+
+/**
+ * BE(`move-request.service.ts`)는 `moveDate`가 오늘보다 미래일 때만 생성·수정을 허용한다.
+ * "수정하기"로 기존 요청을 열면 예전에 고른 `moveDate`가 그대로 채워지는데, 시간이 지나
+ * 그 날짜가 이미 오늘이거나 지나버렸을 수 있다 — 이 경우 사용자가 다른 값을 하나도 안 바꿔도
+ * 그대로 제출하면 BE가 400(VALIDATION_ERROR)으로 거절한다(실제로 재현·확인함). 그래서 폼의
+ * 제출 가능 여부를 계산할 때 `moveDate`가 채워져 있다는 것뿐 아니라 여전히 미래인지도 같이
+ * 확인해야 한다 — `MoveDateCalendar`가 오늘/과거를 비활성화하는 기준(로컬 자정)과 동일하게 맞춘다.
+ */
+export function isPastOrTodayMoveDate(date: Date): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(date);
+  target.setHours(0, 0, 0, 0);
+
+  return target.getTime() <= today.getTime();
 }
 
 /**
