@@ -9,7 +9,7 @@ import { authHref, clearAuthFieldError, resolveAuthenticatedPath, resolveCredent
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
 const customer: AuthUser = { id: "customer-1", name: "테스트", email: "test@example.com", phone: null, role: "CUSTOMER", profileCompleted: true };
-const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!", recoveryQuestion: "PERSONAL_PHRASE" as const, recoveryAnswer: " moving answer " };
+const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!" };
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
 let apiClient: typeof import("../../src/common/api/client").apiClient;
 let beginSocialLogin: typeof import("../../src/features/auth/auth.api").beginSocialLogin;
@@ -19,8 +19,8 @@ let withdrawAccountSession: typeof import("../../src/features/auth/auth.api").wi
 let submitCredentials: typeof import("../../src/features/auth/auth.api").submitCredentials;
 let authenticateCredentials: typeof import("../../src/features/auth/auth.api").authenticateCredentials;
 let findAccount: typeof import("../../src/features/auth/auth.api").findAccount;
-let fetchRecoveryQuestion: typeof import("../../src/features/auth/auth.api").fetchRecoveryQuestion;
-let verifyRecoveryAnswer: typeof import("../../src/features/auth/auth.api").verifyRecoveryAnswer;
+let requestPasswordResetCode: typeof import("../../src/features/auth/auth.api").requestPasswordResetCode;
+let verifyPasswordResetCode: typeof import("../../src/features/auth/auth.api").verifyPasswordResetCode;
 let confirmPasswordReset: typeof import("../../src/features/auth/auth.api").confirmPasswordReset;
 const success = (data: unknown) => Response.json({ success: true, data });
 const failure = (code: string, status = 401) => Response.json({ success: false, error: { code, message: code } }, { status });
@@ -30,7 +30,7 @@ before(async () => {
   // 이 테스트는 실제 서버/개인 환경설정을 사용하지 않고 모든 HTTP 경계를 모의합니다.
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:4000";
   ({ apiClient } = await import("../../src/common/api/client"));
-  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, findAccount, fetchRecoveryQuestion, verifyRecoveryAnswer, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
+  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, findAccount, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
   Object.defineProperty(globalThis, "window", { value: {}, configurable: true });
 });
 beforeEach(async () => { await changeAuthSession(async () => undefined); });
@@ -53,8 +53,8 @@ test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전�
     if (pathname(input) === "/auth/recovery/account") {
       return success({ found: true, loginId: "test@example.com", loginMethod: "EMAIL" });
     }
-    if (pathname(input) === "/auth/recovery/question") return success({ available: true, question: "PERSONAL_PHRASE", loginMethod: "EMAIL" });
-    if (pathname(input) === "/auth/recovery/question/verify") return success({ resetToken: "reset-token" });
+    if (pathname(input) === "/auth/recovery/password/code") return success({ delivery: "EMAIL", challengeId: "11111111-1111-4111-8111-111111111111", expiresInSeconds: 300, resendAfterSeconds: 60 });
+    if (pathname(input) === "/auth/recovery/password/code/verify") return success({ resetToken: "reset-token" });
     return success(null);
   });
 
@@ -63,14 +63,14 @@ test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전�
     loginId: "test@example.com",
     loginMethod: "EMAIL",
   });
-  await fetchRecoveryQuestion({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" });
-  assert.equal(await verifyRecoveryAnswer({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER", recoveryAnswer: "answer" }), "reset-token");
+  await requestPasswordResetCode({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" });
+  assert.equal(await verifyPasswordResetCode("11111111-1111-4111-8111-111111111111", "123456"), "reset-token");
   await confirmPasswordReset("reset-token", "NextPassword1!");
 
   assert.deepEqual(requests, [
     { path: "/auth/recovery/account", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
-    { path: "/auth/recovery/question", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
-    { path: "/auth/recovery/question/verify", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER", recoveryAnswer: "answer" } },
+    { path: "/auth/recovery/password/code", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
+    { path: "/auth/recovery/password/code/verify", body: { challengeId: "11111111-1111-4111-8111-111111111111", code: "123456" } },
     { path: "/auth/recovery/password/confirm", body: { token: "reset-token", newPassword: "NextPassword1!" } },
   ]);
 });
@@ -297,7 +297,7 @@ test("두 역할 이메일 가입/로그인의 DTO와 data.user를 사용한다"
         assert.equal(pathname(input), "/auth/" + mode);
         assert.equal(options.method, "POST");
         const payload: unknown = JSON.parse(String(options.body));
-        assert.deepEqual(payload, { email: "test@example.com", password: values.password, role, ...(mode === "signup" ? { name: "테스트", phone: values.phone, recoveryQuestion: values.recoveryQuestion, recoveryAnswer: "moving answer" } : {}) });
+        assert.deepEqual(payload, { email: "test@example.com", password: values.password, role, ...(mode === "signup" ? { name: "테스트", phone: values.phone } : {}) });
         return success({ user: { ...customer, role } });
       });
       assert.equal((await submitCredentials(mode, role, values)).user.role, role); mock.restoreAll();
@@ -367,8 +367,6 @@ test("회원가입의 임의 입력은 이메일·전화번호·비밀번호·�
     phone: "feafafaff",
     password: "1234567",
     passwordConfirm: "7654321",
-    recoveryQuestion: "",
-    recoveryAnswer: "",
   }, "signup");
 
   assert.equal(errors.name, undefined);
@@ -409,7 +407,7 @@ test("가입 응답이 성공해도 쿠키 세션이 없으면 로그인 완료�
     if (path === "/auth/signup") return success({ user: customer });
     return failure(path === "/auth/refresh" ? "REFRESH_TOKEN_MISSING" : "ACCESS_TOKEN_MISSING");
   });
-  await assert.rejects(authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone, recoveryQuestion: values.recoveryQuestion, recoveryAnswer: values.recoveryAnswer }),
+  await assert.rejects(authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone }),
     (error: unknown) => error instanceof ApiError && error.code === "AUTH_SESSION_UNAVAILABLE");
 });
 

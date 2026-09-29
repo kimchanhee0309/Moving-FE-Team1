@@ -33,8 +33,6 @@ export type AuthCredentialsRequest =
       mode: "signup";
       name: string;
       phone: string;
-      recoveryQuestion: "CHILDHOOD_NICKNAME" | "MEMORABLE_PLACE" | "PERSONAL_PHRASE";
-      recoveryAnswer: string;
     });
 
 export interface AuthContextValue {

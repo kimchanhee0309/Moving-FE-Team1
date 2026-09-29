@@ -3,7 +3,7 @@ import { apiClient } from "@/common/api/client";
 import { changeAuthSession, isGuestFailure } from "@/common/api/auth-session";
 import { ApiError } from "@/common/api/error";
 import type { AuthCredentialsRequest, AuthSession, AuthUser, UserRole } from "@/common/auth/types";
-import type { AuthFormValues, AuthMode, RecoveryQuestion, SocialProvider } from "./auth.types";
+import type { AuthFormValues, AuthMode, SocialProvider } from "./auth.types";
 
 /**
  * POST /auth/signup 또는 /auth/login 연동. 가입만 name/phone을 전송하고 role은 진입 화면에서 받습니다.
@@ -15,8 +15,6 @@ export async function submitCredentials(mode: AuthMode, role: UserRole, values: 
     ...(mode === "signup" ? {
       name: values.name.trim(),
       phone: values.phone,
-      recoveryQuestion: values.recoveryQuestion,
-      recoveryAnswer: values.recoveryAnswer.trim(),
     } : {}) };
   return changeAuthSession(async () => ({ user: readUser(await apiClient<unknown>(`/auth/${mode}`, { method: "POST", body: JSON.stringify(payload) })) }));
 }
@@ -100,23 +98,32 @@ export async function findAccount(input: AccountRecoveryInput): Promise<AccountL
   }));
 }
 
-export interface RecoveryQuestionResult {
-  available: boolean;
-  question: RecoveryQuestion | null;
-  loginMethod: "EMAIL" | "SOCIAL" | null;
+export interface PasswordResetCodeRequestResult {
+  delivery: "EMAIL" | "SOCIAL" | "NONE";
+  challengeId: string | null;
+  expiresInSeconds: number | null;
+  resendAfterSeconds: number | null;
 }
 
-export async function fetchRecoveryQuestion(input: AccountRecoveryInput): Promise<RecoveryQuestionResult> {
-  return apiClient<RecoveryQuestionResult>("/auth/recovery/question", {
+export async function requestPasswordResetCode(input: AccountRecoveryInput): Promise<PasswordResetCodeRequestResult> {
+  const result = await apiClient<PasswordResetCodeRequestResult>("/auth/recovery/password/code", {
     method: "POST",
     body: JSON.stringify({ ...input, email: input.email.trim().toLowerCase(), name: input.name.trim() }),
   });
+  if (
+    !result ||
+    !["EMAIL", "SOCIAL", "NONE"].includes(result.delivery) ||
+    (result.delivery === "EMAIL" && (typeof result.challengeId !== "string" || typeof result.expiresInSeconds !== "number" || typeof result.resendAfterSeconds !== "number"))
+  ) {
+    throw new ApiError(200, "INVALID_RESPONSE", "비밀번호 재설정 응답이 올바르지 않습니다.");
+  }
+  return result;
 }
 
-export async function verifyRecoveryAnswer(input: AccountRecoveryInput & { recoveryAnswer: string }): Promise<string> {
-  const result = await apiClient<{ resetToken: string }>("/auth/recovery/question/verify", {
+export async function verifyPasswordResetCode(challengeId: string, code: string): Promise<string> {
+  const result = await apiClient<{ resetToken: string }>("/auth/recovery/password/code/verify", {
     method: "POST",
-    body: JSON.stringify({ ...input, email: input.email.trim().toLowerCase(), name: input.name.trim(), recoveryAnswer: input.recoveryAnswer }),
+    body: JSON.stringify({ challengeId, code }),
   });
   if (!result || typeof result.resetToken !== "string") {
     throw new ApiError(200, "INVALID_RESPONSE", "비밀번호 재설정 응답이 올바르지 않습니다.");
@@ -139,8 +146,6 @@ export async function authenticateCredentials(input: AuthCredentialsRequest): Pr
     name: input.mode === "signup" ? input.name : "",
     phone: input.mode === "signup" ? input.phone : "",
     passwordConfirm: "",
-    recoveryQuestion: input.mode === "signup" ? input.recoveryQuestion : "",
-    recoveryAnswer: input.mode === "signup" ? input.recoveryAnswer : "",
   });
   const session = await fetchAuthenticatedSession();
   if (session.failure) throw session.failure;
