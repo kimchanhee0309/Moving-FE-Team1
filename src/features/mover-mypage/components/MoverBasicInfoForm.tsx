@@ -10,6 +10,7 @@ import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/va
 import { getEmailError } from "@/common/validation/email";
 import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
+import { AccountWithdrawalButton } from "@/features/auth/components/AccountWithdrawalButton";
 
 import type {
   MoverBasicInfoFormProps,
@@ -102,6 +103,12 @@ export function MoverBasicInfoForm({
     changedFields.email ||
     changedFields.phone ||
     isChangingPassword;
+  const responsiveInputClass = "max-w-none min-[1200px]:[&>div]:h-16";
+  const responsiveButtonClass =
+    "h-[54px] min-h-[54px] min-[1200px]:h-[60px] min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
+  const firstRowClass =
+    "border-b border-[var(--line-100)] py-6 min-[1200px]:min-h-[186px] min-[1200px]:py-8";
+  const rowClass = "border-b border-[var(--line-100)] py-6 min-[1200px]:py-8";
 
   const updateValue = (field: BasicInfoField, value: string) => {
     if (field === "currentPassword") onCurrentPasswordChange?.();
@@ -153,105 +160,105 @@ export function MoverBasicInfoForm({
 
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
           <div className="flex flex-col">
-            <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:py-8">
-            <Input
-              name="name"
-              label="이름"
-              inputSize="sm"
-              containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
-              value={values.name}
-              error={changedFields.name ? errors.name : undefined}
-              disabled={isBusy}
-              onBlur={() => setTouched((current) => ({ ...current, name: true }))}
-              onChange={(event) => updateValue("name", event.currentTarget.value)}
-            />
+            <div className={firstRowClass}>
+              <Input
+                name="name"
+                label="이름"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                value={values.name}
+                error={changedFields.name ? errors.name : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, name: true }))}
+                onChange={(event) => updateValue("name", event.currentTarget.value)}
+              />
             </div>
-            <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:py-8">
-            <Input
-              name="email"
-              label="이메일"
-              type="email"
-              autoComplete="email"
-              inputSize="sm"
-              containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
-              value={values.email}
-              error={changedFields.email ? errors.email : undefined}
-              disabled={isBusy}
-              onBlur={() => setTouched((current) => ({ ...current, email: true }))}
-              onChange={(event) => updateValue("email", event.currentTarget.value)}
-            />
+            <div className={rowClass}>
+              <Input
+                name="email"
+                label="이메일"
+                type="email"
+                autoComplete="email"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                value={values.email}
+                error={changedFields.email ? errors.email : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, email: true }))}
+                onChange={(event) => updateValue("email", event.currentTarget.value)}
+              />
             </div>
-            <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:border-b-0 min-[1200px]:py-8">
-            <Input
-              name="phone"
-              label="전화번호"
-              type="tel"
-              autoComplete="tel"
-              inputMode="tel"
-              inputSize="sm"
-              containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
-              value={values.phone}
-              error={changedFields.phone ? errors.phone : undefined}
-              disabled={isBusy}
-              onBlur={() => setTouched((current) => ({ ...current, phone: true }))}
-              onChange={(event) => updateValue("phone", event.currentTarget.value)}
-            />
+            <div className={`${rowClass} min-[1200px]:border-b-0`}>
+              <Input
+                name="phone"
+                label="전화번호"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                value={values.phone}
+                error={changedFields.phone ? errors.phone : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, phone: true }))}
+                onChange={(event) => updateValue("phone", event.currentTarget.value)}
+              />
             </div>
           </div>
 
           <div className="flex flex-col">
-            <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:py-8">
-            <Input
-              name="currentPassword"
-              label="현재 비밀번호"
-              type="password"
-              autoComplete="current-password"
-              inputSize="sm"
-              containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
-              placeholder="현재 비밀번호를 입력해 주세요"
-              value={values.currentPassword}
-              error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
-              helperText={
-                !currentPasswordError
-                  ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다."
-                  : undefined
-              }
-              disabled={isBusy}
-              onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))}
-              onChange={(event) => updateValue("currentPassword", event.currentTarget.value)}
-            />
+            <div className={firstRowClass}>
+              <Input
+                name="currentPassword"
+                label="현재 비밀번호"
+                type="password"
+                autoComplete="current-password"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                placeholder="현재 비밀번호를 입력해 주세요"
+                value={values.currentPassword}
+                error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
+                helperText={
+                  !currentPasswordError
+                    ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다."
+                    : undefined
+                }
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))}
+                onChange={(event) => updateValue("currentPassword", event.currentTarget.value)}
+              />
             </div>
-            <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:py-8">
-            <Input
-              name="newPassword"
-              label="새 비밀번호"
-              type="password"
-              autoComplete="new-password"
-              inputSize="sm"
-              containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
-              placeholder="새 비밀번호를 입력해 주세요"
-              value={values.newPassword}
-              error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined}
-              disabled={isBusy}
-              onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))}
-              onChange={(event) => updateValue("newPassword", event.currentTarget.value)}
-            />
+            <div className={rowClass}>
+              <Input
+                name="newPassword"
+                label="새 비밀번호"
+                type="password"
+                autoComplete="new-password"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                placeholder="새 비밀번호를 입력해 주세요"
+                value={values.newPassword}
+                error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))}
+                onChange={(event) => updateValue("newPassword", event.currentTarget.value)}
+              />
             </div>
-            <div className="border-b border-[var(--line-100)] py-6 min-[1200px]:border-b-0 min-[1200px]:py-8">
-            <Input
-              name="newPasswordConfirm"
-              label="새 비밀번호 확인"
-              type="password"
-              autoComplete="new-password"
-              inputSize="sm"
-              containerClassName="max-w-none min-[1200px]:[&>div]:h-16"
-              placeholder="새 비밀번호를 다시 입력해 주세요"
-              value={values.newPasswordConfirm}
-              error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
-              disabled={isBusy}
-              onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))}
-              onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)}
-            />
+            <div className={`${rowClass} min-[1200px]:border-b-0`}>
+              <Input
+                name="newPasswordConfirm"
+                label="새 비밀번호 확인"
+                type="password"
+                autoComplete="new-password"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                placeholder="새 비밀번호를 다시 입력해 주세요"
+                value={values.newPasswordConfirm}
+                error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))}
+                onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)}
+              />
             </div>
           </div>
         </div>
@@ -268,13 +275,16 @@ export function MoverBasicInfoForm({
           </p>
         ) : null}
 
-        <div className="ml-auto mt-8 flex w-full flex-col gap-2 min-[1200px]:mt-6 min-[1200px]:grid min-[1200px]:max-w-[500px] min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
-          <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError} isLoading={isBusy} className="min-[1200px]:order-2 min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold">
-            수정하기
-          </Button>
-          <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className="min-[1200px]:order-1 min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold" onClick={() => router.push(ROUTES.MOVER.MY_PAGE)}>
-            취소
-          </Button>
+        <div className="ml-auto mt-8 flex w-full flex-col min-[1200px]:mt-6 min-[1200px]:max-w-[500px]">
+          <div className="flex flex-col gap-2 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
+            <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
+              수정하기
+            </Button>
+            <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => router.push(ROUTES.MOVER.MY_PAGE)}>
+              취소
+            </Button>
+          </div>
+          <AccountWithdrawalButton className="mt-4 min-[1200px]:mt-5" buttonClassName={responsiveButtonClass} disabled={isBusy} />
         </div>
       </form>
     </main>

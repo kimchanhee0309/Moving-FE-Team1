@@ -1,0 +1,150 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
+
+import { ApiError } from "@/common/api/error";
+import {
+  getApiErrorMessage,
+  getCurrentPasswordMismatchError,
+} from "@/common/api/get-error-message";
+import { Button } from "@/common/components/button";
+import { Input } from "@/common/components/Input";
+import { Modal } from "@/common/components/MoverModal/Modal";
+
+import { useAuth } from "../hooks/useAuth";
+
+interface AccountWithdrawalButtonProps {
+  /** 프로필 저장 중에는 서로 다른 계정 변경 요청이 겹치지 않도록 탈퇴 진입을 막습니다. */
+  disabled?: boolean;
+  /** 프로필 화면의 기존 버튼 영역 안에서 보조 액션 위치를 맞춥니다. */
+  className?: string;
+  /** 일반·기사 프로필의 반응형 버튼 높이를 기존 취소·수정 버튼과 맞춥니다. */
+  buttonClassName?: string;
+}
+
+/** 일반 사용자와 기사 설정 화면에서 같은 탈퇴 확인·재인증·오류 흐름을 제공합니다. */
+export function AccountWithdrawalButton({
+  disabled = false,
+  className = "",
+  buttonClassName = "",
+}: AccountWithdrawalButtonProps) {
+  const { withdrawal } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+
+  const closeModal = () => {
+    if (withdrawal.isPending) return;
+    setIsOpen(false);
+    setCurrentPassword("");
+    withdrawal.reset();
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (withdrawal.isPending) return;
+
+    try {
+      await withdrawal.mutateAsync(currentPassword);
+    } catch {
+      // mutation 오류는 현재 비밀번호 필드 또는 공통 서버 오류 문구로 표시합니다.
+    }
+  };
+
+  const currentPasswordError =
+    getCurrentPasswordMismatchError(withdrawal.error) ??
+    (withdrawal.error instanceof ApiError && withdrawal.error.code === "CURRENT_PASSWORD_REQUIRED"
+      ? withdrawal.error.message
+      : undefined);
+  const submissionError =
+    withdrawal.error && !currentPasswordError
+      ? getApiErrorMessage(withdrawal.error, "회원 탈퇴를 완료하지 못했습니다.")
+      : undefined;
+
+  return (
+    <div className={className}>
+      <Button
+        type="button"
+        variant="outlined"
+        fullWidth
+        disabled={disabled}
+        className={`border-[var(--primary-400)]! bg-transparent! text-[var(--primary-400)]! shadow-none! enabled:hover:border-[#e04829]! enabled:hover:bg-[#e04829]! enabled:hover:text-[var(--gray-50)]! ${buttonClassName}`}
+        onClick={() => {
+          withdrawal.reset();
+          setIsOpen(true);
+        }}
+      >
+        회원 탈퇴
+      </Button>
+
+      {isOpen && typeof document !== "undefined" ? createPortal(<Modal
+        isOpen={isOpen}
+        title="회원 탈퇴"
+        mobileLayout="centered"
+        closeOnBackdrop={!withdrawal.isPending}
+        onClose={closeModal}
+      >
+        <form
+          noValidate
+          aria-busy={withdrawal.isPending}
+          className="flex flex-col gap-6"
+          onSubmit={handleSubmit}
+        >
+          <div className="flex flex-col gap-2 text-[var(--black-300)]">
+            <p className="text-lg-semibold">탈퇴하면 계정과 연결된 서비스 데이터가 삭제됩니다.</p>
+            <p className="text-sm-regular text-[var(--gray-500)]">
+              이메일 계정은 현재 비밀번호를 입력해 주세요. SNS 계정은 비밀번호 없이 탈퇴할 수 있습니다.
+            </p>
+          </div>
+
+          <Input
+            data-autofocus
+            name="withdrawalCurrentPassword"
+            label="현재 비밀번호"
+            type="password"
+            autoComplete="current-password"
+            placeholder="현재 비밀번호를 입력해 주세요"
+            value={currentPassword}
+            error={currentPasswordError}
+            helperText="SNS 계정은 비워 두세요."
+            disabled={withdrawal.isPending}
+            containerClassName="max-w-none"
+            onChange={(event) => {
+              setCurrentPassword(event.currentTarget.value);
+              withdrawal.reset();
+            }}
+          />
+
+          {submissionError ? (
+            <p
+              role="alert"
+              className="text-sm-medium rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]"
+            >
+              {submissionError}
+            </p>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              type="button"
+              variant="outlined"
+              fullWidth
+              disabled={withdrawal.isPending}
+              onClick={closeModal}
+            >
+              취소
+            </Button>
+            <Button
+              type="submit"
+              fullWidth
+              isLoading={withdrawal.isPending}
+              className="enabled:bg-[var(--secondary-red-200)]! enabled:hover:bg-[var(--secondary-red-200)]!"
+            >
+              탈퇴하기
+            </Button>
+          </div>
+        </form>
+      </Modal>, document.body) : null}
+    </div>
+  );
+}

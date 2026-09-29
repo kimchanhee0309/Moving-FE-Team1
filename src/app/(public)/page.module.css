@@ -8,24 +8,97 @@
 .truck { width: 100px; height: auto; object-fit: contain; margin-bottom: 20px; }
 .landing .title { font-size: 20px; line-height: 32px; }
 .landing .heroDescription { margin-top: 8px; font-size: 16px; line-height: 26px; color: var(--gray-300); }
+
 .types { position: relative; display: flex; flex-direction: column; gap: 34px; min-height: 374px; max-width: 1920px; margin: auto; padding: 53px 0 61px; }
 .typesTitle { padding: 0 32px; color: var(--content-strong); }
-.typesImage { display: block; width: 100%; aspect-ratio: 375 / 162; }
-.typesImage img { display: block; width: 100%; height: 100%; }
+.typesCta { --orbit-x-front: 112px; --orbit-x-back: 132px; --orbit-x-front-negative: -112px; --orbit-x-back-negative: -132px; position: relative; display: block; width: 100%; aspect-ratio: 375 / 162; overflow: hidden; perspective: 900px; }
+.moveTypeOrbit { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.moveTypeOrbitItem { position: absolute; top: 50%; left: 50%; width: 108px; height: 146px; transform: translate3d(-50%, -50%, 0); transform-style: preserve-3d; animation: move-types-orbit 15s linear infinite; will-change: transform, opacity; }
+.moveTypeCard { display: flex; width: 100%; min-width: 0; height: 100%; flex-direction: column; align-items: center; justify-content: flex-end; overflow: hidden; border: 2px solid transparent; border-radius: 18px; background: #f8f7f6; padding: 8px 4px 14px; color: var(--content-strong); cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease; }
+.moveTypeCard:is(:hover, :focus-visible) { border-color: var(--primary-400); box-shadow: 0 8px 18px rgb(249 80 46 / 14%); outline: none; }
+.moveTypeCard:disabled { cursor: wait; }
+.moveTypeImage { width: auto; object-fit: contain; }
+.moveTypeImageSmall { height: 62px; margin-bottom: 3px; }
+.moveTypeImageHome { height: 72px; margin-bottom: 0; }
+.moveTypeImageOffice { height: 64px; margin-bottom: 2px; }
+.moveTypeCard strong { overflow: hidden; max-width: 100%; font-size: 12px; font-weight: 700; line-height: 18px; text-overflow: ellipsis; white-space: nowrap; }
+.moveTypeCard span { overflow: hidden; max-width: 100%; margin-top: 2px; color: var(--gray-300); font-size: 8px; line-height: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.typesCta:is(:hover, :focus-within) .moveTypeOrbitItem { animation-play-state: paused; }
+
 .request { position: relative; width: 100%; margin: 0 auto 16px; aspect-ratio: 375 / 496; }
+.pictureCta { position: relative; padding: 0; border: 0; background: transparent; will-change: transform, opacity; }
 .requestImage, .compareImage { display: block; width: 100%; height: 100%; }
+.requestImage picture, .compareImage picture { display: block; width: 100%; height: 100%; }
 .requestImage img, .compareImage img { display: block; width: 100%; height: 100%; }
+.quoteCardHotspot { position: absolute; z-index: 2; border: 2px solid transparent; border-radius: 16px; background: transparent; cursor: pointer; transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease; }
+.quoteCardHotspot:hover { border-color: transparent; background: rgb(255 255 255 / 7%); box-shadow: 0 12px 28px rgb(58 42 34 / 13%); outline: none; }
+.quoteCardHotspot:focus-visible { border-color: var(--primary-400); background: transparent; box-shadow: 0 0 0 3px rgb(255 255 255 / 92%), 0 0 0 6px var(--primary-400), 0 14px 32px rgb(58 42 34 / 16%); outline: none; }
+.quoteCardHotspot:disabled { cursor: wait; }
+.requestCardHotspot { top: 24%; left: 9%; width: 60%; height: 60%; }
+.compareCardHotspotOne,
+.compareCardHotspotTwo,
+.compareCardHotspotThree,
+.compareCardHotspotFour { left: 10.1333%; width: 80%; height: 22.119%; }
+.compareCardHotspotOne { top: 25.3717%; }
+.compareCardHotspotTwo { top: 48.9777%; }
+.compareCardHotspotThree { top: 72.4907%; }
+.compareCardHotspotFour { display: none; }
 /* 요청 섹션의 모든 Figma 원본 이미지에 제목이 포함되어 있어 접근성 트리에만 남깁니다. */
 .requestTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; color: var(--gray-50); }
 .compare { position: relative; width: 100%; max-width: 1920px; margin: auto; aspect-ratio: 375 / 1076; }
 /* 모바일·태블릿 Figma 원본에는 제목이 포함되어 있어 중복 렌더링을 막고 접근성 트리에만 남깁니다. */
 .compareTitle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; color: var(--content-strong); }
+
 /* 시작색은 Figma 랜딩 footer 전용 gradient이며 공용 팔레트를 변경하지 않습니다. */
 .footer { display: flex; min-height: 200px; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 24px 16px; background: linear-gradient(91deg, #f95d2e 3.3617%, var(--primary-400) 88.381%); color: var(--gray-50); }
 .appIcon { position: relative; width: 56px; height: 57.631px; }
 /* 내보낸 자산에는 그림자 여백이 포함됩니다. 실제 아이콘 크기는 위 wrapper 기준입니다. */
-.appIcon img { position: absolute; top: -12px; left: -28px; width: 112px; height: 113.631px; max-width: none; }
-.landing .footerText { font-size: 16px; line-height: 26px; text-align: center; }
+.appIcon img { position: absolute; top: -12px; left: -28px; width: 112px; height: 113.631px; max-width: none; opacity: 1; }
+.landing .footerText { font-size: 16px; line-height: 26px; text-align: center; opacity: 1; }
+
+@keyframes hero-photo-settle {
+  from { opacity: 0.58; transform: scale(1.035); }
+  to { opacity: 0.8; transform: scale(1); }
+}
+
+@keyframes hero-truck-arrive {
+  from { opacity: 0; transform: translate3d(-44px, 8px, 0) scale(0.96); }
+  72% { opacity: 1; transform: translate3d(4px, 0, 0) scale(1); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes landing-fade-up {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes move-types-orbit {
+  0%, 100% { z-index: 4; opacity: 1; transform: translate3d(-50%, -46%, 90px) translateX(0) scale(1.06); }
+  16.666% { z-index: 3; opacity: 0.88; transform: translate3d(-50%, -52%, 42px) translateX(var(--orbit-x-front)) scale(0.91); }
+  33.333% { z-index: 2; opacity: 0.58; transform: translate3d(-50%, -62%, -34px) translateX(var(--orbit-x-back)) scale(0.76); }
+  50% { z-index: 1; opacity: 0.3; transform: translate3d(-50%, -68%, -80px) translateX(0) scale(0.68); }
+  66.666% { z-index: 2; opacity: 0.58; transform: translate3d(-50%, -62%, -34px) translateX(var(--orbit-x-back-negative)) scale(0.76); }
+  83.333% { z-index: 3; opacity: 0.88; transform: translate3d(-50%, -52%, 42px) translateX(var(--orbit-x-front-negative)) scale(0.91); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heroPhoto { animation: hero-photo-settle 1100ms ease-out both; }
+  .truck { animation: hero-truck-arrive 760ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both; }
+  .hero .title { animation: landing-fade-up 620ms ease-out 300ms both; }
+  .heroDescription { animation: landing-fade-up 620ms ease-out 420ms both; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroPhoto,
+  .truck,
+  .hero .title,
+  .heroDescription,
+  .pictureCta { animation: none; transition: none; transform: none; }
+  .quoteCardHotspot { transition: none; transform: none; }
+  .moveTypeOrbit { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: center; padding: 0 8px; transform: none; }
+  .moveTypeOrbitItem { position: static; width: auto; height: 146px; opacity: 1; transform: none; animation: none; }
+  .pictureCta { opacity: 1; }
+}
 
 @media (min-width: 744px) {
   .hero { height: 405px; }
@@ -37,9 +110,25 @@
   .landing .heroDescription { margin-top: 16px; font-size: 18px; }
   .types { min-height: 579px; gap: 40px; padding: 69px 32px 108.5px; }
   .typesTitle { padding: 0; }
-  .typesImage { width: min(100%, 677px); aspect-ratio: 677 / 269.5; align-self: center; }
+  .typesCta { --orbit-x-front: 200px; --orbit-x-back: 240px; --orbit-x-front-negative: -200px; --orbit-x-back-negative: -240px; width: min(100%, 677px); aspect-ratio: 677 / 269.5; align-self: center; }
+  .moveTypeOrbitItem { width: 196px; height: 230px; }
+  .moveTypeCard { height: 230px; border-radius: 24px; padding: 18px 10px 24px; }
+  .moveTypeImageSmall { height: 108px; margin-bottom: 6px; }
+  .moveTypeImageHome { height: 128px; margin-bottom: 0; }
+  .moveTypeImageOffice { height: 112px; margin-bottom: 4px; }
+  .moveTypeCard strong { font-size: 18px; line-height: 26px; }
+  .moveTypeCard span { margin-top: 4px; font-size: 12px; line-height: 18px; }
   .request { width: calc(100% - 64px); max-width: 680px; aspect-ratio: 680 / 835; margin-bottom: 36px; }
   .compare { aspect-ratio: 744 / 1008; }
+  .requestCardHotspot { top: 22.5%; left: 8.5%; width: 67.8%; height: 72.5%; border-radius: 22px; }
+  .compareCardHotspotOne,
+  .compareCardHotspotTwo,
+  .compareCardHotspotThree,
+  .compareCardHotspotFour { display: block; width: 44.4892%; border-radius: 20px; }
+  .compareCardHotspotOne { top: 20.8333%; left: 4.3011%; height: 26.4881%; }
+  .compareCardHotspotTwo { top: 48.8095%; left: 4.3011%; height: 26.4881%; }
+  .compareCardHotspotThree { top: 38.4921%; left: 51.2097%; height: 26.3889%; }
+  .compareCardHotspotFour { top: 66.4683%; left: 51.2097%; height: 26.4881%; }
   .footer { min-height: 311px; gap: 32px; }
   .appIcon { width: 100px; height: 102.913px; }
   .appIcon img { width: 156px; height: 159px; }
@@ -50,9 +139,15 @@
 @media (min-width: 1200px) {
   .types { display: block; height: 509px; min-height: 509px; padding: 0; }
   .typesTitle { position: absolute; top: 196px; left: max(32px, calc(50% - 543px)); }
-  .typesImage { position: absolute; top: 115px; right: max(32px, calc(50% - 617.25px)); width: 693px; aspect-ratio: 693 / 269.5; }
-  .request { max-width: 1402px; aspect-ratio: 1402 / 787; margin-bottom: 61px; }
-  .compare { aspect-ratio: 1920 / 1081; }
+  .typesCta { position: absolute; top: 115px; right: max(32px, calc(50% - 617.25px)); width: 693px; aspect-ratio: 693 / 269.5; }
+  .request { max-width: 1402px; aspect-ratio: 5609 / 3148; margin-bottom: 61px; }
+  .compare { aspect-ratio: 7681 / 4324; }
+  .requestCardHotspot { top: 7.6239%; left: 10.1997%; width: 37.0185%; height: 86.6582%; border-radius: 24px; }
+  /* 원본 7681 x 4324 이미지의 카드 픽셀 경계에 맞춘 값입니다. */
+  .compareCardHotspotOne { top: 7.9556%; left: 45.4688%; width: 20.3125%; height: 28.8622%; border-radius: 18px; }
+  .compareCardHotspotTwo { top: 38.4829%; left: 45.4688%; width: 20.3125%; height: 28.7697%; border-radius: 18px; }
+  .compareCardHotspotThree { top: 27.2895%; left: 66.8229%; width: 20.2604%; height: 28.8622%; border-radius: 18px; }
+  .compareCardHotspotFour { top: 57.8168%; left: 66.8229%; width: 20.2604%; height: 28.7697%; border-radius: 18px; }
   .compareTitle { position: absolute; width: auto; height: auto; padding: 0; margin: 0; overflow: visible; clip: auto; white-space: normal; border: 0; top: 14.1845%; left: 21.7188%; }
   .footer { min-height: 355px; }
 }

@@ -11,6 +11,11 @@ export const ROUTES = {
       CUSTOMER: "/signup/customer",
       MOVER: "/signup/mover",
     },
+
+    RECOVERY: {
+      FIND_ACCOUNT: "/find-account",
+      FORGOT_PASSWORD: "/forgot-password",
+    },
   },
 
   PUBLIC: {

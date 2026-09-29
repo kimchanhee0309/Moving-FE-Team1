@@ -29,7 +29,13 @@ interface CredentialsInput {
 
 export type AuthCredentialsRequest =
   | (CredentialsInput & { mode: "login" })
-  | (CredentialsInput & { mode: "signup"; name: string; phone: string });
+  | (CredentialsInput & {
+      mode: "signup";
+      name: string;
+      phone: string;
+      recoveryQuestion: "CHILDHOOD_NICKNAME" | "MEMORABLE_PLACE" | "PERSONAL_PHRASE";
+      recoveryAnswer: string;
+    });
 
 export interface AuthContextValue {
   user: AuthUser | null;
@@ -39,6 +45,7 @@ export interface AuthContextValue {
   isAuthenticated: boolean;
   error: Error | null;
   logout: UseMutationResult<null, Error, void>;
+  withdrawal: UseMutationResult<null, Error, string>;
   credentials: UseMutationResult<{ user: AuthUser }, Error, AuthCredentialsRequest>;
   /** 기존 무인자 호출을 유지하며 서버 복구는 cancelRefetch: false로 진행 중 Query를 공유합니다. */
   refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<AuthSession, Error>>;

@@ -10,7 +10,12 @@ import { getAuthAccess } from "@/common/auth/access";
 import { getAuthSessionState } from "@/common/auth/session";
 import type { AuthContextValue, AuthSession } from "@/common/auth/types";
 import { ROUTES } from "@/common/constants/routes";
-import { authenticateCredentials, fetchSession, logoutSession } from "@/features/auth/auth.api";
+import {
+  authenticateCredentials,
+  fetchSession,
+  logoutSession,
+  withdrawAccountSession,
+} from "@/features/auth/auth.api";
 import { authKeys } from "@/features/auth/auth.keys";
 
 /**
@@ -83,6 +88,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
     onSettled: () => { setIsChangingSession(false); },
   });
 
+  // 탈퇴 API가 DB 삭제와 쿠키 만료를 마친 뒤 로그아웃과 같은 캐시·이동 경계를 적용합니다.
+  const withdrawal = useMutation({
+    mutationFn: withdrawAccountSession,
+    onSuccess: async () => {
+      await client.cancelQueries();
+      credentials.reset();
+      logout.reset();
+      removePrivateCaches();
+      client.setQueryData<AuthSession>(authKeys.session(), { user: null, failure: null });
+      router.replace(ROUTES.HOME);
+      router.refresh();
+    },
+    onError: async () => { await refetchSession(); },
+  });
+
   const { isPending: isCredentialsPending, reset: resetCredentials } = credentials;
   useEffect(() => subscribeAuthFailure((failure) => {
     // 취소는 동기적으로 시작됩니다. 늦은 /me 응답과 개인 Query가 지운 세션을 복구하지 못하게 합니다.
@@ -100,12 +120,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }), [client, isCredentialsPending, removePrivateCaches, resetCredentials]);
 
   const { isSuccess: hasLoggedOut, reset: resetLogout } = logout;
+  const { isSuccess: hasWithdrawn, reset: resetWithdrawal } = withdrawal;
   useEffect(() => {
-    if (hasLoggedOut && pathname === ROUTES.HOME) resetLogout();
-  }, [hasLoggedOut, pathname, resetLogout]);
+    if (pathname !== ROUTES.HOME) return;
+    if (hasLoggedOut) resetLogout();
+    if (hasWithdrawn) resetWithdrawal();
+  }, [hasLoggedOut, hasWithdrawn, pathname, resetLogout, resetWithdrawal]);
 
   // 로그아웃 후 홈 이동이 완료되기 전 역할 guard가 로그인 화면으로 덮어 이동하지 못하게 합니다.
-  const isPending = session.isPending || isChangingSession || (hasLoggedOut && pathname !== ROUTES.HOME);
+  const isPending = session.isPending || isChangingSession || ((hasLoggedOut || hasWithdrawn) && pathname !== ROUTES.HOME);
   const { user, status, error, isAuthenticated } = getAuthSessionState(session.data, session.error, isPending);
 
   // 프로필 API 담당자는 저장 성공 후 호출합니다. 서버와 클라이언트의 profileCompleted를 함께 갱신합니다.
@@ -133,10 +156,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     error,
     credentials,
     logout,
+    withdrawal,
     refetch: refetchSession,
     refetchUser,
     checkAccess,
-  }), [checkAccess, credentials, error, isAuthenticated, isPending, logout, refetchSession, refetchUser, status, user]);
+  }), [checkAccess, credentials, error, isAuthenticated, isPending, logout, refetchSession, refetchUser, status, user, withdrawal]);
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>;
 }

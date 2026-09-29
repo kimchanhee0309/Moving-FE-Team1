@@ -8,7 +8,7 @@ import { authHref } from "../auth.utils";
 import { AuthController } from "./AuthController";
 
 /** 역할별 문구/이미지와 화면 배치만 담당하고 입력 상태는 AuthForm에 한정합니다. */
-export function AuthScreen({ role, mode, redirectTo }: AuthScreenProps) {
+export function AuthScreen({ role, mode, redirectTo, initialRecoveryMode }: AuthScreenProps) {
   const isCustomer = role === "CUSTOMER";
   const alternateRole = isCustomer ? "MOVER" : "CUSTOMER";
   const alternatePath = mode === "login" ? ROUTES.AUTH.LOGIN[alternateRole] : ROUTES.AUTH.SIGNUP[alternateRole];
@@ -31,7 +31,7 @@ export function AuthScreen({ role, mode, redirectTo }: AuthScreenProps) {
             <Link href={authHref(alternatePath, redirectTo)}>{isCustomer ? "기사님" : "일반 유저"} 전용 페이지</Link>
           </p>
         </header>
-        <AuthController key={`${role}-${mode}`} role={role} mode={mode} redirectTo={redirectTo} />
+        <AuthController key={`${role}-${mode}`} role={role} mode={mode} redirectTo={redirectTo} initialRecoveryMode={initialRecoveryMode} />
         <Image className="pointer-events-none absolute hidden object-contain min-[744px]:bottom-[-74px] min-[744px]:left-[calc(100%-137px)] min-[744px]:block min-[744px]:h-[246px] min-[744px]:w-[240px] min-[1200px]:bottom-[-52px] min-[1200px]:left-[calc(100%-60px)] min-[1200px]:size-[392px]" src={`/images/auth/${isCustomer ? "customer" : "mover"}.png`} alt="" width={392} height={392} />
       </section>
     </main>
