@@ -13,6 +13,7 @@ export function GnbMobileMenu({
   menuId,
   navItems,
   isAuthenticated,
+  isAuthLoading,
   loginHref,
   firstNavLinkRef,
   onNavigate,
@@ -97,7 +98,11 @@ export function GnbMobileMenu({
             ))}
           </ul>
 
-          {!isAuthenticated && (
+          {isAuthLoading ? (
+            <div role="status" aria-label="로그인 정보 확인 중" className="px-5 py-6">
+              <div aria-hidden="true" className="h-12 animate-pulse rounded-xl bg-(--gray-100)" />
+            </div>
+          ) : !isAuthenticated ? (
             <div className="px-5 py-6">
               <Link
                 href={loginHref}
@@ -107,7 +112,7 @@ export function GnbMobileMenu({
                 로그인
               </Link>
             </div>
-          )}
+          ) : null}
         </nav>
       </div>
     </div>

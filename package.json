@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:auth": "tsx --test tests/auth/*.test.ts",
+    "test:landing": "tsx --test tests/landing/*.test.ts",
     "test:profile": "tsx --test tests/profile/*.test.ts"
   },
   "dependencies": {

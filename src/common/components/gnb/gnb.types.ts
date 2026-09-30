@@ -20,6 +20,8 @@ export interface GnbMobileMenuProps {
   navItems: GnbNavItem[];
   /** 로그인 여부. `false`면 목록 맨 아래에 로그인 버튼을 보여준다. */
   isAuthenticated: boolean;
+  /** 최초 세션 확인 중에는 로그인 CTA 대신 계정 영역 스켈레톤을 보여준다. */
+  isAuthLoading: boolean;
   /** 로그인 버튼이 이동할 경로. */
   loginHref: string;
   /** 드로어가 열릴 때 포커스를 옮길 첫 번째 링크에 연결하는 ref. */

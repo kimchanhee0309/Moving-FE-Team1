@@ -19,10 +19,4 @@ export interface KakaoSDK {
   };
 }
 
-declare global {
-  interface Window {
-    Kakao?: KakaoSDK;
-  }
-}
-
-export {};
+// Window.Kakao 전역 선언은 실제 SDK 로더인 common/utils/kakao-share.ts에서 단일 관리합니다.
