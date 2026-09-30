@@ -8,31 +8,60 @@ import { ROUTES } from "@/common/constants/routes";
 import type { NotificationApiItem, NotificationType } from "./notification.types";
 
 /**
- * `content` 문장 안에서 이 알림 종류를 대표하는 구간만 강조색으로 표시하기 위한 키워드입니다.
- * BE 문구가 이 키워드를 포함하지 않으면(문구가 바뀌었거나 예상 밖 값이면) 강조 없이 문장 전체를
+ * `content` 문장 안에서 이 알림 종류를 대표하는 구간만 강조색으로 표시하기 위한 resolver입니다.
+ * Figma(스프린터 공유용 무빙_V2, node 510-45388)의 알림 드롭다운 디자인을 기준으로 강조 구간을
+ * 맞췄다 — 예: "김코드 기사님의 [소형이사 견적]이 도착했어요", "김코드 기사님의 견적이 [확정]되었어요",
+ * "내일은 [경기(일산) → 서울(영등포) 이사 예정일]이에요."
+ *
+ * NEW_QUOTE/MOVE_DAY/취소 계열은 서비스 유형·기사 닉네임·주소·고객 이름이 문구에 그대로 꽂혀 들어가
+ * 매번 달라지므로 고정 키워드로는 못 맞춘다(실제로 예전엔 "새로운 이사 견적"이라는 키워드를 썼는데
+ * 실제 BE 문구엔 "새로운"이 아예 없어 강조가 한 번도 안 뜨는 버그였다 — Figma와 직접 대조해서 발견함).
+ * 대신 문구에서 절대 안 바뀌는 앞뒤 고정 부분을 정규식 앵커로 잡고 그 사이의 가변 구간을 통째로
+ * 캡처한다. 정규식이 매치하지 않으면(문구가 바뀌었거나 예상 밖 값이면) 강조 없이 문장 전체를
  * 그대로 보여주므로, 문구가 달라져도 알림 자체가 깨지지는 않습니다.
  */
-const EMPHASIS_KEYWORD_BY_TYPE: Record<NotificationType, string> = {
-  NEW_QUOTE: "새로운 이사 견적",
-  QUOTE_CONFIRMED: "확정",
-  NEW_MOVE_REQUEST: "새로운 이사 견적 요청",
-  MOVE_DAY: "이사",
+type EmphasisResolver = (content: string) => string | null;
+
+function keyword(text: string): EmphasisResolver {
+  return (content) => (content.includes(text) ? text : null);
+}
+
+function pattern(regex: RegExp): EmphasisResolver {
+  return (content) => content.match(regex)?.[1] ?? null;
+}
+
+const EMPHASIS_RESOLVER_BY_TYPE: Record<NotificationType, EmphasisResolver> = {
+  // "{모버닉네임} 기사님의 {서비스유형} 견적이 도착했어요" (mover-request.repository.ts createNewQuoteNotification)
+  NEW_QUOTE: pattern(/기사님의\s(.+견적)이\s도착했어요/),
+  // 고객/기사 양쪽 문구("...견적을 확정했습니다."/"...견적이 확정되었습니다.") 모두 "확정"만 공통.
+  QUOTE_CONFIRMED: keyword("확정"),
+  // "고객님이 새로운 이사 견적을 요청했습니다." (고정 문구, 가변 부분 없음)
+  NEW_MOVE_REQUEST: keyword("새로운 이사 견적을 요청"),
+  // "내일은 {fromAbbrev} → {toAbbrev} 이사 예정일이에요." (move-day.service.ts buildMoveDayContent)
+  MOVE_DAY: pattern(/내일은\s(.+이사\s예정일)이에요\.$/),
+  // "{고객명} 고객님이 (계정을 탈퇴하여 )?보내주신 견적 요청을/이 취소(했습니다|되었습니다)."
+  // DIRECT_DELETE/WITHDRAWAL 두 문구 다 "보내주신"은 공통이라 이 앵커 하나로 둘 다 잡힌다.
+  MOVE_REQUEST_CANCELED: pattern(/보내주신\s(.+?취소)/),
+  // "{고객명} 고객님이 계정을 탈퇴하여 확정된 이사 일정이 취소되었습니다." (withdrawAccount 경로로만 도달)
+  CONFIRMED_MOVE_CANCELED: pattern(/탈퇴하여\s(.+?취소)/),
+  // "고객 응답 없이 이사일이 지나 요청이 만료되었습니다." (고정 문구)
+  MOVE_REQUEST_EXPIRED: keyword("만료"),
 };
 
 function buildSegments(content: string, type: NotificationType): GnbNotificationSegment[] {
-  const keyword = EMPHASIS_KEYWORD_BY_TYPE[type];
-  const index = content.indexOf(keyword);
+  const matchedKeyword = EMPHASIS_RESOLVER_BY_TYPE[type](content);
 
-  if (index === -1) {
+  if (matchedKeyword === null) {
     return [{ text: content }];
   }
 
+  const index = content.indexOf(matchedKeyword);
   const before = content.slice(0, index);
-  const after = content.slice(index + keyword.length);
+  const after = content.slice(index + matchedKeyword.length);
 
   return [
     ...(before ? [{ text: before }] : []),
-    { text: keyword, emphasis: true },
+    { text: matchedKeyword, emphasis: true },
     ...(after ? [{ text: after }] : []),
   ];
 }
@@ -61,6 +90,18 @@ function resolveHref(item: NotificationApiItem, role: UserRole): string | undefi
     return ROUTES.MOVER.REQUESTS;
   }
 
+  if (
+    (item.type === "MOVE_REQUEST_CANCELED" ||
+      item.type === "CONFIRMED_MOVE_CANCELED" ||
+      item.type === "MOVE_REQUEST_EXPIRED") &&
+    item.quoteId
+  ) {
+    // 세 알림 모두 기사님만 받으며(BE가 견적을 보낸 기사님에게만 생성), quoteId가 항상 채워져 있다
+    // (move-request.repository.ts의 recipients가 quote 단위로 구성됨). 자신이 보낸 견적
+    // 상세로 보낸다.
+    return ROUTES.MOVER.QUOTE.DETAIL(item.quoteId);
+  }
+
   return undefined;
 }
 
@@ -81,37 +122,42 @@ export function toGnbNotificationItem(
   };
 }
 
-/** "방금 전"/"N분 전"/"N시간 전"/"N일 전"/그 이후는 날짜로 표시합니다. */
+const MINUTE_MS = 60_000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+const WEEK_MS = 7 * DAY_MS;
+const MONTH_MS = 30 * DAY_MS;
+
+/**
+ * "방금 전"(1분 미만) → "N분 전"(1~59분) → "N시간 전"(1~23시간) → "N일 전"(1~6일) →
+ * "N주 전"(7~29일) → "오래전"(30일 이상, 사용자가 확정한 구간).
+ *
+ * `NotificationProvider`가 매 분(`useNotificationTimeTick`) 재계산을 트리거해줘야 실제로
+ * 시간이 흘러도 값이 갱신된다 — 이 함수 자체는 순수 계산만 하고 언제 다시 호출할지는 모른다.
+ */
 function formatNotificationTimeAgo(dateString: string): string {
   const createdAt = new Date(dateString);
   const difference = Date.now() - createdAt.getTime();
 
-  if (difference < 60_000) {
+  if (difference < MINUTE_MS) {
     return "방금 전";
   }
 
-  const minutes = Math.floor(difference / 60_000);
-
-  if (minutes < 60) {
-    return `${minutes}분 전`;
+  if (difference < HOUR_MS) {
+    return `${Math.floor(difference / MINUTE_MS)}분 전`;
   }
 
-  const hours = Math.floor(minutes / 60);
-
-  if (hours < 24) {
-    return `${hours}시간 전`;
+  if (difference < DAY_MS) {
+    return `${Math.floor(difference / HOUR_MS)}시간 전`;
   }
 
-  const days = Math.floor(hours / 24);
-
-  if (days < 7) {
-    return `${days}일 전`;
+  if (difference < WEEK_MS) {
+    return `${Math.floor(difference / DAY_MS)}일 전`;
   }
 
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "2-digit",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(createdAt);
+  if (difference < MONTH_MS) {
+    return `${Math.floor(difference / WEEK_MS)}주 전`;
+  }
+
+  return "오래전";
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, type PropsWithChildren } from "react";
+import { useEffect, useMemo, useState, type PropsWithChildren } from "react";
 
 import { NotificationBellContext } from "@/common/notification/NotificationBellContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -30,6 +30,21 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
   const role = user?.role;
 
+  // `toGnbNotificationItem`이 만드는 timeAgo("N분 전" 등)는 Date.now() 기준 계산이라, 알림
+  // 목록 데이터(notifications)가 안 바뀌어도 시간은 계속 흐른다. 이 tick이 없으면 마지막으로
+  // data가 바뀐 시점에 계산된 timeAgo 문자열이 그대로 굳어버려서(예: 실제로는 8분 지났는데
+  // 계속 "3시간 전"으로 표시) 드롭다운을 오래 열어두거나 새 알림이 한동안 안 와도 시간 표시가
+  // 실제 경과 시간을 따라가지 못한다. 1분마다 강제로 리렌더시켜 재계산되게 한다.
+  const [timeTick, setTimeTick] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTimeTick((tick) => tick + 1);
+    }, 60_000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   // pathname 변화나 다른 Provider 리렌더만으로 Context identity가 바뀌어 GNB가 매번 다시
   // 렌더되지 않도록 AuthProvider와 같은 방식으로 값을 메모이즈합니다. items는 useMemo 밖에서
   // 만들면 data가 undefined일 때마다 `?? []`가 새 배열을 만들어 매 렌더 dep이 바뀌므로 안에 둡니다.
@@ -55,7 +70,10 @@ export function NotificationProvider({ children }: PropsWithChildren) {
           .forEach((item) => markRead.mutate(item.id));
       },
     };
-  }, [notifications, role, canUseNotifications, markRead]);
+    // timeTick은 값 자체를 쓰지 않고 1분마다 재계산(timeAgo 갱신)을 트리거하는 용도로만 넣는다 —
+    // exhaustive-deps는 함수 본문에서 안 읽는 값이라 "불필요"하다고 오탐한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notifications, role, canUseNotifications, markRead, timeTick]);
 
   return (
     <NotificationBellContext.Provider value={value}>
