@@ -3,7 +3,14 @@ import { authHref } from "@/features/auth/auth.utils";
 import type { AuthUser } from "@/features/auth/auth.types";
 
 /** 세션 상태별 랜딩 CTA 목적지를 한곳에서 결정합니다. */
-export function resolveLandingHrefs(user: Pick<AuthUser, "role"> | null) {
+export function resolveLandingHrefs(
+  user: Pick<AuthUser, "role"> | null,
+  isSessionLoading = false,
+) {
+  if (isSessionLoading) {
+    return { requestHref: null, quoteHref: null };
+  }
+
   return {
     requestHref: user?.role === "CUSTOMER"
       ? ROUTES.CUSTOMER.MOVE_REQUEST

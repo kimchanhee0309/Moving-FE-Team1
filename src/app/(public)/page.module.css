@@ -88,14 +88,14 @@
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.moveTypeCard:is(:hover, :focus-visible) {
+.moveTypeCard[href]:is(:hover, :focus-visible) {
   border-color: var(--primary-400);
   box-shadow: 0 14px 32px rgb(249 80 46 / 16%);
   outline: none;
   transform: translateY(-6px);
 }
 
-.moveTypeCard[aria-disabled="true"] {
+.moveTypeCard[data-navigation-pending="true"] {
   cursor: wait;
 }
 
@@ -172,7 +172,7 @@
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.requestCard:is(:hover, :focus-visible) {
+.requestCard[href]:is(:hover, :focus-visible) {
   border-color: #ffd2c7;
   box-shadow: 0 30px 72px rgb(104 31 16 / 32%);
   outline: none;
@@ -294,15 +294,15 @@
   transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
-.quoteCard:is(:hover, :focus-visible) {
+.quoteCard[href]:is(:hover, :focus-visible) {
   border-color: var(--primary-400);
   box-shadow: 0 20px 44px rgb(92 53 42 / 16%);
   outline: none;
   transform: translateY(-5px);
 }
 
-.quoteCard[aria-disabled="true"],
-.requestCard[aria-disabled="true"] {
+.quoteCard[data-navigation-pending="true"],
+.requestCard[data-navigation-pending="true"] {
   cursor: wait;
 }
 
@@ -481,5 +481,5 @@
   .compare { padding-top: 104px; padding-bottom: 128px; }
   .quoteGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
   .quoteCard:nth-child(even) { transform: translateY(34px); }
-  .quoteCard:nth-child(even):is(:hover, :focus-visible) { transform: translateY(28px); }
+  .quoteCard[href]:nth-child(even):is(:hover, :focus-visible) { transform: translateY(28px); }
 }

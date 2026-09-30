@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { patchCachedAuthUser } from "@/features/auth/auth.cache";
+import { assertProfileCompleted } from "@/features/auth/auth.cache";
 
 import { createMoverProfile, moverProfileKeys } from "../mover-profile.api";
 import { MoverProfileForm } from "./MoverProfileForm";
@@ -16,14 +16,8 @@ export function MoverProfileRegisterContent() {
     mutationFn: createMoverProfile,
     onSuccess: async (profile) => {
       queryClient.setQueryData(moverProfileKeys.current(), profile);
-      try {
-        const completedUser = await refetchUser();
-        if (!completedUser?.profileCompleted) {
-          patchCachedAuthUser(queryClient, { profileCompleted: true });
-        }
-      } catch {
-        patchCachedAuthUser(queryClient, { profileCompleted: true });
-      }
+      const completedUser = await refetchUser();
+      assertProfileCompleted(completedUser);
     },
   });
 

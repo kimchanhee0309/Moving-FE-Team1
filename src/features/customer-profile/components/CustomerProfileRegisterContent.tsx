@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { patchCachedAuthUser } from "@/features/auth/auth.cache";
+import { assertProfileCompleted } from "@/features/auth/auth.cache";
 
 import { createCustomerProfile, customerProfileKeys } from "../customer-profile.api";
 import { CustomerProfileForm } from "./CustomerProfileForm";
@@ -16,14 +16,8 @@ export function CustomerProfileRegisterContent() {
     mutationFn: createCustomerProfile,
     onSuccess: async (profile) => {
       queryClient.setQueryData(customerProfileKeys.current(), profile);
-      try {
-        const completedUser = await refetchUser();
-        if (!completedUser?.profileCompleted) {
-          patchCachedAuthUser(queryClient, { profileCompleted: true });
-        }
-      } catch {
-        patchCachedAuthUser(queryClient, { profileCompleted: true });
-      }
+      const completedUser = await refetchUser();
+      assertProfileCompleted(completedUser);
     },
   });
 

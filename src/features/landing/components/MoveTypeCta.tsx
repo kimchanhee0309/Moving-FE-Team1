@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { MouseEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -11,7 +11,8 @@ import { resolveLandingHrefs } from "../landing.utils";
 
 function useLandingHrefs() {
   const { user, status } = useAuth();
-  return { ...resolveLandingHrefs(user), isLoading: status === "loading" };
+  const isLoading = status === "loading";
+  return { ...resolveLandingHrefs(user, isLoading), isLoading };
 }
 
 const MOVE_TYPES = [
@@ -21,18 +22,22 @@ const MOVE_TYPES = [
 ] as const;
 
 function AuthAwareLink({ href, isLoading, className, label, children }: {
-  href: string;
+  href: string | null;
   isLoading: boolean;
   className: string;
   label: string;
   children: ReactNode;
 }) {
-  const preventPendingNavigation = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (isLoading) event.preventDefault();
-  };
+  if (isLoading || href === null) {
+    return (
+      <div className={className} aria-busy="true" data-navigation-pending="true">
+        {children}
+      </div>
+    );
+  }
 
   return (
-    <Link href={href} className={className} aria-label={label} aria-disabled={isLoading || undefined} onClick={preventPendingNavigation}>
+    <Link href={href} className={className} aria-label={label}>
       {children}
     </Link>
   );
@@ -56,7 +61,7 @@ export function MoveTypeCta() {
   );
 }
 
-function QuotePreviewCard({ href, isLoading, index }: { href: string; isLoading: boolean; index: number }) {
+function QuotePreviewCard({ href, isLoading, index }: { href: string | null; isLoading: boolean; index: number }) {
   const prices = ["180,000원", "195,000원", "210,000원", "225,000원"];
   const names = ["김코드 기사님", "이무빙 기사님", "박안심 기사님", "최친절 기사님"];
 

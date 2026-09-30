@@ -6,6 +6,7 @@ import { ApiError } from "../../src/common/api/error";
 import { canRecoverAuthAccess, getAuthAccess } from "../../src/common/auth/access";
 import { getAuthSessionState } from "../../src/common/auth/session";
 import { authHref, clearAuthFieldError, resolveAuthenticatedPath, resolveCredentialsPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
+import { assertProfileCompleted } from "../../src/features/auth/auth.cache";
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
 const customer: AuthUser = { id: "customer-1", name: "테스트", email: "test@example.com", phone: null, role: "CUSTOMER", profileCompleted: true };
@@ -430,6 +431,18 @@ test("Provider의 화면 인가는 비회원·역할·프로필·오류 상태�
     assert.equal(getAuthAccess(user, "authenticated", role === "CUSTOMER" ? "MOVER" : "CUSTOMER", true), "role-mismatch");
     assert.equal(getAuthAccess({ ...user, profileCompleted: true }, "authenticated", role), "allowed");
   }
+});
+
+test("프로필 저장 후 최신 세션이 완료 상태를 명시한 경우에만 등록 완료로 인정한다", () => {
+  assert.doesNotThrow(() => assertProfileCompleted({ profileCompleted: true }));
+  assert.throws(
+    () => assertProfileCompleted({ profileCompleted: false }),
+    /프로필 등록 상태를 확인하지 못했습니다/,
+  );
+  assert.throws(
+    () => assertProfileCompleted(null),
+    /프로필 등록 상태를 확인하지 못했습니다/,
+  );
 });
 
 test("서버 세션 자동 복구는 비회원·조회 오류에만 적용한다", () => {
