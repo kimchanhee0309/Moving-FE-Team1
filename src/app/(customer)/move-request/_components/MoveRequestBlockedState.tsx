@@ -9,10 +9,10 @@ import { ApiError } from "@/common/api/error";
 import { Button } from "@/common/components/button";
 import { Modal } from "@/common/components/MoverModal/Modal";
 import { ROUTES } from "@/common/constants/routes";
-import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+import { MOVE_REQUEST_STATUS, SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { useDeleteMoveRequest } from "@/features/move-request/hooks/useMoveRequest";
 import type { MoveRequestDto } from "@/features/move-request/move-request.types";
-import { formatMoveDateLabel } from "@/features/move-request/move-request.utils";
+import { formatMoveDateLabel, parseAddressFromApi } from "@/features/move-request/move-request.utils";
 
 /**
  * 이사 유형(`ServiceType`) 표시용 한글 라벨입니다. `MoveTypeCard`/`QuoteCard`가 이미 각자
@@ -54,6 +54,11 @@ export function MoveRequestBlockedState({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteMoveRequestMutation = useDeleteMoveRequest();
+
+  // BE가 WAITING 상태만 수정·삭제를 허용한다(견적 확정 이후에는 요청 내용을 되돌릴 수 없게
+  // 한다는 팀 결정). "활성 요청"으로 조회되는 상태는 WAITING/CONFIRMED뿐이라 여기서는
+  // WAITING 여부만 확인하면 된다.
+  const canEditOrDelete = moveRequest.status === MOVE_REQUEST_STATUS.WAITING;
 
   const openDeleteModal = () => {
     setDeleteError(null);
@@ -127,7 +132,11 @@ export function MoveRequestBlockedState({
 
           <div className="text-md-regular text-center text-(--input-placeholder) min-[1200px]:text-xl-regular">
             <p className="m-0">현재 진행 중인 이사 견적이 있어요!</p>
-            <p className="m-0">아래에서 요청 내용을 수정하거나 삭제할 수 있어요.</p>
+            <p className="m-0">
+              {canEditOrDelete
+                ? "아래에서 요청 내용을 수정하거나 삭제할 수 있어요."
+                : "견적이 확정되어 요청 내용은 더 이상 수정·삭제할 수 없어요."}
+            </p>
           </div>
         </div>
 
@@ -151,35 +160,43 @@ export function MoveRequestBlockedState({
 
             <div className="h-px w-full bg-(--line-100)" aria-hidden="true" />
 
+            {/*
+              moveRequest.fromAddress/toAddress는 BE 저장 형식 그대로
+              `[zonecode] roadAddress (jibunAddress)`라 우편번호·지번 괄호가 그대로 노출된다(실제
+              주소 검색으로 만든 요청으로 재현·확인함 — seed 데이터는 이 형식을 안 따라 지금까지
+              드러나지 않았다). parseAddressFromApi로 roadAddress만 뽑아 고객에게 보여준다.
+            */}
             <div className="flex items-start justify-between gap-4">
               <dt className="shrink-0 text-md-medium text-(--gray-400)">출발지</dt>
               <dd className="min-w-0 flex-1 text-right text-md-regular text-(--black-400) [word-break:break-word]">
-                {moveRequest.fromAddress}
+                {parseAddressFromApi(moveRequest.fromAddress).roadAddress}
               </dd>
             </div>
 
             <div className="flex items-start justify-between gap-4">
               <dt className="shrink-0 text-md-medium text-(--gray-400)">도착지</dt>
               <dd className="min-w-0 flex-1 text-right text-md-regular text-(--black-400) [word-break:break-word]">
-                {moveRequest.toAddress}
+                {parseAddressFromApi(moveRequest.toAddress).roadAddress}
               </dd>
             </div>
           </dl>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Button type="button" variant="outlined" fullWidth onClick={onEditRequest}>
-              수정하기
-            </Button>
-            <Button
-              type="button"
-              variant="outlined"
-              fullWidth
-              onClick={openDeleteModal}
-              className="border-(--secondary-red-200)! text-(--secondary-red-200)! shadow-none!"
-            >
-              삭제하기
-            </Button>
-          </div>
+          {canEditOrDelete ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Button type="button" variant="outlined" fullWidth onClick={onEditRequest}>
+                수정하기
+              </Button>
+              <Button
+                type="button"
+                variant="outlined"
+                fullWidth
+                onClick={openDeleteModal}
+                className="border-(--secondary-red-200)! text-(--secondary-red-200)! shadow-none!"
+              >
+                삭제하기
+              </Button>
+            </div>
+          ) : null}
         </article>
 
         <Link

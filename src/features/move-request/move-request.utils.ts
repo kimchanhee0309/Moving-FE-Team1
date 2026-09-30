@@ -67,25 +67,41 @@ export function isPastOrTodayMoveDate(date: Date): boolean {
 /**
  * `formatAddressForApi`의 역변환입니다. BE가 내려주는 `MoveRequestDto.fromAddress`/`toAddress`
  * (`[{zonecode}] {roadAddress} {detailAddress} ({jibunAddress})`)를 다시 `AddressResult`로 쪼갠다 —
- * "수정하기"로 생성 wizard를 다시 열 때 출발지/도착지 검색 모달(`AddressSearchModal`)에 기존
- * 선택 상태를 넘겨주기 위해서만 쓴다.
+ * "수정하기"로 생성 wizard를 다시 열 때, 그리고 활성 요청 카드(`MoveRequestBlockedState`)에 깨끗한
+ * 도로명 주소만 보여줄 때 쓴다.
+ *
+ * `formatAddressForApi`가 zonecode/jibunAddress를 각각 독립적으로 생략하므로(있으면 붙이고 없으면
+ * 생략 — 신축 건물 등 지번 매핑이 아직 없는 주소는 실제로 zonecode만 있고 jibunAddress는 없을 수
+ * 있다), 앞의 `[zonecode]`와 뒤의 `(jibunAddress)`를 각각 독립적으로 떼어낸다(원래는 정규식 하나로
+ * 둘 다 있어야만 매치했는데, 그러면 한쪽만 있는 주소는 통째로 안 떼어지고 대괄호·괄호가 그대로
+ * 노출되는 버그가 있었다). 뒤쪽 괄호는 문자열 끝에 고정(`$`)해서 자르므로, roadAddress 자체에
+ * 포함된 괄호(예: "강남대로6길 100-1 (양재동, 지움)")는 jibunAddress로 잘못 떼어지지 않는다.
  *
  * TODO(feature-implementer, 확인 담당: 노진우): 상세주소(`detailAddress`) 입력칸이 아직 없어
  * `formatAddressForApi`가 항상 빈 문자열을 채우는 전제로 만든 파서라, `roadAddress`와
- * `detailAddress`를 구분하지 못하고 괄호 앞부분을 통째로 `roadAddress`에 담는다. 상세주소
- * 입력칸이 생기면(Todoist "견적 요청 - 상세주소 입력칸 추가" 작업) 이 파서도 함께 갱신해야 한다.
- * 형식이 예상과 다르면(정규식 매치 실패) 원본 문자열을 그대로 `roadAddress`에 넣어 화면이
- * 깨지지 않게만 한다.
+ * `detailAddress`를 구분하지 못하고 zonecode/jibunAddress를 뗀 나머지를 통째로 `roadAddress`에
+ * 담는다. 상세주소 입력칸이 생기면(Todoist "견적 요청 - 상세주소 입력칸 추가" 작업) 이 파서도
+ * 함께 갱신해야 한다.
  */
-const ADDRESS_API_FORMAT = /^\[(.+)\]\s(.+)\s\((.+)\)$/;
+const ZONECODE_PREFIX = /^\[([^[\]]*)\]\s*/;
+const JIBUN_SUFFIX = /\s*\(([^()]*)\)$/;
 
 export function parseAddressFromApi(formattedAddress: string): AddressResult {
-  const match = formattedAddress.match(ADDRESS_API_FORMAT);
+  let roadAddress = formattedAddress;
+  let zonecode = "";
+  let jibunAddress = "";
 
-  if (!match) {
-    return { zonecode: "", roadAddress: formattedAddress, jibunAddress: "" };
+  const zonecodeMatch = roadAddress.match(ZONECODE_PREFIX);
+  if (zonecodeMatch) {
+    zonecode = zonecodeMatch[1];
+    roadAddress = roadAddress.slice(zonecodeMatch[0].length);
   }
 
-  const [, zonecode, roadAddress, jibunAddress] = match;
+  const jibunMatch = roadAddress.match(JIBUN_SUFFIX);
+  if (jibunMatch) {
+    jibunAddress = jibunMatch[1];
+    roadAddress = roadAddress.slice(0, roadAddress.length - jibunMatch[0].length);
+  }
+
   return { zonecode, roadAddress, jibunAddress };
 }
