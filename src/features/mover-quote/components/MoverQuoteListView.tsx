@@ -13,7 +13,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Button } from "@/common/components/button";
 import {
   EmptyState,
@@ -29,6 +29,7 @@ import { MoverQuoteTabs } from "./MoverQuoteTabs";
 
 export function MoverQuoteListView() {
   const t = useTranslations("MoverQuote");
+  const apiErrorMessage = useApiErrorMessage();
   const common = useTranslations("Common");
   const router = useRouter();
   const quotesQuery = useMoverQuotes();
@@ -47,7 +48,7 @@ export function MoverQuoteListView() {
    */
   const initialErrorMessage =
     quotesQuery.isError && !hasLoadedQuotes && quotesQuery.error
-      ? getApiErrorMessage(
+      ? apiErrorMessage(
           quotesQuery.error,
           t("loadError"),
         )
@@ -59,7 +60,7 @@ export function MoverQuoteListView() {
    */
   const loadMoreErrorMessage =
     quotesQuery.isFetchNextPageError && quotesQuery.error
-      ? getApiErrorMessage(
+      ? apiErrorMessage(
           quotesQuery.error,
           t("loadMoreError"),
         )

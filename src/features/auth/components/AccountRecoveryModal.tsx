@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useState, type FormEvent } from "react";
 
-import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import type { UserRole } from "@/common/auth/types";
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
@@ -43,6 +43,7 @@ function formatExpiryDuration(totalSeconds: number, t: RecoveryTranslator) {
 
 function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: AccountRecoveryModalProps) {
   const t = useTranslations("Recovery");
+  const apiErrorMessage = useApiErrorMessage();
   const auth = useTranslations("Auth");
   const translateValidation = useValidationMessage();
   const { setModalDismissible } = useModal();
@@ -123,7 +124,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
       else if (!challengeId) await sendCode();
       else setResetToken(await verifyPasswordResetCode(challengeId, code));
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : t("requestError"));
+      setError(apiErrorMessage(caught, t("requestError")));
     } finally {
       setIsPending(false);
     }
@@ -134,7 +135,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     setError("");
     setIsPending(true);
     try { await sendCode(); }
-    catch (caught) { setError(caught instanceof ApiError ? caught.message : t("resendError")); }
+    catch (caught) { setError(apiErrorMessage(caught, t("resendError"))); }
     finally { setIsPending(false); }
   }
 
@@ -150,7 +151,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
       await confirmPasswordReset(resetToken, newPassword);
       setIsComplete(true);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : t("resetError"));
+      setError(apiErrorMessage(caught, t("resetError")));
     } finally {
       setIsPending(false);
     }

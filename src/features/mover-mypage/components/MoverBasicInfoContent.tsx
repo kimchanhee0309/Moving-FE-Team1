@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import {
-  getApiErrorMessage,
   getCurrentPasswordMismatchError,
 } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { patchCachedAuthUser } from "@/features/auth/auth.cache";
@@ -21,6 +21,7 @@ import { MoverBasicInfoForm } from "./MoverBasicInfoForm";
 
 export function MoverBasicInfoContent() {
   const t = useTranslations("Account");
+  const apiErrorMessage = useApiErrorMessage();
   const common = useTranslations("Common");
   const queryClient = useQueryClient();
   const { refetchUser } = useAuth();
@@ -49,7 +50,7 @@ export function MoverBasicInfoContent() {
     return (
       <ErrorState
         title={t("basicInfoLoadError")}
-        description={getApiErrorMessage(myPageQuery.error, common("errorDescription"))}
+        description={apiErrorMessage(myPageQuery.error, common("errorDescription"))}
         onRetry={() => { void myPageQuery.refetch(); }}
       />
     );
@@ -68,7 +69,7 @@ export function MoverBasicInfoContent() {
       currentPasswordError={currentPasswordError}
       submissionError={
         mutation.error && !currentPasswordError
-          ? getApiErrorMessage(mutation.error, t("basicInfoUpdateError"))
+          ? apiErrorMessage(mutation.error, t("basicInfoUpdateError"))
           : undefined
       }
       onCurrentPasswordChange={() => mutation.reset()}

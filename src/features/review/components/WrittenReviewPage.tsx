@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Pagination } from "@/common/components/Pagination";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 import { ROUTES } from "@/common/constants/routes";
@@ -19,6 +20,7 @@ import { WrittenReviewCard } from "./WrittenReviewCard";
  */
 export function WrittenReviewPage() {
   const t = useTranslations("Review");
+  const apiErrorMessage = useApiErrorMessage();
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsQuery = useWrittenReviews(currentPage);
 
@@ -50,7 +52,7 @@ export function WrittenReviewPage() {
             title={t("writtenLoadError")}
             description={
               reviewsQuery.error instanceof ApiError
-                ? reviewsQuery.error.message
+                ? apiErrorMessage(reviewsQuery.error, t("writtenLoadError"))
                 : undefined
             }
             onRetry={() => {
