@@ -44,8 +44,6 @@ const EMPHASIS_RESOLVER_BY_TYPE: Record<NotificationType, EmphasisResolver> = {
   MOVE_REQUEST_CANCELED: pattern(/보내주신\s(.+?취소)/),
   // "{고객명} 고객님이 계정을 탈퇴하여 확정된 이사 일정이 취소되었습니다." (withdrawAccount 경로로만 도달)
   CONFIRMED_MOVE_CANCELED: pattern(/탈퇴하여\s(.+?취소)/),
-  // "고객 응답 없이 이사일이 지나 요청이 만료되었습니다." (고정 문구)
-  MOVE_REQUEST_EXPIRED: keyword("만료"),
 };
 
 function buildSegments(content: string, type: NotificationType): GnbNotificationSegment[] {
@@ -91,12 +89,10 @@ function resolveHref(item: NotificationApiItem, role: UserRole): string | undefi
   }
 
   if (
-    (item.type === "MOVE_REQUEST_CANCELED" ||
-      item.type === "CONFIRMED_MOVE_CANCELED" ||
-      item.type === "MOVE_REQUEST_EXPIRED") &&
+    (item.type === "MOVE_REQUEST_CANCELED" || item.type === "CONFIRMED_MOVE_CANCELED") &&
     item.quoteId
   ) {
-    // 세 알림 모두 기사님만 받으며(BE가 견적을 보낸 기사님에게만 생성), quoteId가 항상 채워져 있다
+    // 두 알림 모두 기사님만 받으며(BE가 견적을 보낸 기사님에게만 생성), quoteId가 항상 채워져 있다
     // (move-request.repository.ts의 recipients가 quote 단위로 구성됨). 자신이 보낸 견적
     // 상세로 보낸다.
     return ROUTES.MOVER.QUOTE.DETAIL(item.quoteId);
