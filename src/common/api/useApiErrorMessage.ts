@@ -9,7 +9,15 @@ import { getApiErrorMessage } from "./get-error-message";
 type ApiErrorCode = keyof Messages["ApiErrors"];
 
 // 같은 code라도 서버가 상황별로 다른 문장을 보내는 범용 code는 code 번역 대신 화면의 기본 문구를 씁니다.
-const GENERIC_CODES = new Set(["BAD_REQUEST", "VALIDATION_ERROR", "INVALID_REQUEST"]);
+// 서버 내부 오류·조회 실패처럼 원인을 특정하지 않는 code도 화면 맥락이 담긴 기본 문구가 더 구체적이므로 포함합니다.
+const GENERIC_CODES = new Set([
+  "BAD_REQUEST",
+  "VALIDATION_ERROR",
+  "INVALID_REQUEST",
+  "INTERNAL_SERVER_ERROR",
+  "NOT_FOUND",
+  "RESOURCE_NOT_FOUND",
+]);
 
 function isApiErrorCode(messages: Messages["ApiErrors"], code: string): code is ApiErrorCode {
   return Object.hasOwn(messages, code);
