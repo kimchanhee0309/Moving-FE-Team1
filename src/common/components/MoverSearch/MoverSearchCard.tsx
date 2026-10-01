@@ -278,9 +278,12 @@ function FavoriteButton({
   );
 }
 
-/** 카드 폭이 고정이라 999를 넘는 수는 locale과 무관하게 "999+"로 줄입니다. */
-function formatCappedCount(count: number, cap = 999): string {
-  return count > cap ? `${cap}+` : count.toLocaleString("ko-KR");
+// 카드 폭이 고정이라 999를 넘는 수는 "999+"로 줄입니다.
+const COUNT_CAP = 999;
+
+/** 단위가 없는 숫자(리뷰 수 괄호 표기)에만 사용합니다. 단위가 붙는 수는 번역 메시지로 줄입니다. */
+function formatCappedCount(count: number): string {
+  return count > COUNT_CAP ? `${COUNT_CAP}+` : count.toLocaleString("ko-KR");
 }
 
 function useIsSingleLine(text: string) {
@@ -382,8 +385,8 @@ function MoverStatsRow({
 
       <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
         <span className="text-[var(--black-300)]">
-          {confirmedCount > 999
-            ? formatCappedCount(confirmedCount)
+          {confirmedCount > COUNT_CAP
+            ? t("confirmedCountCapped", { count: COUNT_CAP })
             : t("confirmedCount", { count: confirmedCount })}
         </span>
         <span className="text-[#ababab]">{t("confirmedLabel")}</span>

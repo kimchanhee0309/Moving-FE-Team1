@@ -463,6 +463,7 @@
     "career": "Experience",
     "careerYears": "{count, plural, one {# yr} other {# yrs}}",
     "confirmedCount": "{count, number}",
+    "confirmedCountCapped": "{count}+",
     "confirmedLabel": "confirmed",
     "price": "Quote price",
     "priceValue": "₩{price, number}",

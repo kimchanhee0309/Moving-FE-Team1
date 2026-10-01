@@ -10,7 +10,7 @@ import { LoadingState } from "@/common/components/page-state";
 import { SubHeader } from "@/common/components/SubHeader";
 import { Tabs } from "@/common/components/Tabs";
 import { ROUTES } from "@/common/constants/routes";
-import { formatDateWithWeekday, formatLongDate } from "@/common/utils/date-format";
+import { formatDateWithWeekday, formatLongDate, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { QuoteCard } from "@/features/customer-quote/components";
 import { useCustomerQuoteLoadMoreSentinel } from "@/features/customer-quote/hooks/useCustomerQuoteLoadMoreSentinel";
 import {
@@ -125,10 +125,10 @@ export function CustomerQuoteListView() {
       {moveRequest ? (
         <SubHeader
           serviceType={moveRequest.serviceType}
-          requestedAt={formatLongDate(moveRequest.requestedAt, locale)}
+          requestedAt={formatLongDate(moveRequest.requestedAt, locale, SERVICE_TIME_ZONE)}
           from={moveRequest.from}
           to={moveRequest.to}
-          moveDate={formatDateWithWeekday(moveRequest.moveDate, locale)}
+          moveDate={formatDateWithWeekday(moveRequest.moveDate, locale, SERVICE_TIME_ZONE)}
         />
       ) : null}
 

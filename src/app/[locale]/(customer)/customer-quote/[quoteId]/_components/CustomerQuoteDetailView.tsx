@@ -11,7 +11,7 @@ import {
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
 import { QUOTE_STATUS } from "@/common/constants/domain";
-import { formatDateTimeWithWeekday } from "@/common/utils/date-format";
+import { formatDateTimeWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { shareToKakaoTalk } from "@/common/utils/kakao-share";
 
 import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
@@ -323,7 +323,7 @@ export function CustomerQuoteDetailView({
                 <QuoteInfoRow label={t("service")} value={moveType(quote.serviceType)} />
                 <QuoteInfoRow
                   label={t("useDate")}
-                  value={formatDateTimeWithWeekday(quote.moveDate, locale)}
+                  value={formatDateTimeWithWeekday(quote.moveDate, locale, SERVICE_TIME_ZONE)}
                 />
                 <QuoteInfoRow label={t("from")} value={quote.from} />
                 <QuoteInfoRow label={t("to")} value={quote.to} />

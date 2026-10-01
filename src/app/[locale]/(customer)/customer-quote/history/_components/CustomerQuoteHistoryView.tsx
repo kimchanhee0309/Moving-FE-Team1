@@ -11,7 +11,7 @@ import { Tabs } from "@/common/components/Tabs";
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
-import { formatDateWithWeekday } from "@/common/utils/date-format";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { groupHistoryQuotes } from "@/features/customer-quote/api/customer-quote.mapper";
 import type { CustomerQuoteHistoryGroupView } from "@/features/customer-quote/api/customer-quote.types";
 import { QuoteHistoryCard } from "@/features/customer-quote/components";
@@ -94,7 +94,7 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
             <QuoteInfoRow label={quote("to")} value={group.to} />
             <QuoteInfoRow
               label={quote("useDate")}
-              value={formatDateWithWeekday(group.moveDate, locale)}
+              value={formatDateWithWeekday(group.moveDate, locale, SERVICE_TIME_ZONE)}
             />
           </dl>
         </section>

@@ -7,7 +7,7 @@ import type { MouseEvent, ReactNode } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
-import { formatDateWithWeekday } from "@/common/utils/date-format";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -35,7 +35,7 @@ function cn(...classNames: ClassValue[]) {
 }
 
 function formatMoveDate(date: string, locale: string) {
-  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale);
+  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale, SERVICE_TIME_ZONE);
 }
 
 function useModalAccessibility(isOpen: boolean, onClose: () => void) {

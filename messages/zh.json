@@ -463,6 +463,7 @@
     "career": "经验",
     "careerYears": "{count}年",
     "confirmedCount": "{count, number}次",
+    "confirmedCountCapped": "{count}+次",
     "confirmedLabel": "成交",
     "price": "报价金额",
     "priceValue": "{price, number}韩元",

@@ -3,7 +3,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
-import { formatDateWithWeekday } from "@/common/utils/date-format";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -27,7 +27,7 @@ export interface WrittenReviewCardProps {
 }
 
 function formatMoveDate(date: string, locale: string): string {
-  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale);
+  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale, SERVICE_TIME_ZONE);
 }
 
 function formatWrittenAt(date: string): string {

@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
+import { createTranslator, type Messages } from "next-intl";
+
 import {
   formatDateTimeWithWeekday,
   formatDateWithWeekday,
@@ -23,6 +25,11 @@ function collectKeys(tree: MessageTree, prefix = ""): string[] {
 
 async function readMessages(locale: string): Promise<MessageTree> {
   return JSON.parse(await readFile(`messages/${locale}.json`, "utf8")) as MessageTree;
+}
+
+/** 키 구조는 위 테스트가 ko와 같음을 보장하므로 번역 함수 타입은 AppConfig의 Messages로 읽습니다. */
+async function readAppMessages(locale: string): Promise<Messages> {
+  return JSON.parse(await readFile(`messages/${locale}.json`, "utf8"));
 }
 
 const LOCALES = ["ko", "en", "zh"] as const;
@@ -81,6 +88,23 @@ test("zh 날짜·상대 시간은 중국어 표기를 사용한다", () => {
   assert.equal(formatTimeAgo(3, "hour", "zh"), "3小时前");
   assert.equal(formatJustNow("zh"), "刚刚");
   assert.equal(formatLongAgo("zh"), "很久以前");
+});
+
+test("999를 넘는 확정 건수도 locale별 단위를 유지한다", async () => {
+  const expected = { ko: "999+건", en: "999+", zh: "999+次" } as const;
+
+  for (const locale of LOCALES) {
+    const t = createTranslator({ locale, messages: await readAppMessages(locale), namespace: "Quote" });
+    assert.equal(t("confirmedCountCapped", { count: 999 }), expected[locale]);
+  }
+});
+
+test("서버 ISO 날짜는 서비스 시간대로 고정해 같은 날짜를 표시한다", () => {
+  // UTC로는 9월 30일이지만 서비스 기준(Asia/Seoul)으로는 10월 1일입니다.
+  const iso = "2026-09-30T16:30:00.000Z";
+
+  assert.equal(formatDateWithWeekday(iso, "ko", SERVICE_TIME_ZONE), "2026년 10월 01일 (목)");
+  assert.equal(formatDateTimeWithWeekday(iso, "ko", SERVICE_TIME_ZONE), "2026. 10. 01(목) 오전 01:30");
 });
 
 test("잘못된 날짜는 예외 없이 원문을 반환한다", () => {
