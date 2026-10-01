@@ -119,15 +119,15 @@ export function formatTimeAgo(count: number, unit: TimeAgoUnit, locale: string):
 }
 
 // Intl.RelativeTimeFormat에 "방금 전"/"오래전" 같은 표현이 없어 지원 locale별로 고정합니다.
-const JUST_NOW: Record<string, string> = { ko: "방금 전", en: "just now", zh: "刚刚" };
-const LONG_AGO: Record<string, string> = { ko: "오래전", en: "a while ago", zh: "很久以前" };
+const JUST_NOW: Record<string, string> = { ko: "방금 전", en: "just now", zh: "刚刚", ja: "たった今" };
+const LONG_AGO: Record<string, string> = { ko: "오래전", en: "a while ago", zh: "很久以前", ja: "しばらく前" };
 
-/** ko "방금 전" · en "just now" · zh "刚刚" */
+/** ko "방금 전" · en "just now" · zh "刚刚" · ja "たった今" */
 export function formatJustNow(locale: string): string {
   return JUST_NOW[locale] ?? JUST_NOW.en;
 }
 
-/** ko "오래전" · en "a while ago" · zh "很久以前" */
+/** ko "오래전" · en "a while ago" · zh "很久以前" · ja "しばらく前" */
 export function formatLongAgo(locale: string): string {
   return LONG_AGO[locale] ?? LONG_AGO.en;
 }
