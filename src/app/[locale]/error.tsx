@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { ErrorState } from "@/common/components/page-state";
 
 interface ErrorPageProps {
@@ -11,15 +12,18 @@ interface ErrorPageProps {
 }
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
+  const t = useTranslations("Page");
+  const common = useTranslations("Common");
   useEffect(() => {
     console.error(error);
   }, [error]);
 
   return (
     <ErrorState
-      title="페이지를 불러오지 못했어요."
-      description="일시적인 문제가 발생했습니다."
+      title={t("errorTitle")}
+      description={t("errorDescription")}
       onRetry={reset}
+      retryLabel={common("retry")}
     />
   );
 }
