@@ -4,6 +4,7 @@ import type {
 } from "@/common/components/gnb/gnb.types";
 import type { UserRole } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
+import { formatJustNow, formatLongAgo, formatTimeAgo } from "@/common/utils/date-format";
 
 import type { NotificationApiItem, NotificationType } from "./notification.types";
 
@@ -104,15 +105,17 @@ function resolveHref(item: NotificationApiItem, role: UserRole): string | undefi
 /**
  * BE 알림 응답을 `Gnb`가 그리는 순수 표시용 타입으로 변환합니다.
  * `Gnb`/`GnbNotificationMenu`는 API를 모르는 공통 컴포넌트이므로 변환은 항상 이 경계에서 합니다.
+ * content는 BE가 만든 문장 그대로 표시하고, 상대 시간만 현재 locale로 만듭니다.
  */
 export function toGnbNotificationItem(
   item: NotificationApiItem,
   role: UserRole,
+  locale = "ko",
 ): GnbNotificationItem {
   return {
     id: item.id,
     segments: buildSegments(item.content, item.type),
-    timeAgo: formatNotificationTimeAgo(item.createdAt),
+    timeAgo: formatNotificationTimeAgo(item.createdAt, locale),
     href: resolveHref(item, role),
     isRead: item.readAt !== null,
   };
@@ -131,29 +134,29 @@ const MONTH_MS = 30 * DAY_MS;
  * `NotificationProvider`가 매 분(`useNotificationTimeTick`) 재계산을 트리거해줘야 실제로
  * 시간이 흘러도 값이 갱신된다 — 이 함수 자체는 순수 계산만 하고 언제 다시 호출할지는 모른다.
  */
-function formatNotificationTimeAgo(dateString: string): string {
+function formatNotificationTimeAgo(dateString: string, locale: string): string {
   const createdAt = new Date(dateString);
   const difference = Date.now() - createdAt.getTime();
 
   if (difference < MINUTE_MS) {
-    return "방금 전";
+    return formatJustNow(locale);
   }
 
   if (difference < HOUR_MS) {
-    return `${Math.floor(difference / MINUTE_MS)}분 전`;
+    return formatTimeAgo(Math.floor(difference / MINUTE_MS), "minute", locale);
   }
 
   if (difference < DAY_MS) {
-    return `${Math.floor(difference / HOUR_MS)}시간 전`;
+    return formatTimeAgo(Math.floor(difference / HOUR_MS), "hour", locale);
   }
 
   if (difference < WEEK_MS) {
-    return `${Math.floor(difference / DAY_MS)}일 전`;
+    return formatTimeAgo(Math.floor(difference / DAY_MS), "day", locale);
   }
 
   if (difference < MONTH_MS) {
-    return `${Math.floor(difference / WEEK_MS)}주 전`;
+    return formatTimeAgo(Math.floor(difference / WEEK_MS), "week", locale);
   }
 
-  return "오래전";
+  return formatLongAgo(locale);
 }

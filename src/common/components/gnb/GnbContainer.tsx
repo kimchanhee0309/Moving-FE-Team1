@@ -1,8 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useTranslations } from "next-intl";
+
 import { useNotificationBell } from "@/common/notification/NotificationBellContext";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useRouter } from "@/i18n/navigation";
+
 import { Gnb } from "./Gnb";
 
 /**
@@ -12,6 +15,7 @@ import { Gnb } from "./Gnb";
  * API를 모르는 순수 표시 컴포넌트라는 공통 컴포넌트 원칙(AGENTS.md 6번)을 지키기 위함입니다.
  */
 export function GnbContainer() {
+  const t = useTranslations("Common");
   const router = useRouter();
   const { user, isPending, logout } = useAuth();
   const isInitialSessionLoading = isPending && !user;
@@ -46,6 +50,6 @@ export function GnbContainer() {
         <Gnb isAuthenticated={false} isLoading={isInitialSessionLoading} />
       )}
     </div>
-    {logout.isError && <p role="alert" className="p-4 text-center text-(--primary-400)">로그아웃하지 못했습니다. 다시 시도해 주세요.</p>}
+    {logout.isError && <p role="alert" className="p-4 text-center text-(--primary-400)">{t("logoutError")}</p>}
   </>;
 }

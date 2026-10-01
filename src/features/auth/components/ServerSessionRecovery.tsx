@@ -1,11 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 
 import { useAuth } from "@/common/auth/AuthContext";
 import { recoverServerSession } from "@/common/auth/recover-server-session";
 import type { UserRole } from "@/common/auth/types";
+import { useRouter } from "@/i18n/navigation";
+
 import { AuthGuard } from "./AuthGuard";
 
 interface ServerSessionRecoveryProps {
@@ -23,6 +25,8 @@ interface ServerSessionRecoveryProps {
  * 서버 재조회에도 쿠키가 전달되지 않으면 수동 재시도를 안내해 무한 새로고침을 막습니다.
  */
 export function ServerSessionRecovery({ role, hasServerAccess, shouldRecoverSession, children }: ServerSessionRecoveryProps) {
+  const t = useTranslations("Auth");
+  const common = useTranslations("Common");
   const { refetch } = useAuth();
   const router = useRouter();
   const [isTransitionPending, startTransition] = useTransition();
@@ -59,16 +63,16 @@ export function ServerSessionRecovery({ role, hasServerAccess, shouldRecoverSess
   }, [hasServerAccess, recover, shouldRecoverSession]);
 
   if (!hasServerAccess && (isChecking || isTransitionPending)) {
-    return <p role="status" className="p-8 text-center">로그인 정보를 다시 확인하고 있습니다.</p>;
+    return <p role="status" className="p-8 text-center">{t("rechecking")}</p>;
   }
 
   return <AuthGuard role={role}>
     {hasServerAccess ? children : <div role="alert" className="p-8 text-center">
       <p>{error instanceof TypeError
-        ? "서버에 연결하지 못했습니다. 네트워크 연결을 확인해 주세요."
-        : "서버에서 인증 정보를 확인하지 못했습니다. 다시 확인해 주세요."}</p>
+        ? t("networkError")
+        : t("serverSessionFailed")}</p>
       <button type="button" className="underline" disabled={isChecking || isTransitionPending}
-        onClick={() => { setError(null); setIsChecking(true); void recover(); }}>다시 확인</button>
+        onClick={() => { setError(null); setIsChecking(true); void recover(); }}>{common("checkAgain")}</button>
     </div>}
   </AuthGuard>;
 }

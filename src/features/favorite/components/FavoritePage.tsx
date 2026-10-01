@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 import { ApiError } from "@/common/api/error";
 import { MoverSearchCard } from "@/common/components/MoverSearch";
 import { ROUTES } from "@/common/constants/routes";
+import { Link } from "@/i18n/navigation";
 
 import {
   useFavoriteMovers,
@@ -88,6 +89,8 @@ function FavoriteCardSelectControl({
   moverName: string;
   onChange: (isSelected: boolean) => void;
 }) {
+  const t = useTranslations("Quote");
+
   return (
     <div
       className="absolute top-3 right-3 z-20 flex size-14 cursor-default items-center justify-center min-[744px]:top-4 min-[744px]:right-5"
@@ -105,7 +108,7 @@ function FavoriteCardSelectControl({
       }}
     >
       <label className="relative flex size-5 cursor-pointer items-center justify-center">
-        <span className="sr-only">{moverName} 기사님 선택</span>
+        <span className="sr-only">{t("selectMover", { name: moverName })}</span>
         <input
           type="checkbox"
           checked={checked}
@@ -152,6 +155,9 @@ function FavoriteCardSelectControl({
  * 기사님 찾기 찜 토글은 연동하지 않습니다.
  */
 export function FavoritePage() {
+  const t = useTranslations("Favorite");
+  const quote = useTranslations("Quote");
+  const common = useTranslations("Common");
   const favoritesQuery = useFavoriteMovers();
   const removeMutation = useRemoveFavoriteMovers();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -236,10 +242,12 @@ export function FavoritePage() {
         );
       },
       onError: (mutationError) => {
+        // FAVORITE_REMOVE_FAILED는 hook이 만든 일괄 실패 오류라 서버 문구 대신 현재 locale 문구를 씁니다.
         const message =
-          mutationError instanceof ApiError
+          mutationError instanceof ApiError &&
+          mutationError.code !== "FAVORITE_REMOVE_FAILED"
             ? mutationError.message
-            : "선택한 찜을 삭제하지 못했습니다. 다시 시도해 주세요.";
+            : t("removeError");
         setActionError(message);
       },
     });
@@ -248,7 +256,7 @@ export function FavoritePage() {
   const listErrorMessage =
     error instanceof ApiError
       ? error.message
-      : "찜 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+      : t("loadError");
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -260,7 +268,7 @@ export function FavoritePage() {
         */}
         <div className="mx-auto w-full max-w-[1920px] px-6 min-[744px]:px-18 min-[1200px]:px-40">
           <h1 className="text-2xl-semibold text-[var(--black-500)] max-[743px]:text-xl-bold">
-            찜한 기사님
+            {t("title")}
           </h1>
         </div>
       </header>
@@ -272,7 +280,7 @@ export function FavoritePage() {
               checked={isAllSelected && loadedCount > 0}
               disabled={loadedCount === 0 || isBusy || isPending}
               onChange={handleToggleSelectAll}
-              aria-label="전체선택"
+              aria-label={t("selectAll")}
             />
             <button
               type="button"
@@ -286,7 +294,7 @@ export function FavoritePage() {
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
               ].join(" ")}
             >
-              전체선택({selectedCount}/{loadedCount})
+              {t("selectAllCount", { selected: selectedCount, total: loadedCount })}
             </button>
           </div>
 
@@ -303,7 +311,7 @@ export function FavoritePage() {
                 : "cursor-not-allowed text-[var(--gray-400)]",
             ].join(" ")}
           >
-            {isBusy ? "삭제 중..." : "선택 항목 삭제"}
+            {isBusy ? t("deleting") : t("deleteSelected")}
           </button>
         </div>
 
@@ -318,7 +326,7 @@ export function FavoritePage() {
             role="status"
             className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]"
           >
-            찜한 기사님을 불러오는 중입니다.
+            {t("loading")}
           </p>
         ) : isError ? (
           <section
@@ -341,7 +349,7 @@ export function FavoritePage() {
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
               ].join(" ")}
             >
-              다시 시도
+              {common("retry")}
             </button>
           </section>
         ) : isEmpty ? (
@@ -350,7 +358,7 @@ export function FavoritePage() {
             aria-live="polite"
           >
             <p className="text-lg-regular text-center text-[var(--input-placeholder)] min-[744px]:text-2xl-regular">
-              찜한 기사님이 없어요!
+              {t("empty")}
             </p>
             <Link
               href={ROUTES.PUBLIC.MOVER_SEARCH}
@@ -362,7 +370,7 @@ export function FavoritePage() {
                 "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
               ].join(" ")}
             >
-              기사님 찾으러 가기
+              {t("findMover")}
             </Link>
           </section>
         ) : (
@@ -402,7 +410,7 @@ export function FavoritePage() {
                     */}
                     <Link
                       href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
-                      aria-label={`${mover.moverName} 기사님 상세 보기`}
+                      aria-label={quote("detailLinkMover", { name: mover.moverName })}
                       className="absolute inset-y-0 left-0 right-16 z-10 cursor-pointer rounded-l-2xl min-[744px]:rounded-l-[20px]"
                     />
                     <Link
@@ -419,7 +427,7 @@ export function FavoritePage() {
             <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
             {isFetchingNextPage ? (
               <p className="text-md-regular py-4 text-center text-[var(--gray-400)]">
-                더 불러오는 중이에요.
+                {t("loadingMore")}
               </p>
             ) : null}
           </>

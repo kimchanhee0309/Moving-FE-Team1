@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { SERVICE_TYPE } from "@/common/constants/domain";
 
@@ -10,29 +11,29 @@ import {
 } from "./MoveTypeChip.types";
 
 interface MoveTypeChipVisual {
-  label: string;
+  labelKey: "SMALL" | "HOME" | "OFFICE" | "designated";
   iconSrc: string;
   colorClassName: string;
 }
 
 const CHIP_VISUAL: Record<MoveTypeChipVariant, MoveTypeChipVisual> = {
   [SERVICE_TYPE.SMALL]: {
-    label: "소형이사",
+    labelKey: "SMALL",
     iconSrc: "/icons/ic-solid-box.svg",
     colorClassName: "bg-[var(--primary-100)] text-[var(--primary-400)]",
   },
   [SERVICE_TYPE.HOME]: {
-    label: "가정이사",
+    labelKey: "HOME",
     iconSrc: "/icons/common-chip-mypage/ic-solid-home.svg",
     colorClassName: "bg-[var(--primary-100)] text-[var(--primary-400)]",
   },
   [SERVICE_TYPE.OFFICE]: {
-    label: "사무실이사",
+    labelKey: "OFFICE",
     iconSrc: "/icons/ic-solid-company.svg",
     colorClassName: "bg-[var(--primary-100)] text-[var(--primary-400)]",
   },
   [DESIGNATED_REQUEST_CHIP]: {
-    label: "지정 견적 요청",
+    labelKey: "designated",
     iconSrc: "/icons/ic-solid-document.svg",
     colorClassName:
       "bg-[var(--secondary-red-100)] text-[var(--secondary-red-200)]",
@@ -60,6 +61,7 @@ export function MoveTypeChip({
   className,
   ...spanProps
 }: MoveTypeChipProps) {
+  const t = useTranslations("MoveType");
   const visual = CHIP_VISUAL[variant];
 
   return (
@@ -79,7 +81,7 @@ export function MoveTypeChip({
       {isLoading ? (
         <span
           className="h-5 w-14 animate-pulse rounded bg-current opacity-15"
-          aria-label="Chip 불러오는 중"
+          aria-label={t("chipLoading")}
         />
       ) : (
         <>
@@ -91,7 +93,7 @@ export function MoveTypeChip({
             className="size-5 shrink-0 object-contain"
             aria-hidden="true"
           />
-          <span>{visual.label}</span>
+          <span>{t(visual.labelKey)}</span>
         </>
       )}
     </span>

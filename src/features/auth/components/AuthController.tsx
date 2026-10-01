@@ -1,11 +1,13 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 
 import { beginSocialLogin } from "../auth.api";
 import type { AuthScreenProps, SocialProvider } from "../auth.types";
-import { resolveCredentialsPath, safeAuthRedirect } from "../auth.utils";
+import { authNavigationTarget, localizedAuthRedirect, resolveCredentialsPath } from "../auth.utils";
+import { ROUTES } from "@/common/constants/routes";
 import { useAuth } from "../hooks/useAuth";
 import { AuthForm } from "./AuthForm";
 
@@ -17,10 +19,14 @@ import { AuthForm } from "./AuthForm";
  */
 export function AuthController(props: AuthScreenProps) {
   const router = useRouter();
+  const locale = useLocale();
   const { credentials } = useAuth();
   const socialMutation = useMutation({
     mutationFn: (provider: SocialProvider) => beginSocialLogin(
-      provider, props.role, safeAuthRedirect(props.redirectTo),
+      provider, props.role, localizedAuthRedirect(
+        props.redirectTo ?? (props.role === "MOVER" ? ROUTES.MOVER.MY_PAGE : ROUTES.PUBLIC.MOVER_SEARCH),
+        locale,
+      ),
     ),
   });
 
@@ -36,7 +42,8 @@ export function AuthController(props: AuthScreenProps) {
       const { user } = await credentials.mutateAsync(props.mode === "signup"
         ? { ...input, mode: "signup", name: values.name, phone: values.phone }
         : { ...input, mode: "login" });
-      router.replace(resolveCredentialsPath(props.mode, user, props.redirectTo));
+      const target = authNavigationTarget(resolveCredentialsPath(props.mode, user, props.redirectTo), locale);
+      router.replace(target.href, { locale: target.locale });
     }}
     onSocialLogin={async (provider) => {
       const { url } = await socialMutation.mutateAsync(provider);

@@ -1,8 +1,10 @@
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useEffect, useRef } from "react";
 
 import type { GnbMobileMenuProps } from "./gnb.types";
+import { useGnbLabel } from "./useGnbLabel";
 
 const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
@@ -19,6 +21,8 @@ export function GnbMobileMenu({
   onNavigate,
   onClose,
 }: GnbMobileMenuProps) {
+  const t = useTranslations("Common");
+  const navLabel = useGnbLabel();
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,14 +72,14 @@ export function GnbMobileMenu({
         ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label="전체 메뉴"
+        aria-label={t("fullMenu")}
         className="absolute inset-y-0 right-0 flex w-55 max-w-[85vw] flex-col overflow-y-auto bg-(--gray-50)"
       >
         <div className="flex h-13.5 shrink-0 items-center justify-end border-b border-(--line-100) px-4">
           <button
             type="button"
             onClick={onClose}
-            aria-label="메뉴 닫기"
+            aria-label={t("closeMenu")}
             className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 ${FOCUS_RING}`}
           >
             <Image src="/images/gnb/icon-x.svg" alt="" width={24} height={24} className="size-6" />
@@ -92,14 +96,14 @@ export function GnbMobileMenu({
                   onClick={onNavigate}
                   className={`text-lg-medium block px-5 py-6 text-(--black-500)! no-underline hover:bg-(--background-200) ${FOCUS_RING}`}
                 >
-                  {item.label}
+                  {navLabel(item.label)}
                 </Link>
               </li>
             ))}
           </ul>
 
           {isAuthLoading ? (
-            <div role="status" aria-label="로그인 정보 확인 중" className="px-5 py-6">
+            <div role="status" aria-label={t("checkingLogin")} className="px-5 py-6">
               <div aria-hidden="true" className="h-12 animate-pulse rounded-xl bg-(--gray-100)" />
             </div>
           ) : !isAuthenticated ? (
@@ -109,7 +113,7 @@ export function GnbMobileMenu({
                 onClick={onNavigate}
                 className={`text-lg-semibold block rounded-xl bg-(--primary-400) px-4 py-3.5 text-center text-(--gray-50)! no-underline hover:bg-(--primary-500) ${FOCUS_RING}`}
               >
-                로그인
+                {t("login")}
               </Link>
             </div>
           ) : null}

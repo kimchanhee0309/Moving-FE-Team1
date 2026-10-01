@@ -7,6 +7,11 @@ import { authKeys } from "./auth.keys";
 const PROFILE_COMPLETION_CONFIRMATION_ERROR =
   "프로필 등록 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.";
 
+/** assertProfileCompleted가 던진 오류인지 확인해 화면이 현재 locale 문구로 바꿀 수 있게 합니다. */
+export function isProfileCompletionError(error: unknown): boolean {
+  return error instanceof Error && error.message === PROFILE_COMPLETION_CONFIRMATION_ERROR;
+}
+
 /** 프로필 저장 뒤 최신 세션이 완료 상태를 명시적으로 확인한 경우에만 다음 화면 진입을 허용합니다. */
 export function assertProfileCompleted(
   user: Pick<AuthUser, "profileCompleted"> | null,

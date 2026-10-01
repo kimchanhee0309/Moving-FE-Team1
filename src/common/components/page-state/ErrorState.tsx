@@ -1,23 +1,24 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import styles from "./PageState.module.css";
 
 interface ErrorStateProps {
   title?: string;
   description?: string;
   onRetry?: () => void;
+  retryLabel?: string;
 }
 
-export function ErrorState({
-  title = "문제가 발생했어요.",
-  description = "잠시 후 다시 시도해 주세요.",
-  onRetry,
-}: ErrorStateProps) {
+export function ErrorState({ title, description, onRetry, retryLabel }: ErrorStateProps) {
+  const t = useTranslations("Common");
+
   return (
     <section className={styles.container} role="alert">
-      <h2 className={`${styles.title} text-xl-semibold`}>{title}</h2>
+      <h2 className={`${styles.title} text-xl-semibold`}>{title ?? t("errorTitle")}</h2>
 
-      <p className={`${styles.description} text-md-regular`}>{description}</p>
+      <p className={`${styles.description} text-md-regular`}>{description ?? t("errorDescription")}</p>
 
       {onRetry && (
         <button
@@ -25,7 +26,7 @@ export function ErrorState({
           className={`${styles.button} text-lg-semibold`}
           onClick={onRetry}
         >
-          다시 시도
+          {retryLabel ?? t("retry")}
         </button>
       )}
     </section>

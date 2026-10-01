@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import type { PaginationProps, PaginationSize } from "./Pagination.types";
 
@@ -82,8 +83,9 @@ export function Pagination({
   isLoading = false,
   disabled = false,
   className,
-  ariaLabel = "페이지 이동",
+  ariaLabel,
 }: PaginationProps) {
+  const t = useTranslations("Common");
   const normalizedTotalPages = Math.max(0, Math.trunc(totalPages));
 
   if (normalizedTotalPages <= 0) {
@@ -109,13 +111,13 @@ export function Pagination({
 
   return (
     <nav
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? t("pagination")}
       aria-busy={isLoading || undefined}
       className={["flex items-center gap-2", className].filter(Boolean).join(" ")}
     >
       <button
         type="button"
-        aria-label="이전 페이지"
+        aria-label={t("previousPage")}
         disabled={isInteractionDisabled || safeCurrentPage === 1}
         className={buttonClassName}
         onClick={() => onPageChange(safeCurrentPage - 1)}
@@ -149,7 +151,7 @@ export function Pagination({
           <button
             key={item}
             type="button"
-            aria-label={`${item}페이지`}
+            aria-label={t("pageNumber", { page: item })}
             aria-current={isCurrentPage ? "page" : undefined}
             disabled={isInteractionDisabled}
             className={`${buttonClassName} ${
@@ -166,7 +168,7 @@ export function Pagination({
 
       <button
         type="button"
-        aria-label="다음 페이지"
+        aria-label={t("nextPage")}
         disabled={isInteractionDisabled || safeCurrentPage === normalizedTotalPages}
         className={buttonClassName}
         onClick={() => onPageChange(safeCurrentPage + 1)}

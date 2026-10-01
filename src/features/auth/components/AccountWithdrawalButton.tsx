@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 
@@ -11,6 +12,7 @@ import {
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { Modal } from "@/common/components/MoverModal/Modal";
+import { useValidationMessage } from "@/common/validation/useValidationMessage";
 
 import { useAuth } from "../hooks/useAuth";
 
@@ -29,6 +31,8 @@ export function AccountWithdrawalButton({
   className = "",
   buttonClassName = "",
 }: AccountWithdrawalButtonProps) {
+  const t = useTranslations("Withdrawal");
+  const translateValidation = useValidationMessage();
   const { withdrawal } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -52,13 +56,13 @@ export function AccountWithdrawalButton({
   };
 
   const currentPasswordError =
-    getCurrentPasswordMismatchError(withdrawal.error) ??
+    translateValidation(getCurrentPasswordMismatchError(withdrawal.error)) ??
     (withdrawal.error instanceof ApiError && withdrawal.error.code === "CURRENT_PASSWORD_REQUIRED"
       ? withdrawal.error.message
       : undefined);
   const submissionError =
     withdrawal.error && !currentPasswordError
-      ? getApiErrorMessage(withdrawal.error, "회원 탈퇴를 완료하지 못했습니다.")
+      ? getApiErrorMessage(withdrawal.error, t("error"))
       : undefined;
 
   return (
@@ -74,12 +78,12 @@ export function AccountWithdrawalButton({
           setIsOpen(true);
         }}
       >
-        회원 탈퇴
+        {t("title")}
       </Button>
 
       {isOpen && typeof document !== "undefined" ? createPortal(<Modal
         isOpen={isOpen}
-        title="회원 탈퇴"
+        title={t("title")}
         mobileLayout="centered"
         closeOnBackdrop={!withdrawal.isPending}
         onClose={closeModal}
@@ -91,22 +95,22 @@ export function AccountWithdrawalButton({
           onSubmit={handleSubmit}
         >
           <div className="flex flex-col gap-2 text-[var(--black-300)]">
-            <p className="text-lg-semibold">탈퇴하면 계정과 연결된 서비스 데이터가 삭제됩니다.</p>
+            <p className="text-lg-semibold">{t("description")}</p>
             <p className="text-sm-regular text-[var(--gray-500)]">
-              이메일 계정은 현재 비밀번호를 입력해 주세요. SNS 계정은 비밀번호 없이 탈퇴할 수 있습니다.
+              {t("hint")}
             </p>
           </div>
 
           <Input
             data-autofocus
             name="withdrawalCurrentPassword"
-            label="현재 비밀번호"
+            label={t("password")}
             type="password"
             autoComplete="current-password"
-            placeholder="현재 비밀번호를 입력해 주세요"
+            placeholder={t("passwordPlaceholder")}
             value={currentPassword}
             error={currentPasswordError}
-            helperText="SNS 계정은 비워 두세요."
+            helperText={t("socialHint")}
             disabled={withdrawal.isPending}
             containerClassName="max-w-none"
             onChange={(event) => {
@@ -132,7 +136,7 @@ export function AccountWithdrawalButton({
               disabled={withdrawal.isPending}
               onClick={closeModal}
             >
-              취소
+              {t("cancel")}
             </Button>
             <Button
               type="submit"
@@ -140,7 +144,7 @@ export function AccountWithdrawalButton({
               isLoading={withdrawal.isPending}
               className="enabled:bg-[var(--secondary-red-200)]! enabled:hover:bg-[var(--secondary-red-200)]!"
             >
-              탈퇴하기
+              {t("submit")}
             </Button>
           </div>
         </form>

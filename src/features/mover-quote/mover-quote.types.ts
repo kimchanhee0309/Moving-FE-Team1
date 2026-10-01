@@ -5,7 +5,8 @@
  * - 백엔드 응답 구조를 그대로 표현
  *
  * 화면 타입:
- * - 날짜 포맷 등 화면에 표시하기 좋게 변환된 데이터
+ * - 화면에서 쓰기 좋게 이름을 정리한 데이터
+ * - 이사일은 locale마다 표기가 달라 ISO 원문을 두고 컴포넌트에서 포맷
  *
  * 이 파일은 API 요청, 화면 렌더링, TanStack Query 상태를 담당하지 않음
  */
@@ -91,7 +92,7 @@ export interface RejectedRequestApiPage {
  * 보낸 견적 카드에서 사용하는 화면 전용 데이터
  *
  * API의 quoteId는 컴포넌트에서 공통적으로 사용할 수 있도록 id로 바꾸고,
- * moveDate는 한국어 표시 형식으로 변환된 값을 받음
+ * moveDate는 ISO 원문이며 카드에서 현재 locale로 포맷함
  */
 export interface MoverQuoteCardData {
   id: string;

@@ -1,21 +1,14 @@
 "use client";
 
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import type { ButtonHTMLAttributes } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
-import { SERVICE_TYPE } from "@/common/constants/domain";
 import type { ServiceType } from "@/common/constants/domain";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 
 import { toDisplayRegionAddress } from "../review.utils";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
-
-const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
@@ -25,22 +18,8 @@ function cn(...classNames: ClassValue[]): string {
   return classNames.filter(Boolean).join(" ");
 }
 
-function formatPrice(price: number): string {
-  return `${price.toLocaleString("ko-KR")}원`;
-}
-
-function formatMoveDate(date: string): string {
-  const parsedDate = new Date(date);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "";
-  }
-
-  const year = parsedDate.getFullYear();
-  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
-  const day = String(parsedDate.getDate()).padStart(2, "0");
-
-  return `${year}년 ${month}월 ${day}일 (${WEEKDAY_LABELS[parsedDate.getDay()]})`;
+function formatMoveDate(date: string, locale: string): string {
+  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale, SERVICE_TIME_ZONE);
 }
 
 type ChipVariant = "service" | "designated";
@@ -97,6 +76,7 @@ interface AvatarProps {
 }
 
 function Avatar({ src, moverName, className }: AvatarProps) {
+  const t = useTranslations("Quote");
   const isDefaultImage = !src;
   const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
 
@@ -109,7 +89,7 @@ function Avatar({ src, moverName, className }: AvatarProps) {
     >
       <Image
         src={profileSrc}
-        alt={`${moverName} 기사님 프로필`}
+        alt={t("moverProfile", { name: moverName })}
         fill
         sizes="(min-width: 1280px) 150px, (min-width: 768px) 120px, 96px"
         quality={isDefaultImage ? 100 : 75}
@@ -132,6 +112,8 @@ function WriteReviewButton({
   className,
   ...restProps
 }: WriteReviewButtonProps) {
+  const t = useTranslations("Review");
+
   return (
     <button
       type="button"
@@ -148,7 +130,7 @@ function WriteReviewButton({
       )}
       {...restProps}
     >
-      {isReviewWritten ? "리뷰 작성완료" : "리뷰 작성하기"}
+      {isReviewWritten ? t("written") : t("write")}
     </button>
   );
 }
@@ -226,10 +208,12 @@ function PriceBlock({
   labelClassName,
   valueClassName,
 }: PriceBlockProps) {
+  const t = useTranslations("Quote");
+
   return (
     <div className={cn("flex flex-col", className)}>
-      <span className={labelClassName}>견적 금액</span>
-      <span className={valueClassName}>{formatPrice(price)}</span>
+      <span className={labelClassName}>{t("price")}</span>
+      <span className={valueClassName}>{t("priceValue", { price })}</span>
     </div>
   );
 }
@@ -263,10 +247,13 @@ export function ReviewableCard({
   onWriteReview,
   className,
 }: ReviewableCardProps) {
+  const t = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const locale = useLocale();
   const chipGroup = (
     <>
-      <Chip variant="service">{SERVICE_TYPE_LABEL[serviceType]}</Chip>
-      {isDesignatedRequest && <Chip variant="designated">지정 견적 요청</Chip>}
+      <Chip variant="service">{moveType(serviceType)}</Chip>
+      {isDesignatedRequest && <Chip variant="designated">{moveType("designated")}</Chip>}
     </>
   );
 
@@ -291,7 +278,7 @@ export function ReviewableCard({
                   <MovingBadge />
 
                   <p className="max-w-full truncate text-[16px]/[26px] font-semibold text-(--black-300) min-[744px]:text-[18px]/[26px] min-[744px]:font-bold">
-                    {moverName} 기사님
+                    {t("moverName", { name: moverName })}
                   </p>
                 </div>
 
@@ -322,17 +309,17 @@ export function ReviewableCard({
           <div className="flex min-w-0 flex-1 flex-col gap-4 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-4 min-[1200px]:gap-5">
             <div className="flex min-w-0 flex-1 gap-4 min-[744px]:contents">
               <MoveInfoItem
-                label="출발지"
+                label={t("from")}
                 value={toDisplayRegionAddress(departure)}
               />
               <MoveInfoDivider className="hidden min-[1200px]:block" />
               <MoveInfoItem
-                label="도착지"
+                label={t("to")}
                 value={toDisplayRegionAddress(arrival)}
               />
             </div>
             <MoveInfoDivider className="hidden min-[744px]:block" />
-            <MoveInfoItem label="이사일" value={formatMoveDate(movedAt)} />
+            <MoveInfoItem label={t("moveDate")} value={formatMoveDate(movedAt, locale)} />
           </div>
 
           <MoveInfoDivider className="hidden min-[744px]:block min-[1200px]:hidden" />
@@ -353,10 +340,10 @@ export function ReviewableCard({
 
         <div className="flex items-center justify-between border-t border-(--line-200) pt-5 min-[744px]:hidden">
           <span className="text-[14px]/[24px] font-medium text-(--gray-400)">
-            견적 금액
+            {t("price")}
           </span>
           <span className="text-[18px]/[26px] font-bold text-(--black-400)">
-            {formatPrice(price)}
+            {t("priceValue", { price })}
           </span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/common/components/button";
@@ -26,6 +27,7 @@ export function CustomerProfileForm({
   submissionError,
   onSubmit,
 }: CustomerProfileFormProps) {
+  const t = useTranslations("Profile");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImageError, setProfileImageError] = useState<string | null>(null);
   const [serviceTypeIds, setServiceTypeIds] = useState(initialValues?.serviceTypeIds ?? []);
@@ -56,7 +58,7 @@ export function CustomerProfileForm({
     setIsSubmitting(true);
     try {
       await onSubmit(values);
-      setStatusMessage(mode === "register" ? "프로필이 등록되었습니다." : "프로필이 수정되었습니다.");
+      setStatusMessage(t(mode === "register" ? "registered" : "updated"));
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
     } finally {
@@ -76,10 +78,10 @@ export function CustomerProfileForm({
           <header className="w-full min-[1200px]:max-w-[640px]">
             <div className="flex flex-col gap-2 min-[1200px]:gap-7">
               <h1 className="text-xl-bold text-[var(--black-400)] min-[1200px]:!text-[32px] min-[1200px]:!leading-[42px] min-[1200px]:!font-bold">
-                {mode === "register" ? "프로필 등록" : "프로필 수정"}
+                {t(mode === "register" ? "registerTitle" : "editTitle")}
               </h1>
               <p className="text-md-regular text-[var(--gray-500)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px]">
-                추가 정보를 입력하여 회원가입을 완료해주세요.
+                {t("registerHint")}
               </p>
             </div>
             <hr className="mt-6 border-0 border-t border-[var(--line-100)] min-[1200px]:mt-7" />
@@ -99,8 +101,8 @@ export function CustomerProfileForm({
             <hr className="w-full border-0 border-t border-[var(--line-100)]" />
 
             <fieldset>
-              <legend className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">이용 서비스</legend>
-              <p className="text-xs-regular mt-1 text-[var(--gray-400)] min-[1200px]:!text-[16px] min-[1200px]:!leading-[26px]">* 이용 서비스는 중복 선택 가능하며, 언제든 수정 가능해요!</p>
+              <legend className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">{t("customerServices")}</legend>
+              <p className="text-xs-regular mt-1 text-[var(--gray-400)] min-[1200px]:!text-[16px] min-[1200px]:!leading-[26px]">{t("customerServicesHint")}</p>
               <ProfileMultiSelectChipGroup
                 options={PROFILE_SERVICE_OPTIONS}
                 values={serviceTypeIds}
@@ -108,7 +110,7 @@ export function CustomerProfileForm({
                 disabled={isBusy}
                 isInvalid={hasServiceError}
                 className="mt-4 min-[1200px]:mt-6 min-[1200px]:gap-[14px]"
-                ariaLabel="이용 서비스 선택"
+                ariaLabel={t("customerServicesSelect")}
                 ariaDescribedBy={hasServiceError ? "customer-service-error" : undefined}
                 onValuesChange={(nextValues) => {
                   setServiceTouched(true);
@@ -117,7 +119,7 @@ export function CustomerProfileForm({
               />
               {hasServiceError ? (
                 <p id="customer-service-error" role="alert" className="text-xs-medium mt-2 text-[var(--primary-400)]">
-                  이용 서비스를 한 개 이상 선택해 주세요.
+                  {t("customerServicesError")}
                 </p>
               ) : null}
             </fieldset>
@@ -125,8 +127,8 @@ export function CustomerProfileForm({
             <hr className="w-full border-0 border-t border-[var(--line-100)]" />
 
             <fieldset>
-              <legend className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">내가 사는 지역</legend>
-              <p className="text-xs-regular mt-1 text-[var(--gray-400)] min-[1200px]:!text-[16px] min-[1200px]:!leading-[26px]">* 내가 사는 지역은 언제든 수정 가능해요!</p>
+              <legend className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">{t("livingRegion")}</legend>
+              <p className="text-xs-regular mt-1 text-[var(--gray-400)] min-[1200px]:!text-[16px] min-[1200px]:!leading-[26px]">{t("livingRegionHint")}</p>
               <ProfileSingleSelectChipGroup
                 name="customer-region"
                 options={PROFILE_REGION_OPTIONS}
@@ -136,7 +138,7 @@ export function CustomerProfileForm({
                 isInvalid={hasRegionError}
                 required
                 className="mt-4 !gap-2 min-[1200px]:mt-6 min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]"
-                ariaLabel="거주 지역 선택"
+                ariaLabel={t("livingRegionSelect")}
                 ariaDescribedBy={hasRegionError ? "customer-region-error" : undefined}
                 onValueChange={(nextRegion) => {
                   setRegionTouched(true);
@@ -145,7 +147,7 @@ export function CustomerProfileForm({
               />
               {hasRegionError ? (
                 <p id="customer-region-error" role="alert" className="text-xs-medium mt-2 text-[var(--primary-400)]">
-                  지역을 한 개 이상 선택해 주세요.
+                  {t("livingRegionError")}
                 </p>
               ) : null}
             </fieldset>
@@ -172,7 +174,7 @@ export function CustomerProfileForm({
             isLoading={isBusy}
             className="min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:!text-[18px] min-[1200px]:!leading-[26px] min-[1200px]:!font-semibold"
           >
-            {mode === "register" ? "시작하기" : "수정하기"}
+            {t(mode === "register" ? "submit" : "edit")}
           </Button>
         </div>
       </form>

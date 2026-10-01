@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 
@@ -57,9 +58,11 @@ export function AddressSearchModal({
   onSelectAddress,
   onConfirm,
   onClose,
-  searchPlaceholder = "텍스트를 입력해 주세요.",
+  searchPlaceholder,
   className = "",
 }: AddressSearchModalProps) {
+  const t = useTranslations("Address");
+  const common = useTranslations("Common");
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -169,7 +172,7 @@ export function AddressSearchModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label={`${title} 닫기`}
+            aria-label={common("closeTitle", { title })}
             className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
           >
             <CloseIcon className="size-full" />
@@ -194,7 +197,7 @@ export function AddressSearchModal({
                   onSearchSubmit();
                 }
               }}
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholder ?? t("searchPlaceholder")}
               aria-label={title}
               className="text-2lg-regular min-w-0 flex-1 appearance-none bg-transparent text-(--black-400)! outline-none focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-(--black-400)! placeholder:text-(--gray-300) [&::-webkit-search-cancel-button]:appearance-none"
             />
@@ -202,7 +205,7 @@ export function AddressSearchModal({
               <button
                 type="button"
                 onClick={onSearchClear}
-                aria-label="검색어 지우기"
+                aria-label={common("clearSearch")}
                 className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
               >
                 <ClearCircleIcon className="size-full" />
@@ -211,7 +214,7 @@ export function AddressSearchModal({
             <button
               type="button"
               onClick={onSearchSubmit}
-              aria-label="주소 검색"
+              aria-label={t("search")}
               className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
             >
               <SearchIcon className="size-full" />
@@ -220,24 +223,24 @@ export function AddressSearchModal({
 
           <div
             role="group"
-            aria-label="주소 검색 결과"
+            aria-label={t("results")}
             className="flex max-h-[280px] flex-col gap-4 overflow-y-auto"
           >
             {isLoading ? (
               <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
-                검색하고 있어요...
+                {t("searching")}
               </p>
             ) : null}
 
             {showHint ? (
               <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
-                우편번호, 도로명 또는 지번 주소로 검색해 주세요.
+                {t("hint")}
               </p>
             ) : null}
 
             {showEmptyMessage ? (
               <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
-                검색 결과가 없어요. 다른 주소로 검색해 보세요.
+                {t("empty")}
               </p>
             ) : null}
 
@@ -267,7 +270,7 @@ export function AddressSearchModal({
             selectedAddress ? "bg-(--primary-400)!" : "cursor-not-allowed bg-(--gray-300)!"
           } ${FOCUS_RING}`}
         >
-          선택완료
+          {t("done")}
         </button>
       </div>
     </div>

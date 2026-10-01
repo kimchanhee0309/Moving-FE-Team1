@@ -4,6 +4,7 @@ import type { ChangeEvent } from "react";
 
 import { getProfileSelectionChipClassName } from "./ProfileSelectionChip.styles";
 import type { ProfileSingleSelectChipGroupProps } from "./ProfileSelectionChip.types";
+import { useProfileOptionLabel } from "./useProfileOptionLabel";
 
 /**
  * 일반 유저의 거주 지역처럼 반드시 한 항목만 선택해야 하는 Chip 그룹입니다.
@@ -23,6 +24,7 @@ export function ProfileSingleSelectChipGroup<T extends string>({
   ariaLabel,
   ariaDescribedBy,
 }: ProfileSingleSelectChipGroupProps<T>) {
+  const optionLabel = useProfileOptionLabel();
   const isInteractionDisabled = disabled || isLoading;
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -80,7 +82,7 @@ export function ProfileSingleSelectChipGroup<T extends string>({
                   aria-hidden="true"
                 />
               ) : null}
-              {option.label}
+              {optionLabel(option.value, option.label)}
             </span>
           </label>
         );

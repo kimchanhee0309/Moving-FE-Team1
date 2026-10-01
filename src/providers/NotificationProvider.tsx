@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "next-intl";
 import { useEffect, useMemo, useState, type PropsWithChildren } from "react";
 
 import { NotificationBellContext } from "@/common/notification/NotificationBellContext";
@@ -37,6 +38,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
   // data가 바뀐 시점에 계산된 timeAgo 문자열이 그대로 굳어버려서(예: 실제로는 8분 지났는데
   // 계속 "3시간 전"으로 표시) 드롭다운을 오래 열어두거나 새 알림이 한동안 안 와도 시간 표시가
   // 실제 경과 시간을 따라가지 못한다. 1분마다 강제로 리렌더시켜 재계산되게 한다.
+  const locale = useLocale();
   const [timeTick, setTimeTick] = useState(0);
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     const items = notifications.data?.pages.flatMap((page) => page.items) ?? [];
     const hasUnreadNotification = hasUnread.data ?? false;
     const notificationItems = role
-      ? items.map((item) => toGnbNotificationItem(item, role))
+      ? items.map((item) => toGnbNotificationItem(item, role, locale))
       : [];
 
     return {
@@ -84,7 +86,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     // timeTick은 값 자체를 쓰지 않고 1분마다 재계산(timeAgo 갱신)을 트리거하는 용도로만 넣는다 —
     // exhaustive-deps는 함수 본문에서 안 읽는 값이라 "불필요"하다고 오탐한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifications, hasUnread, role, canUseNotifications, markRead, timeTick]);
+  }, [notifications, hasUnread, role, canUseNotifications, markRead, timeTick, locale]);
 
   return (
     <NotificationBellContext.Provider value={value}>

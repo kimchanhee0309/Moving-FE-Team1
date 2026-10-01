@@ -2,6 +2,7 @@
 
 import { ProfileSelectionChip } from "./ProfileSelectionChip";
 import type { ProfileMultiSelectChipGroupProps } from "./ProfileSelectionChip.types";
+import { useProfileOptionLabel } from "./useProfileOptionLabel";
 
 /**
  * 프로필의 제공 서비스·서비스 가능 지역을 여러 개 선택하는 controlled 그룹입니다.
@@ -19,6 +20,7 @@ export function ProfileMultiSelectChipGroup<T extends string>({
   ariaLabel,
   ariaDescribedBy,
 }: ProfileMultiSelectChipGroupProps<T>) {
+  const optionLabel = useProfileOptionLabel();
   const selectedValues = new Set(values);
 
   return (
@@ -49,7 +51,7 @@ export function ProfileMultiSelectChipGroup<T extends string>({
               );
             }}
           >
-            {option.label}
+            {optionLabel(option.value, option.label)}
           </ProfileSelectionChip>
         );
       })}

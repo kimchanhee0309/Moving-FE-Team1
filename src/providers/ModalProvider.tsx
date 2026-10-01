@@ -10,7 +10,9 @@ import {
   useState,
 } from "react";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 
 import { MODAL_COMPONENTS } from "./modal-registry";
 
@@ -92,6 +94,7 @@ function BareModal({
   ariaLabel,
   ariaLabelledBy,
 }: BareModalProps) {
+  const t = useTranslations("Common");
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -178,7 +181,7 @@ function BareModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={ariaLabelledBy}
-        aria-label={ariaLabelledBy ? undefined : ariaLabel || "알림"}
+        aria-label={ariaLabelledBy ? undefined : ariaLabel || t("dialog")}
         tabIndex={-1}
         className="box-border max-h-[calc(100dvh-48px)] overflow-y-auto rounded-[32px] bg-(--gray-50) outline-none"
       >

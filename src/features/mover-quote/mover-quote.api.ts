@@ -229,28 +229,6 @@ function readRejectedRequestItem(value: unknown): RejectedRequestApiItem {
   };
 }
 
-/**
- * ISO 날짜를 카드용 한국어 날짜로 변환
- *
- * 브라우저의 timezone과 무관하게 서비스 기준인 Asia/Seoul로 표시
- */
-function formatDate(dateString: string): string {
-  const parts = new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).formatToParts(new Date(dateString));
-
-  const year = parts.find((part) => part.type === "year")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
-  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
-
-  return `${year}년 ${month}월 ${day}일 (${weekday})`;
-}
-
 /** 견적 요청일을 상세 화면의 짧은 날짜 형식으로 변환 */
 function formatShortDate(dateString: string): string {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -277,7 +255,7 @@ function toMoverQuoteCardData(item: MoverQuoteApiItem): MoverQuoteCardData {
     isDesignated: item.isDesignated,
     fromAddress: item.fromAddress,
     toAddress: item.toAddress,
-    moveDate: formatDate(item.moveDate),
+    moveDate: item.moveDate,
     price: item.price,
     quoteStatus: item.quoteStatus,
     moveRequestStatus: item.moveRequestStatus,
@@ -296,7 +274,7 @@ function toRejectedRequestCardData(
     isDesignated: item.isDesignated,
     fromAddress: item.fromAddress,
     toAddress: item.toAddress,
-    moveDate: formatDate(item.moveDate),
+    moveDate: item.moveDate,
     reason: item.reason,
     rejectedAt: item.rejectedAt,
   };

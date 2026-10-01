@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import type {
   ReviewListCardProps,
@@ -27,6 +28,7 @@ export function ReviewListCard({
   isLoading = false,
   className,
 }: ReviewListCardProps) {
+  const t = useTranslations("Review");
   const safeRating = Math.min(Math.max(Math.round(rating), 0), STAR_NUMBERS.length);
 
   if (isLoading) {
@@ -39,7 +41,7 @@ export function ReviewListCard({
         ]
           .filter(Boolean)
           .join(" ")}
-        aria-label="리뷰를 불러오는 중"
+        aria-label={t("loadingReview")}
         aria-busy="true"
       >
         <div className="flex flex-col gap-2">
@@ -71,7 +73,7 @@ export function ReviewListCard({
 
         <div
           className="flex items-center gap-0.5"
-          aria-label={`평점 ${safeRating}점`}
+          aria-label={t("ratingAverage", { count: safeRating })}
         >
           {STAR_NUMBERS.map((starNumber) => (
             <Image

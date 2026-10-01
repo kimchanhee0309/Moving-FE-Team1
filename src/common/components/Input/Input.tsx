@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import {
   forwardRef,
   useId,
@@ -89,6 +90,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   },
   ref,
 ) {
+  const t = useTranslations("Common");
   // id가 없는 사용처도 label과 도움말을 안정적으로 연결할 수 있도록 React 고유 id를 생성합니다.
   const generatedId = useId();
   const inputId = id ?? generatedId;
@@ -147,7 +149,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           <button
             type="button"
             className="flex size-8 shrink-0 items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)]"
-            aria-label={isPasswordVisible ? "비밀번호 숨기기" : "비밀번호 보기"}
+            aria-label={t(isPasswordVisible ? "hidePassword" : "showPassword")}
             aria-pressed={isPasswordVisible}
             onClick={() => setIsPasswordVisible((current) => !current)}
           >

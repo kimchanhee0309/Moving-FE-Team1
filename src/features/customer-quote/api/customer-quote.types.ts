@@ -98,6 +98,7 @@ export interface CustomerQuoteListItemView {
   price: number;
 }
 
+/** requestedAt·moveDate는 ISO 원문이며 화면에서 현재 locale로 포맷합니다. */
 export interface CustomerQuoteMoveRequestView {
   id: string;
   serviceType: ServiceType;
@@ -107,6 +108,7 @@ export interface CustomerQuoteMoveRequestView {
   moveDate: string;
 }
 
+/** requestedAt은 언어 중립 숫자 표기("26. 10. 01."), moveDate는 ISO 원문입니다. */
 export interface CustomerQuoteHistoryGroupView {
   id: string;
   requestedAt: string;

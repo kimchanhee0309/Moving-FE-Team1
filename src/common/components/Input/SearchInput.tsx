@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { forwardRef, useId, type ComponentPropsWithoutRef } from "react";
 
 import type { InputSize } from "./Input";
@@ -46,7 +47,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
   function SearchInput(
     {
       id,
-      label = "검색",
+      label: labelProp,
       inputSize = "sm",
       isLoading = false,
       onClear,
@@ -59,6 +60,8 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     },
     ref,
   ) {
+    const t = useTranslations("Common");
+    const label = labelProp ?? t("search");
     // 시각적으로 숨긴 label도 htmlFor로 연결할 수 있도록 안정적인 id를 보장합니다.
     const generatedId = useId();
     const inputId = id ?? generatedId;
@@ -107,7 +110,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         ) : hasValue && onClear ? (
           <button
             type="button"
-            aria-label="검색어 지우기"
+            aria-label={t("clearSearch")}
             className={`flex shrink-0 items-center justify-center rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] ${ICON_FRAME_SIZE_CLASS[inputSize]}`}
             onClick={onClear}
           >

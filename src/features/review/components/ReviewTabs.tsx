@@ -1,14 +1,15 @@
 "use client";
 
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { ROUTES } from "@/common/constants/routes";
+import { Link } from "@/i18n/navigation";
 
 type ReviewTabValue = "writable" | "written";
 
 interface ReviewTabItem {
   id: ReviewTabValue;
-  label: string;
+  labelKey: "writableTab" | "writtenTab";
   href: string;
 }
 
@@ -19,12 +20,12 @@ interface ReviewTabsProps {
 const ITEMS: ReviewTabItem[] = [
   {
     id: "writable",
-    label: "작성 가능한 리뷰",
+    labelKey: "writableTab",
     href: ROUTES.CUSTOMER.REVIEW.CREATE,
   },
   {
     id: "written",
-    label: "내가 작성한 리뷰",
+    labelKey: "writtenTab",
     href: ROUTES.CUSTOMER.REVIEW.WRITTEN,
   },
 ];
@@ -57,9 +58,11 @@ function getTabLabelClassName(isSelected: boolean) {
  * 패딩은 Figma 탭(24/72/360), 초광폭은 max-w-[1920px]로 Desktop 프레임을 넘지 않게 합니다.
  */
 export function ReviewTabs({ value }: ReviewTabsProps) {
+  const t = useTranslations("Review");
+
   return (
     <nav
-      aria-label="리뷰 목록"
+      aria-label={t("tabs")}
       className={[
         "w-full border-b border-[var(--line-100)] bg-[var(--gray-50)]",
         "min-[744px]:shadow-[0_2px_5px_rgba(248,248,248,0.2)]",
@@ -88,7 +91,7 @@ export function ReviewTabs({ value }: ReviewTabsProps) {
               className={getTabClassName(isSelected)}
             >
               <span className={getTabLabelClassName(isSelected)}>
-                {item.label}
+                {t(item.labelKey)}
               </span>
             </Link>
           );

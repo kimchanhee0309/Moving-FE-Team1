@@ -1,14 +1,9 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 const SERVICE_TYPE_ICON: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "/icons/ic-solid-box.svg",
@@ -66,6 +61,8 @@ function MovingBadge() {
 }
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
+  const t = useTranslations("Quote");
+
   if (status === QUOTE_STATUS.CONFIRMED) {
     return (
       <div className="flex shrink-0 items-center justify-center gap-1 rounded-md px-2 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
@@ -78,7 +75,7 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
           unoptimized
         />
         <span className="text-lg-bold whitespace-nowrap text-[var(--primary-400)]">
-          확정견적
+          {t("confirmed")}
         </span>
       </div>
     );
@@ -87,7 +84,7 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
   return (
     <div className="flex shrink-0 items-center justify-center rounded-md px-2 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
       <span className="text-lg-semibold whitespace-nowrap text-[var(--gray-400)]">
-        견적대기
+        {t("pending")}
       </span>
     </div>
   );
@@ -109,10 +106,13 @@ export function QuoteHistoryCard({
   onFavoriteClick,
   className,
 }: QuoteHistoryCardProps) {
-  const serviceTypeLabel = SERVICE_TYPE_LABEL[serviceType];
+  const t = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const serviceTypeLabel = moveType(serviceType);
   const serviceTypeIcon = SERVICE_TYPE_ICON[serviceType];
   const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
-  const priceLabel = `${price.toLocaleString("ko-KR")}원`;
+  const priceLabel = t("priceValue", { price });
+  const displayMessage = message || t("defaultMessage");
   const ratingLabel = rating.toFixed(1);
 
   const favoriteContent = (
@@ -193,10 +193,10 @@ export function QuoteHistoryCard({
                 />
                 <span className="whitespace-nowrap text-[#ff4f64]">
                   <span className="text-sm-semibold min-[660px]:hidden">
-                    지정 견적 요청
+                    {moveType("designated")}
                   </span>
                   <span className="hidden text-md-semibold min-[660px]:inline">
-                    지정 견적 요청
+                    {moveType("designated")}
                   </span>
                 </span>
               </div>
@@ -207,10 +207,10 @@ export function QuoteHistoryCard({
             <div className="flex w-full flex-col items-start min-[660px]:flex-row min-[660px]:items-center min-[660px]:justify-between">
               <p className="text-[var(--black-300)]">
                 <span className="text-lg-semibold min-[660px]:hidden">
-                  {message}
+                  {displayMessage}
                 </span>
                 <span className="hidden text-2lg-semibold min-[660px]:inline">
-                  {message}
+                  {displayMessage}
                 </span>
               </p>
               <div className="hidden min-[660px]:block">
@@ -223,7 +223,7 @@ export function QuoteHistoryCard({
                 <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
                   <Image
                     src={profileSrc}
-                    alt={`${moverName} 기사님 프로필`}
+                    alt={t("moverProfile", { name: moverName })}
                     width={50}
                     height={50}
                     className="size-full object-cover"
@@ -237,10 +237,10 @@ export function QuoteHistoryCard({
                       <MovingBadge />
                       <p className="text-[var(--black-300)]">
                         <span className="text-md-semibold min-[660px]:hidden">
-                          {moverName} 기사님
+                          {t("moverName", { name: moverName })}
                         </span>
                         <span className="hidden text-lg-semibold min-[660px]:inline">
-                          {moverName} 기사님
+                          {t("moverName", { name: moverName })}
                         </span>
                       </p>
                     </div>
@@ -250,7 +250,7 @@ export function QuoteHistoryCard({
                         type="button"
                         onClick={onFavoriteClick}
                         className="flex items-center justify-center gap-0.5"
-                        aria-label="찜하기"
+                        aria-label={t("favorite")}
                       >
                         {favoriteContent}
                       </button>
@@ -287,9 +287,9 @@ export function QuoteHistoryCard({
                     />
 
                     <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
-                      <span className="text-[var(--gray-400)]">경력</span>
+                      <span className="text-[var(--gray-400)]">{t("career")}</span>
                       <span className="text-[var(--black-300)]">
-                        {careerYears}년
+                        {t("careerYears", { count: careerYears })}
                       </span>
                     </div>
 
@@ -300,9 +300,9 @@ export function QuoteHistoryCard({
 
                     <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
                       <span className="text-[var(--black-300)]">
-                        {confirmedCount.toLocaleString("ko-KR")}건
+                        {t("confirmedCount", { count: confirmedCount })}
                       </span>
-                      <span className="text-[var(--gray-400)]">확정</span>
+                      <span className="text-[var(--gray-400)]">{t("confirmedLabel")}</span>
                     </div>
                   </div>
                 </div>
@@ -317,7 +317,7 @@ export function QuoteHistoryCard({
           </div>
 
           <div className="flex items-center gap-3">
-            <p className="text-md-medium text-[var(--gray-500)]">견적 금액</p>
+            <p className="text-md-medium text-[var(--gray-500)]">{t("price")}</p>
             <p className="text-[var(--black-400)]">
               <span className="text-2lg-bold min-[660px]:hidden">{priceLabel}</span>
               <span className="hidden text-2xl-bold min-[660px]:inline">

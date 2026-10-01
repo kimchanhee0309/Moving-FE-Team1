@@ -160,63 +160,6 @@ function formatAddressSummary(address: string): string {
   return addressParts.slice(0, 2).join(" ");
 }
 
-function formatMoveDate(dateString: string): string {
-  const date = new Date(dateString);
-
-  const parts = new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    weekday: "short",
-  }).formatToParts(date);
-
-  const year = parts.find((part) => part.type === "year")?.value ?? "";
-  const month = parts.find((part) => part.type === "month")?.value ?? "";
-  const day = parts.find((part) => part.type === "day")?.value ?? "";
-  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
-
-  return `${year}년 ${month}월 ${day}일 (${weekday})`;
-}
-
-function formatRequestedAt(dateString: string): string {
-  const requestedAt = new Date(dateString);
-  const difference = Date.now() - requestedAt.getTime();
-
-  if (difference < 0) {
-    return "방금 전";
-  }
-
-  const minutes = Math.floor(difference / 60_000);
-
-  if (minutes < 1) {
-    return "방금 전";
-  }
-
-  if (minutes < 60) {
-    return `${minutes}분 전`;
-  }
-
-  const hours = Math.floor(minutes / 60);
-
-  if (hours < 24) {
-    return `${hours}시간 전`;
-  }
-
-  const days = Math.floor(hours / 24);
-
-  if (days < 7) {
-    return `${days}일 전`;
-  }
-
-  return new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "2-digit",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(requestedAt);
-}
-
 function toReceivedRequestViewModel(
   item: ReceivedRequestApiItem,
 ): ReceivedRequestViewModel {
@@ -226,11 +169,9 @@ function toReceivedRequestViewModel(
     serviceType: item.serviceType,
     isDesignated: item.isDesignated,
     requestedAt: item.requestedAt,
-    requestedAtLabel: formatRequestedAt(item.requestedAt),
     departureLabel: formatAddressSummary(item.fromAddress),
     arrivalLabel: formatAddressSummary(item.toAddress),
     moveDate: item.moveDate,
-    moveDateLabel: formatMoveDate(item.moveDate),
   };
 }
 

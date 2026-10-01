@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useEffect, useRef } from "react";
 
 import type { GnbNotificationItem, GnbNotificationMenuProps } from "./gnb.types";
@@ -98,6 +99,7 @@ export function GnbNotificationMenu({
   onNavigate,
   onClose,
 }: GnbNotificationMenuProps) {
+  const t = useTranslations("Common");
   const panelRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -181,20 +183,20 @@ export function GnbNotificationMenu({
       ref={panelRef}
       id={menuId}
       role="menu"
-      aria-label="알림 목록"
+      aria-label={t("notificationList")}
       className={`absolute top-full right-0 z-10 mt-2 flex flex-col items-start rounded-3xl border border-(--line-200) bg-(--gray-50) px-4 py-2.5 shadow-[2px_2px_8px_rgba(0,0,0,0.06)] ${NOTIFICATION_MENU_SIZE.panelWidth}`}
     >
       <div
         role="none"
         className={`flex w-full items-center justify-between border-b border-(--line-200) ${NOTIFICATION_MENU_SIZE.headerPadding}`}
       >
-        <p className={`m-0 ${NOTIFICATION_MENU_SIZE.titleText}`}>알림</p>
+        <p className={`m-0 ${NOTIFICATION_MENU_SIZE.titleText}`}>{t("notifications")}</p>
         <button
           ref={closeButtonRef}
           type="button"
           role="menuitem"
           onClick={onClose}
-          aria-label="알림 닫기"
+          aria-label={t("closeNotifications")}
           className={`inline-flex size-6 shrink-0 cursor-pointer items-center justify-center border-0 bg-transparent p-0 ${FOCUS_RING}`}
         >
           <Image src="/images/gnb/icon-x.svg" alt="" width={24} height={24} className="size-6" />
@@ -206,7 +208,7 @@ export function GnbNotificationMenu({
           role="none"
           className={`m-0 w-full text-center ${NOTIFICATION_MENU_SIZE.itemText} text-(--gray-400) ${NOTIFICATION_MENU_SIZE.itemPadding}`}
         >
-          새로운 알림이 없어요.
+          {t("noNotifications")}
         </p>
       ) : (
         <div
@@ -245,7 +247,7 @@ export function GnbNotificationMenu({
               role="none"
               className={`m-0 w-full text-center ${NOTIFICATION_MENU_SIZE.timeText} ${NOTIFICATION_MENU_SIZE.itemPadding}`}
             >
-              불러오는 중...
+              {t("loadingMore")}
             </p>
           )}
         </div>

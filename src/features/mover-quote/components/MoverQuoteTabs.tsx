@@ -5,6 +5,8 @@
  * 이 컴포넌트는 기사님 견적 도메인의 탭 구성만 제공
  */
 
+import { useTranslations } from "next-intl";
+
 import { Tabs, type TabItem } from "@/common/components/Tabs/Tabs";
 import { ROUTES } from "@/common/constants/routes";
 
@@ -15,20 +17,20 @@ interface MoverQuoteTabsProps {
   value: MoverQuoteTabValue;
 }
 
-/** 모듈 밖에서 변경되지 않는 고정 탭 목록 */
-const ITEMS: TabItem<MoverQuoteTabValue>[] = [
-  {
-    id: "sent",
-    label: "보낸 견적 조회",
-    href: ROUTES.MOVER.QUOTE.LIST,
-  },
-  {
-    id: "rejected",
-    label: "반려 요청",
-    href: ROUTES.MOVER.QUOTE.REJECTED_REQUESTS,
-  },
-];
-
 export function MoverQuoteTabs({ value }: MoverQuoteTabsProps) {
-  return <Tabs ariaLabel="기사님 견적 관리" items={ITEMS} value={value} />;
+  const t = useTranslations("MoverQuote");
+  const items: TabItem<MoverQuoteTabValue>[] = [
+    {
+      id: "sent",
+      label: t("sentTab"),
+      href: ROUTES.MOVER.QUOTE.LIST,
+    },
+    {
+      id: "rejected",
+      label: t("rejectedTab"),
+      href: ROUTES.MOVER.QUOTE.REJECTED_REQUESTS,
+    },
+  ];
+
+  return <Tabs ariaLabel={t("tabs")} items={items} value={value} />;
 }

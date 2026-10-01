@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef } from "react";
 import type { MouseEvent, PropsWithChildren } from "react";
 
@@ -30,6 +31,7 @@ export function Modal({
   children,
 }: ModalProps) {
   const isBottomSheet = mobileLayout === "bottom-sheet";
+  const t = useTranslations("Common");
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -155,7 +157,7 @@ export function Modal({
                 ? "inline-flex size-9 shrink-0 items-center justify-center rounded-lg hover:bg-[var(--gray-100)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] max-md:size-6"
                 : "inline-flex size-9 shrink-0 items-center justify-center rounded-lg hover:bg-[var(--gray-100)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] max-[743px]:size-6"
             }
-            aria-label={`${title} 닫기`}
+            aria-label={t("closeTitle", { title })}
             onClick={onClose}
           >
             <Image

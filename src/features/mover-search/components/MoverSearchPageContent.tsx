@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { useRouter } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { MoverSearchCard } from "@/common/components/MoverSearch";
@@ -53,6 +54,7 @@ function useMinWidth(px: number) {
 }
 
 export function MoverSearchPageContent() {
+  const t = useTranslations("Search");
   const router = useRouter();
   const { user, isPending: isAuthPending, error: authError } = useAuth();
   const isDesktopToolbar = useMinWidth(1200);
@@ -162,7 +164,7 @@ export function MoverSearchPageContent() {
         */}
         <div className="mx-auto w-full max-w-[1920px] px-6 min-[1200px]:px-40">
           <h1 className="text-2xl-semibold text-[var(--black-500)]">
-            기사님 찾기
+            {t("title")}
           </h1>
         </div>
       </header>
@@ -208,16 +210,16 @@ export function MoverSearchPageContent() {
           />
 
           {isListPending ? (
-            <LoadingState message="기사님 목록을 불러오는 중이에요." />
+            <LoadingState message={t("loading")} />
           ) : isListError ? (
             <ErrorState
-              title="기사님 목록을 불러오지 못했어요."
+              title={t("loadError")}
               onRetry={() => void refetchList()}
             />
           ) : moverList.length === 0 ? (
             <EmptyState
-              title="조건에 맞는 기사님이 없어요."
-              description="검색어나 필터를 바꿔 다시 찾아 보세요."
+              title={t("empty")}
+              description={t("emptyDescription")}
             />
           ) : (
             <ul className="flex flex-col gap-5">
@@ -229,7 +231,7 @@ export function MoverSearchPageContent() {
                   <Link
                     href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
                     className="block min-[744px]:w-full"
-                    aria-label={`${mover.moverName} 기사님 상세 보기`}
+                    aria-label={t("detail", {name: mover.moverName})}
                   >
                     <MoverSearchCard
                       serviceType={mover.serviceType}
@@ -259,7 +261,7 @@ export function MoverSearchPageContent() {
           <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
           {isFetchingNextPage ? (
             <p className="text-md-regular py-4 text-center text-[var(--gray-400)]">
-              더 불러오는 중이에요.
+              {t("loadingMore")}
             </p>
           ) : null}
         </section>

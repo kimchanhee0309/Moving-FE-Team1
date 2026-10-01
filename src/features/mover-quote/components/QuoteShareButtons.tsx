@@ -7,11 +7,14 @@
  * 공유 API 실패 여부는 사용자에게 aria-live 메시지로 알립니다.
  */
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { IconButton } from "@/common/components/button";
 
 export function QuoteShareButtons() {
+  const t = useTranslations("MoverQuote");
+  const quoteText = useTranslations("Quote");
   const [copyMessage, setCopyMessage] = useState("");
 
   /** 공유 시 query string을 포함한 현재 상세 페이지 URL을 사용합니다. */
@@ -20,9 +23,9 @@ export function QuoteShareButtons() {
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(getShareUrl());
-      setCopyMessage("견적 링크가 복사되었습니다.");
+      setCopyMessage(t("linkCopied"));
     } catch {
-      setCopyMessage("링크를 복사하지 못했습니다.");
+      setCopyMessage(t("linkCopyFailed"));
     }
   };
 
@@ -53,21 +56,21 @@ export function QuoteShareButtons() {
         <IconButton
           kind="clip"
           size="md"
-          aria-label="견적 링크 복사"
+          aria-label={t("copyLink")}
           onClick={() => void handleCopyLink()}
         />
 
         <IconButton
           kind="kakao"
           size="md"
-          aria-label="카카오스토리로 공유"
+          aria-label={t("shareKakaoStory")}
           onClick={handleShareKakaoStory}
         />
 
         <IconButton
           kind="facebook"
           size="md"
-          aria-label="페이스북으로 공유"
+          aria-label={quoteText("shareFacebook")}
           onClick={handleShareFacebook}
         />
       </div>
@@ -77,21 +80,21 @@ export function QuoteShareButtons() {
         <IconButton
           kind="clip"
           size="xs"
-          aria-label="견적 링크 복사"
+          aria-label={t("copyLink")}
           onClick={() => void handleCopyLink()}
         />
 
         <IconButton
           kind="kakao"
           size="xs"
-          aria-label="카카오스토리로 공유"
+          aria-label={t("shareKakaoStory")}
           onClick={handleShareKakaoStory}
         />
 
         <IconButton
           kind="facebook"
           size="xs"
-          aria-label="페이스북으로 공유"
+          aria-label={quoteText("shareFacebook")}
           onClick={handleShareFacebook}
         />
       </div>

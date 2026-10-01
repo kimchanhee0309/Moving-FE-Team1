@@ -10,7 +10,8 @@
     "test:auth": "tsx --test tests/auth/*.test.ts",
     "test:landing": "tsx --test tests/landing/*.test.ts",
     "test:profile": "tsx --test tests/profile/*.test.ts",
-    "test:notification": "tsx --test tests/notification/*.test.ts"
+    "test:notification": "tsx --test tests/notification/*.test.ts",
+    "test:i18n": "tsx --test tests/i18n/*.test.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",
@@ -18,6 +19,7 @@
     "dotenv": "^17.4.2",
     "motion": "^13.4.4",
     "next": "16.3.3",
+    "next-intl": "4.4.0",
     "node": "^26.8.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",

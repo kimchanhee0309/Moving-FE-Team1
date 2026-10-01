@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import Script from "next/script";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
@@ -11,8 +11,10 @@ import {
   ErrorState,
   LoadingState,
 } from "@/common/components/page-state";
+import { useProfileOptionLabel } from "@/common/components/ProfileSelectionChip/useProfileOptionLabel";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
+import { getPathname, useRouter } from "@/i18n/navigation";
 import { authHref } from "@/features/auth/auth.utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
@@ -27,7 +29,6 @@ import {
   KAKAO_JS_SDK_INTEGRITY,
   KAKAO_JS_SDK_SRC,
   REGION_FILTER_OPTIONS,
-  SERVICE_TYPE_LABEL,
 } from "../mover-search.constants";
 import { getMoverSearchViewer } from "../mover-search.utils";
 import { CopyLinkToast } from "./CopyLinkToast";
@@ -48,7 +49,12 @@ export function MoverSearchDetailPageContent({
   moverId,
   mockHasGeneralQuote = false,
 }: MoverSearchDetailPageContentProps) {
+  const t = useTranslations("MoverDetail");
+  const quote = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const optionLabel = useProfileOptionLabel();
   const router = useRouter();
+  const locale = useLocale();
   const { user, isPending: isAuthPending, error: authError } = useAuth();
   const viewer = getMoverSearchViewer(user, isAuthPending, Boolean(authError));
   const isCustomer = viewer === "customer";
@@ -114,7 +120,7 @@ export function MoverSearchDetailPageContent({
   };
 
   const getShareUrl = () =>
-    createMoverDetailShareUrl(window.location.origin, detailHref);
+    createMoverDetailShareUrl(window.location.origin, getPathname({ href: detailHref, locale }));
 
   const handleCopyLink = async () => {
     try {
@@ -133,7 +139,7 @@ export function MoverSearchDetailPageContent({
     const url = getShareUrl();
     const didShare = shareMoverDetailToKakao({
       url,
-      moverName: mover.moverName,
+      title: t("kakaoTitle", { name: mover.moverName }),
       introduction: mover.introduction,
       imageUrl: getKakaoShareImageUrl(mover.profileImageUrl, window.location.origin),
     });
@@ -152,13 +158,13 @@ export function MoverSearchDetailPageContent({
   };
 
   if (isDetailPending) {
-    return <LoadingState message="기사님 정보를 불러오는 중이에요." />;
+    return <LoadingState message={t("loading")} />;
   }
 
   if (isDetailError) {
     return (
       <ErrorState
-        title="기사님 정보를 불러오지 못했어요."
+        title={t("loadError")}
         onRetry={() => void refetchDetail()}
       />
     );
@@ -167,8 +173,8 @@ export function MoverSearchDetailPageContent({
   if (!mover) {
     return (
       <EmptyState
-        title="기사님을 찾을 수 없어요."
-        description="목록에서 다른 기사님을 선택해 주세요."
+        title={t("notFound")}
+        description={t("notFoundDescription")}
       />
     );
   }
@@ -223,7 +229,7 @@ export function MoverSearchDetailPageContent({
           <div className="relative z-10 mb-[13px] flex size-16 items-center justify-center overflow-hidden rounded-xl bg-[var(--black-300)] p-0.5 min-[744px]:mb-[23px] min-[744px]:size-[100px] min-[744px]:p-1 min-[1200px]:mb-5 min-[1200px]:size-[134px] min-[1200px]:rounded-[12px] min-[1200px]:p-1.5">
             <Image
               src={mover.profileImageUrl ?? "/images/mover-search/profile-placeholder.png"}
-              alt={`${mover.moverName} 기사님 프로필`}
+              alt={quote("moverProfile", { name: mover.moverName })}
               width={134}
               height={134}
               className="size-full object-contain"
@@ -254,12 +260,12 @@ export function MoverSearchDetailPageContent({
                   <div className="flex items-center gap-1">
                     <MovingBadge />
                     <p className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-2lg-semibold">
-                      {mover.moverName} 기사님
+                      {quote("moverName", { name: mover.moverName })}
                     </p>
                   </div>
                   <p
                     className="text-md-medium flex items-center gap-1 text-[var(--content-muted)] min-[744px]:text-2lg-medium"
-                    aria-label={`찜 ${displayedFavoriteCount}명`}
+                    aria-label={t("favoriteCount", { count: displayedFavoriteCount })}
                   >
                     {displayedFavoriteCount}
                     <Image
@@ -279,13 +285,13 @@ export function MoverSearchDetailPageContent({
 
               <dl className="flex h-[95px] items-center justify-between gap-2 rounded-xl border border-[var(--line-200)] bg-[var(--gray-50)] px-10 min-[744px]:h-[120px] min-[744px]:rounded-2xl min-[744px]:px-[100px]">
                 <div className="flex flex-col items-center text-center">
-                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">진행</dt>
+                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">{t("progress")}</dt>
                   <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
-                    {mover.confirmedCount}건
+                    {t("confirmedCount", { count: mover.confirmedCount })}
                   </dd>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">리뷰</dt>
+                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">{t("reviews")}</dt>
                   <dd className="flex items-center gap-0.5 min-[744px]:gap-1.5">
                     <Image
                       src="/icons/ic-star.svg"
@@ -303,22 +309,26 @@ export function MoverSearchDetailPageContent({
                   </dd>
                 </div>
                 <div className="flex flex-col items-center text-center">
-                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">총 경력</dt>
+                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">{t("totalCareer")}</dt>
                   <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
-                    {mover.careerYears}년
+                    {t("careerYears", { count: mover.careerYears })}
                   </dd>
                 </div>
               </dl>
             </div>
 
             <ChipGroup
-              title="제공 서비스"
-              labels={mover.serviceTypes.map((type) => SERVICE_TYPE_LABEL[type])}
+              title={t("services")}
+              labels={mover.serviceTypes.map((type) => moveType(type))}
               variant="service"
             />
             <ChipGroup
-              title="서비스 가능 지역"
-              labels={mover.regionValues.map(getRegionLabel)}
+              title={t("regions")}
+              labels={mover.regionValues.map((value) => {
+                // 지역 label은 API 값(한국어)이므로 표시 직전에만 Options 번역으로 바꿉니다.
+                const label = getRegionLabel(value);
+                return optionLabel(label, label);
+              })}
               variant="region"
             />
 
@@ -383,6 +393,7 @@ function getRegionLabel(value: string) {
 }
 
 function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
+  const moveType = useTranslations("MoveType");
   const icon =
     serviceType === SERVICE_TYPE.OFFICE
       ? "/icons/mover-search/ic-solid-company.svg"
@@ -405,7 +416,7 @@ function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
         unoptimized
       />
       <span className="text-sm-semibold text-[var(--primary-400)] min-[744px]:text-md-semibold">
-        {SERVICE_TYPE_LABEL[serviceType]}
+        {moveType(serviceType)}
       </span>
     </span>
   );

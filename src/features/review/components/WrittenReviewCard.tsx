@@ -1,21 +1,15 @@
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
-import { SERVICE_TYPE } from "@/common/constants/domain";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 
 import { toDisplayRegionAddress } from "../review.utils";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 const STAR_NUMBERS = [1, 2, 3, 4, 5] as const;
 const MAX_RATING = STAR_NUMBERS.length;
-const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 export interface WrittenReviewCardProps {
   moverName: string;
@@ -32,18 +26,8 @@ export interface WrittenReviewCardProps {
   className?: string;
 }
 
-function formatMoveDate(date: string): string {
-  const parsedDate = new Date(date);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return "";
-  }
-
-  const year = parsedDate.getFullYear();
-  const month = String(parsedDate.getMonth() + 1).padStart(2, "0");
-  const day = String(parsedDate.getDate()).padStart(2, "0");
-
-  return `${year}년 ${month}월 ${day}일 (${WEEKDAY_LABELS[parsedDate.getDay()]})`;
+function formatMoveDate(date: string, locale: string): string {
+  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale, SERVICE_TIME_ZONE);
 }
 
 function formatWrittenAt(date: string): string {
@@ -91,6 +75,8 @@ function MovingBadge() {
 }
 
 function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
+  const moveType = useTranslations("MoveType");
+
   return (
     <div
       className={[
@@ -114,13 +100,15 @@ function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
           "min-[744px]:text-md-semibold",
         ].join(" ")}
       >
-        {SERVICE_TYPE_LABEL[serviceType]}
+        {moveType(serviceType)}
       </span>
     </div>
   );
 }
 
 function DesignatedChip() {
+  const moveType = useTranslations("MoveType");
+
   return (
     <div
       className={[
@@ -144,7 +132,7 @@ function DesignatedChip() {
           "min-[744px]:text-md-semibold",
         ].join(" ")}
       >
-        지정 견적 요청
+        {moveType("designated")}
       </span>
     </div>
   );
@@ -159,6 +147,7 @@ function MoverProfile({
   moverName: string;
   size: 50 | 80;
 }) {
+  const t = useTranslations("Quote");
   const isDefaultImage = !src;
   const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
   const isLarge = size === 80;
@@ -182,7 +171,7 @@ function MoverProfile({
         >
           <Image
             src={profileSrc}
-            alt={`${moverName} 기사님 프로필`}
+            alt={t("moverProfile", { name: moverName })}
             fill
             sizes={`${croppedImageSize}px`}
             quality={100}
@@ -192,7 +181,7 @@ function MoverProfile({
       ) : (
         <Image
           src={profileSrc}
-          alt={`${moverName} 기사님 프로필`}
+          alt={t("moverProfile", { name: moverName })}
           fill
           sizes={`${size}px`}
           className="object-cover"
@@ -259,13 +248,14 @@ function MoveInfoDivider() {
 }
 
 function StarRating({ rating }: { rating: number }) {
+  const t = useTranslations("Review");
   const filledStarCount = Math.min(MAX_RATING, Math.max(0, Math.round(rating)));
 
   return (
     <div
       className="flex items-start"
       role="img"
-      aria-label={`별점 ${filledStarCount}점`}
+      aria-label={t("rating", { count: filledStarCount })}
     >
       {STAR_NUMBERS.map((starNumber) => (
         <Image
@@ -305,7 +295,10 @@ export function WrittenReviewCard({
   writtenAt,
   className,
 }: WrittenReviewCardProps) {
-  const moveDateLabel = formatMoveDate(movedAt);
+  const t = useTranslations("Quote");
+  const review = useTranslations("Review");
+  const locale = useLocale();
+  const moveDateLabel = formatMoveDate(movedAt, locale);
   const writtenAtLabel = writtenAt ? formatWrittenAt(writtenAt) : "";
 
   return (
@@ -332,7 +325,7 @@ export function WrittenReviewCard({
           <div className="flex flex-col items-start gap-1">
             <MovingBadge />
             <p className="text-lg-semibold whitespace-nowrap text-[var(--black-300)]">
-              {moverName} 기사님
+              {t("moverName", { name: moverName })}
             </p>
           </div>
 
@@ -348,7 +341,7 @@ export function WrittenReviewCard({
             <div className="flex items-center gap-1.5">
               <MovingBadge />
               <p className="text-2lg-bold whitespace-nowrap text-[var(--black-300)]">
-                {moverName} 기사님
+                {t("moverName", { name: moverName })}
               </p>
             </div>
 
@@ -376,19 +369,19 @@ export function WrittenReviewCard({
       {/* 모바일: 세로 스택으로 긴 주소·이사일 겹침 방지. 태블릿+: Figma 한 줄 + truncate */}
       <div className="flex w-full min-w-0 flex-col gap-3 min-[744px]:flex-row min-[744px]:items-center min-[744px]:gap-5">
         <MoveInfoItem
-          label="출발지"
+          label={t("from")}
           value={toDisplayRegionAddress(departure)}
           className="w-full min-[744px]:min-w-0 min-[744px]:flex-1"
         />
         <MoveInfoDivider />
         <MoveInfoItem
-          label="도착지"
+          label={t("to")}
           value={toDisplayRegionAddress(arrival)}
           className="w-full min-[744px]:min-w-0 min-[744px]:flex-1"
         />
         <MoveInfoDivider />
         <MoveInfoItem
-          label="이사일"
+          label={t("moveDate")}
           value={moveDateLabel}
           className="w-full shrink-0 min-[744px]:w-auto"
         />
@@ -409,7 +402,7 @@ export function WrittenReviewCard({
       {writtenAtLabel ? (
         <div className="flex w-full items-center justify-end gap-1.5 min-[744px]:hidden">
           <p className="text-xs-regular whitespace-nowrap text-[#ababab]">
-            작성일
+            {review("writtenAt")}
           </p>
           <p className="text-xs-regular whitespace-nowrap text-[#ababab]">
             {writtenAtLabel}

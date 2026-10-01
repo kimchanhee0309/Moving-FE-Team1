@@ -1,21 +1,15 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import type { ServiceType } from "@/common/constants/domain";
-import { SERVICE_TYPE } from "@/common/constants/domain";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 export interface SubHeaderProps {
   serviceType: ServiceType;
-  /** Display string, e.g. "2024년 6월 24일" */
+  /** 호출부가 현재 locale로 포맷한 표시 문자열, e.g. "2024년 6월 24일" */
   requestedAt: string;
   from: string;
   to: string;
-  /** Display string, e.g. "2024년 07월 01일 (월)" */
+  /** 호출부가 현재 locale로 포맷한 표시 문자열, e.g. "2024년 07월 01일 (월)" */
   moveDate: string;
   className?: string;
 }
@@ -28,7 +22,9 @@ export function SubHeader({
   moveDate,
   className,
 }: SubHeaderProps) {
-  const serviceTypeLabel = SERVICE_TYPE_LABEL[serviceType];
+  const t = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const serviceTypeLabel = moveType(serviceType);
 
   return (
     <section
@@ -40,7 +36,7 @@ export function SubHeader({
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label="이사 정보"
+      aria-label={t("moveInfo")}
     >
       {/*
         긴 실주소에서 제목이 flex로 짓눌려 세로로 깨지지 않도록(1200+) 제목은 shrink-0,
@@ -71,10 +67,10 @@ export function SubHeader({
           </h2>
           <p className="whitespace-nowrap text-[var(--gray-500)]">
             <span className="text-xs-regular min-[744px]:hidden">
-              견적 신청일: {requestedAt}
+              {t("requestedAtValue", { date: requestedAt })}
             </span>
             <span className="hidden text-md-regular min-[744px]:inline">
-              견적 신청일: {requestedAt}
+              {t("requestedAtValue", { date: requestedAt })}
             </span>
           </p>
         </div>
@@ -82,7 +78,7 @@ export function SubHeader({
         <dl className="flex w-full flex-col gap-1 min-[744px]:hidden">
           <div className="flex w-full items-start justify-between gap-3">
             <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
-              출발지
+              {t("from")}
             </dt>
             <dd className="text-md-semibold break-keep text-right text-[var(--black-500)]">
               {from}
@@ -90,7 +86,7 @@ export function SubHeader({
           </div>
           <div className="flex w-full items-start justify-between gap-3">
             <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
-              도착지
+              {t("to")}
             </dt>
             <dd className="text-md-semibold break-keep text-right text-[var(--black-500)]">
               {to}
@@ -98,7 +94,7 @@ export function SubHeader({
           </div>
           <div className="flex w-full items-start justify-between gap-3">
             <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
-              이사일
+              {t("moveDate")}
             </dt>
             <dd className="text-md-semibold whitespace-nowrap text-right text-[var(--black-500)]">
               {moveDate}
@@ -116,7 +112,7 @@ export function SubHeader({
           <div className="flex min-w-0 flex-1 items-end gap-3">
             <div className="flex min-w-0 flex-col items-start">
               <span className="text-md-regular text-[var(--gray-500)]">
-                출발지
+                {t("from")}
               </span>
               <span className="text-2lg-semibold break-keep text-[var(--black-500)]">
                 {from}
@@ -137,7 +133,7 @@ export function SubHeader({
             </div>
             <div className="flex min-w-0 flex-col items-start">
               <span className="text-md-regular text-[var(--gray-500)]">
-                도착지
+                {t("to")}
               </span>
               <span className="text-2lg-semibold break-keep text-[var(--black-500)]">
                 {to}
@@ -147,7 +143,7 @@ export function SubHeader({
 
           <div className="flex shrink-0 flex-col items-start">
             <span className="text-md-regular text-[var(--gray-500)]">
-              이사일
+              {t("moveDate")}
             </span>
             <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
               {moveDate}

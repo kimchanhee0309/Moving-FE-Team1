@@ -6,11 +6,13 @@
  */
 
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 
 import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 
 import type { RejectedRequestCardData } from "../mover-quote.types";
 
@@ -19,6 +21,10 @@ interface RejectedRequestCardProps {
 }
 
 export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
+  const t = useTranslations("MoverQuote");
+  const quoteText = useTranslations("Quote");
+  const locale = useLocale();
+
   return (
     <article className="relative min-h-[242px] w-full max-w-[588px] overflow-hidden rounded-[20px] border-[0.5px] border-[var(--line-100)] bg-white px-10 py-8 shadow-[2px_2px_10px_rgb(220_220_220/20%)] max-[743px]:min-h-[270px] max-[743px]:max-w-[328px] max-[743px]:px-5 max-[743px]:py-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -30,7 +36,7 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
       </div>
 
       <h2 className="mt-6 border-b border-[var(--line-100)] pb-3 text-[20px] font-semibold leading-8 text-[var(--black-400)]">
-        {request.customerName} 고객님
+        {quoteText("customerName", { name: request.customerName })}
       </h2>
 
       <div className="mt-6 flex items-start justify-between gap-6 max-[743px]:flex-col max-[743px]:gap-3">
@@ -41,7 +47,7 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
         <div className="flex min-w-0 flex-1 items-end gap-3 max-[743px]:w-full">
           <div className="flex min-w-0 max-w-[45%] shrink-0 flex-col gap-1">
             <span className="text-[14px] leading-6 text-[var(--content-muted)]">
-              출발지
+              {quoteText("from")}
             </span>
 
             <strong
@@ -63,7 +69,7 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
 
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-[14px] leading-6 text-[var(--content-muted)]">
-              도착지
+              {quoteText("to")}
             </span>
 
             <strong
@@ -77,11 +83,11 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
 
         <div className="flex shrink-0 flex-col gap-1">
           <span className="text-[14px] leading-6 text-[var(--content-muted)]">
-            이사일
+            {quoteText("moveDate")}
           </span>
 
           <strong className="whitespace-nowrap text-[16px] font-semibold leading-[26px] text-[var(--black-500)]">
-            {request.moveDate}
+            {formatDateWithWeekday(request.moveDate, locale, SERVICE_TIME_ZONE)}
           </strong>
         </div>
       </div>
@@ -91,7 +97,7 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
        */}
       <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-black/60">
         <p className="text-[18px] font-semibold leading-[26px] text-white">
-          반려된 요청이에요
+          {t("rejected")}
         </p>
       </div>
     </article>

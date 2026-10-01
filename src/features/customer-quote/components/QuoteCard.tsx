@@ -1,14 +1,9 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
-import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
+import { QUOTE_STATUS } from "@/common/constants/domain";
 
 const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
@@ -63,6 +58,8 @@ function MovingBadge() {
 }
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
+  const t = useTranslations("Quote");
+
   if (status === QUOTE_STATUS.CONFIRMED) {
     return (
       <div className="flex shrink-0 items-center justify-center gap-1 rounded-md px-2 py-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
@@ -75,7 +72,7 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
           unoptimized
         />
         <span className="text-lg-bold whitespace-nowrap text-[var(--primary-400)]">
-          확정견적
+          {t("confirmed")}
         </span>
       </div>
     );
@@ -84,7 +81,7 @@ function StatusBadge({ status }: { status: QuoteStatus }) {
   return (
     <div className="flex shrink-0 items-center justify-center rounded-md px-2 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
       <span className="text-lg-semibold whitespace-nowrap text-[var(--gray-400)]">
-        견적대기
+        {t("pending")}
       </span>
     </div>
   );
@@ -109,9 +106,12 @@ export function QuoteCard({
   isConfirmDisabled = false,
   className,
 }: QuoteCardProps) {
-  const serviceTypeLabel = SERVICE_TYPE_LABEL[serviceType];
+  const t = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const serviceTypeLabel = moveType(serviceType);
   const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
-  const priceLabel = `${price.toLocaleString("ko-KR")}원`;
+  const priceLabel = t("priceValue", { price });
+  const displayMessage = message || t("defaultMessage");
   const ratingLabel = rating.toFixed(1);
 
   return (
@@ -173,10 +173,10 @@ export function QuoteCard({
                   />
                   <span className="whitespace-nowrap text-[#ff4f64]">
                     <span className="text-sm-semibold min-[558px]:hidden">
-                      지정 견적 요청
+                      {moveType("designated")}
                     </span>
                     <span className="hidden text-md-semibold min-[558px]:inline">
-                      지정 견적 요청
+                      {moveType("designated")}
                     </span>
                   </span>
                 </div>
@@ -188,9 +188,9 @@ export function QuoteCard({
 
           <div className="flex w-full flex-col gap-1">
             <p className="w-full text-[var(--black-300)]">
-              <span className="text-lg-semibold min-[558px]:hidden">{message}</span>
+              <span className="text-lg-semibold min-[558px]:hidden">{displayMessage}</span>
               <span className="hidden text-2lg-semibold min-[558px]:inline">
-                {message}
+                {displayMessage}
               </span>
             </p>
 
@@ -198,7 +198,7 @@ export function QuoteCard({
               <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
                 <Image
                   src={profileSrc}
-                  alt={`${moverName} 기사님 프로필`}
+                  alt={t("moverProfile", { name: moverName })}
                   width={50}
                   height={50}
                   className="size-full object-cover"
@@ -211,7 +211,7 @@ export function QuoteCard({
                   <div className="flex items-center gap-1">
                     <MovingBadge />
                     <p className="text-md-semibold whitespace-nowrap text-[var(--black-300)]">
-                      {moverName} 기사님
+                      {t("moverName", { name: moverName })}
                     </p>
                   </div>
 
@@ -220,7 +220,7 @@ export function QuoteCard({
                       type="button"
                       onClick={onFavoriteClick}
                       className="flex items-center justify-center gap-0.5"
-                      aria-label="찜하기"
+                      aria-label={t("favorite")}
                     >
                       <Image
                         src="/icons/ic-like.svg"
@@ -275,9 +275,9 @@ export function QuoteCard({
                   />
 
                   <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
-                    <span className="text-[var(--gray-400)]">경력</span>
+                    <span className="text-[var(--gray-400)]">{t("career")}</span>
                     <span className="text-[var(--black-300)]">
-                      {careerYears}년
+                      {t("careerYears", { count: careerYears })}
                     </span>
                   </div>
 
@@ -288,9 +288,9 @@ export function QuoteCard({
 
                   <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
                     <span className="text-[var(--black-300)]">
-                      {confirmedCount.toLocaleString("ko-KR")}건
+                      {t("confirmedCount", { count: confirmedCount })}
                     </span>
-                    <span className="text-[var(--gray-400)]">확정</span>
+                    <span className="text-[var(--gray-400)]">{t("confirmedLabel")}</span>
                   </div>
                 </div>
               </div>
@@ -302,10 +302,10 @@ export function QuoteCard({
           <div className="flex w-full flex-1 items-center justify-between min-[558px]:items-end">
             <p>
               <span className="text-md-medium text-[var(--gray-400)] min-[558px]:hidden">
-                견적 금액
+                {t("price")}
               </span>
               <span className="text-lg-medium hidden text-[var(--black-400)] min-[558px]:inline">
-                견적 금액
+                {t("price")}
               </span>
             </p>
             <p className="shrink-0 whitespace-nowrap text-[var(--black-400)]">
@@ -329,7 +329,7 @@ export function QuoteCard({
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
           ].join(" ")}
         >
-          상세보기
+          {t("detail")}
         </button>
 
         <button
@@ -345,7 +345,7 @@ export function QuoteCard({
             "disabled:cursor-not-allowed disabled:opacity-50",
           ].join(" ")}
         >
-          견적 확정하기
+          {t("confirm")}
         </button>
       </div>
     </article>

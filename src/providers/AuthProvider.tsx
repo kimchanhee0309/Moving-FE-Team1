@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "@/i18n/navigation";
 import { useCallback, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 
 import { isGuestFailure, subscribeAuthFailure } from "@/common/api/auth-session";

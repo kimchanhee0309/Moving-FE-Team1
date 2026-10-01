@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import type { AddressChipProps, AddressChipSize } from "./AddressChip.types";
 
 const SIZE_CLASS: Record<AddressChipSize, string> = {
@@ -17,6 +19,8 @@ export function AddressChip({
   className,
   ...spanProps
 }: AddressChipProps) {
+  const t = useTranslations("Address");
+
   return (
     <span
       {...spanProps}
@@ -33,7 +37,7 @@ export function AddressChip({
       {isLoading ? (
         <span
           className="h-3 w-6 animate-pulse rounded bg-current opacity-15"
-          aria-label="주소 형식 불러오는 중"
+          aria-label={t("chipLoading")}
         />
       ) : (
         children

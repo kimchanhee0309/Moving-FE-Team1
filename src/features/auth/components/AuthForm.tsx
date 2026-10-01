@@ -1,13 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
 import { ApiError } from "@/common/api/error";
+import { useValidationMessage } from "@/common/validation/useValidationMessage";
+import { Link } from "@/i18n/navigation";
 import { useModal } from "@/providers/ModalProvider";
 
 import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, RecoveryMode, SocialProvider } from "../auth.types";
@@ -26,13 +28,13 @@ interface AuthFormProps extends AuthScreenProps {
 const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "" };
 const SIGNUP_FIELDS: AuthField[] = ["name", "email", "phone", "password", "passwordConfirm"];
 const LOGIN_FIELDS: AuthField[] = ["email", "password"];
-const SOCIAL_PROVIDERS: { provider: SocialProvider; label: string; image: string }[] = [
-  { provider: "google", label: "Google", image: "google.svg" },
-  { provider: "kakao", label: "카카오", image: "kakao.svg" },
-  { provider: "naver", label: "네이버", image: "naver.svg" },
+const SOCIAL_PROVIDERS: { provider: SocialProvider; image: string }[] = [
+  { provider: "google", image: "google.svg" },
+  { provider: "kakao", image: "kakao.svg" },
+  { provider: "naver", image: "naver.svg" },
 ];
-const FIELD_LABELS: Record<AuthField, string> = { name: "이름", email: "이메일", phone: "전화번호", password: "비밀번호", passwordConfirm: "비밀번호 확인" };
-const FIELD_PLACEHOLDERS: Record<AuthField, string> = { name: "성함을 입력해 주세요", email: "이메일을 입력해 주세요", phone: "숫자만 입력해 주세요", password: "비밀번호를 입력해 주세요", passwordConfirm: "비밀번호를 다시 한번 입력해 주세요" };
+const FIELD_LABEL_KEYS = { name: "name", email: "email", phone: "phone", password: "password", passwordConfirm: "confirmPassword" } as const;
+const FIELD_PLACEHOLDER_KEYS = { name: "namePlaceholder", email: "emailPlaceholder", phone: "phonePlaceholder", password: "passwordPlaceholder", passwordConfirm: "confirmPasswordPlaceholder" } as const;
 
 // 오류 행을 항상 예약해 blur 후 다음 입력/버튼이 이동하지 않게 합니다.
 // !는 공통 Input의 크기 클래스와 전역 typography보다 Auth 인스턴스 값을 우선하며 공통 구현은 바꾸지 않습니다.
@@ -43,6 +45,9 @@ const AUTH_FIELD_CLASS = "grid! max-w-none! gap-0! grid-rows-[auto_54px_minmax(2
  * API 요청과 전역 인증 상태는 Provider/컨테이너에 위임합니다.
  */
 export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmitValues, onSocialLogin, isPending }: AuthFormProps) {
+  const t = useTranslations("Auth");
+  const translateValidation = useValidationMessage();
+  const common = useTranslations("Common");
   const { openModal, closeModal } = useModal();
   const [values, setValues] = useState(INITIAL_VALUES);
   const [touched, setTouched] = useState<Partial<Record<AuthField, boolean>>>({});
@@ -60,9 +65,9 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
       initialMode === "find-account"
         ? <FindAccountModal initialRole={role} onClose={closeModal} />
         : <ForgotPasswordModal initialRole={role} onClose={closeModal} />,
-      { ariaLabel: initialMode === "find-account" ? "아이디 찾기" : "비밀번호 찾기" },
+      { ariaLabel: t(initialMode === "find-account" ? "findAccount" : "forgotPassword") },
     );
-  }, [closeModal, openModal, role]);
+  }, [closeModal, openModal, role, t]);
 
   useEffect(() => {
     if (mode !== "login" || !initialRecoveryMode || initialRecoveryOpened.current) return;
@@ -103,12 +108,12 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
           const field = fields.find((candidate) => candidate === detail.field);
           if (field) fieldErrors[field] = detail.reason;
         }
-        if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = "이미 가입된 이메일입니다. 로그인해 주세요.";
-        if (error.code === "PHONE_ALREADY_EXISTS") fieldErrors.phone = "이미 가입된 휴대전화 번호입니다.";
+        if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = t("emailExists");
+        if (error.code === "PHONE_ALREADY_EXISTS") fieldErrors.phone = t("phoneExists");
         setServerErrors(fieldErrors);
-        setSubmitError(error.status === 429 ? "로그인에 5회 실패해 잠시 로그인이 제한되었습니다. 비밀번호 찾기를 이용해 주세요." : error.code === "INVALID_CREDENTIALS" ? "이메일 또는 비밀번호가 올바르지 않습니다." : error.message);
+        setSubmitError(error.status === 429 ? t("rateLimited") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : error.message);
       } else {
-        setSubmitError(error instanceof TypeError ? "서버에 연결하지 못했습니다. 네트워크 연결을 확인해 주세요." : "요청을 완료하지 못했습니다. 다시 시도해 주세요.");
+        setSubmitError(error instanceof TypeError ? t("networkError") : t("requestFailed"));
       }
     } finally {
       submitLock.current = false;
@@ -120,7 +125,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
     submitLock.current = true;
     setSubmitError("");
     try { await onSocialLogin(provider); }
-    catch (error) { setSubmitError(error instanceof ApiError && error.code === "OAUTH_NOT_CONFIGURED" ? "SNS 로그인 준비 중입니다. 이메일 로그인을 이용해 주세요." : "SNS 로그인에 실패했습니다. 다시 시도해 주세요."); }
+    catch (error) { setSubmitError(error instanceof ApiError && error.code === "OAUTH_NOT_CONFIGURED" ? t("socialNotReady") : t("socialFailed")); }
     finally { submitLock.current = false; }
   }
 
@@ -136,7 +141,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
                 key={field}
                 id={`auth-${field}`}
                 name={field}
-                label={FIELD_LABELS[field]}
+                label={t(FIELD_LABEL_KEYS[field])}
                 aria-required="true"
                 type={isPassword ? "password" : field === "email" ? "email" : field === "phone" ? "tel" : "text"}
                 autoComplete={isPassword ? (mode === "login" ? "current-password" : "new-password") : field === "phone" ? "tel" : field === "email" ? "email" : "name"}
@@ -146,8 +151,8 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
                 className="text-base! min-[744px]:text-lg! placeholder:text-(--input-placeholder)!"
                 value={values[field]}
                 disabled={isPending}
-                placeholder={FIELD_PLACEHOLDERS[field]}
-                error={shouldShowError ? errors[field] : undefined}
+                placeholder={t(FIELD_PLACEHOLDER_KEYS[field])}
+                error={shouldShowError ? translateValidation(errors[field]) : undefined}
                 onBlur={() => setTouched((current) => ({ ...current, [field]: true }))}
                 onChange={(event) => handleFieldChange(field, event.currentTarget.value)}
               />
@@ -155,27 +160,27 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
           })}
         </div>
         <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete || hasValidationError || isPending} isLoading={isPending}>
-          {mode === "login" ? "로그인" : "시작하기"}
+          {mode === "login" ? common("login") : t("start")}
         </Button>
       </form>
       {submitError && <p className="mt-4 text-sm leading-6 text-(--primary-400)" role="alert">{submitError}</p>}
       <p className="mt-4 text-center text-xs leading-5 text-(--black-100) min-[744px]:mt-6 min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200) [&_a]:font-semibold [&_a]:text-(--primary-400) [&_a]:underline [&_a]:underline-offset-[3px]">
-        {mode === "login" ? "아직 무빙 회원이 아니신가요?" : "이미 무빙 회원이신가요?"}{" "}
+        {t(mode === "login" ? "notMember" : "alreadyMember")}{" "}
         <Link href={authHref(mode === "login" ? ROUTES.AUTH.SIGNUP[role] : ROUTES.AUTH.LOGIN[role], redirectTo)}>
-          {mode === "login" ? "이메일로 회원가입하기" : "로그인"}
+          {mode === "login" ? t("signupWithEmail") : common("login")}
         </Link>
       </p>
       {mode === "login" && (
-        <nav className="mt-3 flex justify-center gap-4 text-xs text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm [&_button]:cursor-pointer [&_button]:rounded-sm [&_button]:underline [&_button]:underline-offset-4 [&_button]:focus-visible:outline-3 [&_button]:focus-visible:outline-offset-3 [&_button]:focus-visible:outline-[var(--primary-400)]" aria-label="계정 찾기">
-          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("find-account")}>아이디 찾기</button>
-          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("forgot-password")}>비밀번호 찾기</button>
+        <nav className="mt-3 flex justify-center gap-4 text-xs text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm [&_button]:cursor-pointer [&_button]:rounded-sm [&_button]:underline [&_button]:underline-offset-4 [&_button]:focus-visible:outline-3 [&_button]:focus-visible:outline-offset-3 [&_button]:focus-visible:outline-[var(--primary-400)]" aria-label={t("findAccount")}>
+          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("find-account")}>{t("findAccount")}</button>
+          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("forgot-password")}>{t("forgotPassword")}</button>
         </nav>
       )}
-      <section className={mode === "login" ? "mt-9 min-[744px]:mt-10" : "mt-12"} aria-label="SNS 로그인">
-        <p className="text-center text-xs leading-[18px] text-(--black-100) min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200)">SNS 계정으로 간편 가입하기</p>
+      <section className={mode === "login" ? "mt-9 min-[744px]:mt-10" : "mt-12"} aria-label={t("socialLogin")}>
+        <p className="text-center text-xs leading-[18px] text-(--black-100) min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200)">{t("socialSignup")}</p>
         <div className="mt-6 flex items-center justify-center gap-6 min-[744px]:mt-8 min-[744px]:gap-8">
-          {SOCIAL_PROVIDERS.map(({ provider, label, image }) => (
-            <button className="cursor-pointer rounded-full focus-visible:rounded focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-(--primary-400) disabled:cursor-not-allowed disabled:opacity-50" key={provider} type="button" aria-label={`${label}로 ${role === "CUSTOMER" ? "일반 유저" : "기사님"} 로그인`} disabled={isPending} onClick={() => void handleSocialLogin(provider)}>
+          {SOCIAL_PROVIDERS.map(({ provider, image }) => (
+            <button className="cursor-pointer rounded-full focus-visible:rounded focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-(--primary-400) disabled:cursor-not-allowed disabled:opacity-50" key={provider} type="button" aria-label={t("socialLoginAs", { provider: t(provider), role: t(role === "CUSTOMER" ? "customer" : "mover") })} disabled={isPending} onClick={() => void handleSocialLogin(provider)}>
               <Image className="size-[54px] min-[744px]:size-[72px]" src={`/images/auth/${image}`} alt="" width={72} height={72} />
             </button>
           ))}
