@@ -1,0 +1,27 @@
+/**
+ * 알림 목록 스크롤바 전용 스타일입니다. Tailwind v4에는 스크롤바 유틸리티가 없고 별도
+ * 플러그인 설치는 팀 승인이 필요해, 이 한 곳만 쓰는 CSS Module로 분리했습니다
+ * (`PageState.module.css`와 같은 예외 패턴). 기본 브라우저 스크롤바 대신 트랙 없이
+ * 얇은 손잡이만 보이도록 해 알림 드롭다운의 rounded 카드 느낌과 어울리게 합니다.
+ */
+.notificationList {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) transparent;
+}
+
+.notificationList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notificationList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notificationList::-webkit-scrollbar-thumb {
+  background-color: var(--gray-300);
+  border-radius: 9999px;
+}
+
+.notificationList::-webkit-scrollbar-thumb:hover {
+  background-color: var(--gray-400);
+}

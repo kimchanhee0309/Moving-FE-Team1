@@ -313,7 +313,12 @@ export function ReceivedRequestsView() {
   return (
     <>
       <section className="border-b border-[var(--line-100)] bg-white">
-        <div className="mx-auto w-full max-w-[1200px] px-6 py-8 max-[743px]:py-[10px]">
+        {/*
+          컨테이너 폭·좌우 padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` + `px-6/px-18/px-40`
+          기준과 맞춘다 — 예전엔 `max-w-[1200px]`+고정 `px-6`이라 1200px 이상 화면에서 GNB
+          로고와 이 제목의 중앙정렬 기준 폭이 달라 화면이 커질수록 간격이 계속 벌어졌다.
+        */}
+        <div className="mx-auto w-full max-w-[1920px] px-6 py-8 min-[744px]:px-18 min-[1200px]:px-40 max-[743px]:py-[10px]">
           <h1 className="text-[24px] font-semibold leading-8 text-[var(--black-500)] max-[743px]:text-[18px]">
             받은 요청
           </h1>
