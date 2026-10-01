@@ -25,9 +25,9 @@ const MotionImage = motion.create(Image);
 // 랜딩 견적 요청·비교 카드의 고정 샘플입니다. 실제 기사님·견적 데이터가 아니며 이름·주소만 locale별 문구로 바꿉니다.
 const SAMPLE_QUOTES = [
   { id: "kim", nameKey: "sampleMoverKim", price: 180_000, years: 7, reviews: 178, confirmed: 334 },
-  { id: "lee", nameKey: "sampleMoverKim", price: 180_000, years: 7, reviews: 178, confirmed: 334 },
-  { id: "park", nameKey: "sampleMoverKim", price: 180_000, years: 7, reviews: 178, confirmed: 334 },
-  { id: "choi", nameKey: "sampleMoverKim", price: 180_000, years: 7, reviews: 178, confirmed: 334 },
+  { id: "lee", nameKey: "sampleMoverLee", price: 195_000, years: 8, reviews: 146, confirmed: 281 },
+  { id: "park", nameKey: "sampleMoverPark", price: 210_000, years: 9, reviews: 209, confirmed: 418 },
+  { id: "choi", nameKey: "sampleMoverChoi", price: 225_000, years: 10, reviews: 121, confirmed: 367 },
 ] as const;
 const SAMPLE_REQUEST_DATE = new Date(2024, 7, 26);
 const SAMPLE_COMPARE_DATE = new Date(2024, 6, 1);
