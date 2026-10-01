@@ -2,6 +2,7 @@
 export interface NotificationListParams {
   limit?: number;
   unreadOnly?: boolean;
+  cursor?: string;
 }
 
 export const notificationKeys = {
@@ -9,6 +10,9 @@ export const notificationKeys = {
   lists: () => [...notificationKeys.all, "list"] as const,
   list: (params: NotificationListParams) =>
     [...notificationKeys.lists(), params] as const,
+  /** GNB 알림 드롭다운의 무한 스크롤 목록입니다. cursor는 페이지마다 달라지는 pageParam이라
+   * key에 포함하지 않습니다(포함하면 페이지마다 별도 캐시로 쪼개져 무한 스크롤이 동작하지 않습니다). */
+  infiniteList: () => [...notificationKeys.lists(), "infinite"] as const,
 };
 
 /**

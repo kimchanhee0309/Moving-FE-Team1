@@ -15,8 +15,15 @@ export function GnbContainer() {
   const router = useRouter();
   const { user, isPending, logout } = useAuth();
   const isInitialSessionLoading = isPending && !user;
-  const { hasUnreadNotification, notificationItems, onNotificationClick, onNotificationsRead } =
-    useNotificationBell();
+  const {
+    hasUnreadNotification,
+    notificationItems,
+    hasMoreNotifications,
+    isLoadingMoreNotifications,
+    onLoadMoreNotifications,
+    onNotificationClick,
+    onNotificationsRead,
+  } = useNotificationBell();
 
   return <>
     <div aria-busy={isPending || logout.isPending}>
@@ -29,6 +36,9 @@ export function GnbContainer() {
           }}
           hasUnreadNotification={hasUnreadNotification}
           notificationItems={notificationItems}
+          hasMoreNotifications={hasMoreNotifications}
+          isLoadingMoreNotifications={isLoadingMoreNotifications}
+          onLoadMoreNotifications={onLoadMoreNotifications}
           onNotificationClick={onNotificationClick}
           onNotificationsRead={onNotificationsRead}
         />

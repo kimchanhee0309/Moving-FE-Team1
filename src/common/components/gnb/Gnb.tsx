@@ -25,6 +25,9 @@ export function Gnb(props: GnbProps) {
     isLoading = false,
     hasUnreadNotification = false,
     notificationItems = [],
+    hasMoreNotifications = false,
+    isLoadingMoreNotifications = false,
+    onLoadMoreNotifications,
     onNotificationClick,
     onNotificationsRead,
     className,
@@ -275,6 +278,9 @@ export function Gnb(props: GnbProps) {
                   <GnbNotificationMenu
                     menuId={notificationMenuId}
                     items={notificationItems}
+                    hasMore={hasMoreNotifications}
+                    isLoadingMore={isLoadingMoreNotifications}
+                    onLoadMore={() => onLoadMoreNotifications?.()}
                     closeButtonRef={notificationCloseButtonRef}
                     triggerRef={notificationButtonRef}
                     onNavigate={handleCloseNotificationMenu}

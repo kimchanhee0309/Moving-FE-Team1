@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { NotificationBellContext } from "@/common/notification/NotificationBellContext";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
+  useHasUnreadNotification,
   useMarkNotificationRead,
   useNotificationBellList,
 } from "@/features/notification/hooks/useNotifications";
@@ -26,6 +27,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
 
   useNotificationStream(canUseNotifications);
   const notifications = useNotificationBellList(canUseNotifications);
+  const hasUnread = useHasUnreadNotification(canUseNotifications);
   const markRead = useMarkNotificationRead();
 
   const role = user?.role;
@@ -49,8 +51,8 @@ export function NotificationProvider({ children }: PropsWithChildren) {
   // 렌더되지 않도록 AuthProvider와 같은 방식으로 값을 메모이즈합니다. items는 useMemo 밖에서
   // 만들면 data가 undefined일 때마다 `?? []`가 새 배열을 만들어 매 렌더 dep이 바뀌므로 안에 둡니다.
   const value = useMemo(() => {
-    const items = notifications.data?.items ?? [];
-    const hasUnreadNotification = items.some((item) => item.readAt === null);
+    const items = notifications.data?.pages.flatMap((page) => page.items) ?? [];
+    const hasUnreadNotification = hasUnread.data ?? false;
     const notificationItems = role
       ? items.map((item) => toGnbNotificationItem(item, role))
       : [];
@@ -58,13 +60,22 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     return {
       hasUnreadNotification,
       notificationItems,
+      hasMoreNotifications: notifications.hasNextPage ?? false,
+      isLoadingMoreNotifications: notifications.isFetchingNextPage,
+      onLoadMoreNotifications: () => {
+        if (notifications.hasNextPage && !notifications.isFetchingNextPage) {
+          void notifications.fetchNextPage();
+        }
+      },
       onNotificationClick: () => {
         if (canUseNotifications) {
           void notifications.refetch();
+          void hasUnread.refetch();
         }
       },
       onNotificationsRead: () => {
-        // BE에 전체 읽음(bulk) API가 없어, 방금 보여준 항목 중 안 읽은 것만 각각 읽음 처리한다.
+        // BE에 전체 읽음(bulk) API가 없어, 지금까지 불러온(스크롤로 더 불러온 페이지 포함) 항목 중
+        // 안 읽은 것만 각각 읽음 처리한다.
         items
           .filter((item) => item.readAt === null)
           .forEach((item) => markRead.mutate(item.id));
@@ -73,7 +84,7 @@ export function NotificationProvider({ children }: PropsWithChildren) {
     // timeTick은 값 자체를 쓰지 않고 1분마다 재계산(timeAgo 갱신)을 트리거하는 용도로만 넣는다 —
     // exhaustive-deps는 함수 본문에서 안 읽는 값이라 "불필요"하다고 오탐한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [notifications, role, canUseNotifications, markRead, timeTick]);
+  }, [notifications, hasUnread, role, canUseNotifications, markRead, timeTick]);
 
   return (
     <NotificationBellContext.Provider value={value}>

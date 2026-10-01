@@ -12,6 +12,12 @@ import type { GnbNotificationItem } from "@/common/components/gnb/gnb.types";
 export interface NotificationBellContextValue {
   hasUnreadNotification: boolean;
   notificationItems: GnbNotificationItem[];
+  /** 드롭다운 스크롤로 더 불러올 알림이 남아있는지. */
+  hasMoreNotifications: boolean;
+  /** 다음 페이지를 불러오는 중인지. 목록 하단에 로딩 표시를 보여줄 때 쓴다. */
+  isLoadingMoreNotifications: boolean;
+  /** 드롭다운 하단에 닿으면 다음 페이지를 불러온다. */
+  onLoadMoreNotifications: () => void;
   onNotificationClick: () => void;
   onNotificationsRead: () => void;
 }

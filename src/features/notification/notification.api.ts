@@ -18,6 +18,7 @@ export function fetchNotifications(
     query: {
       limit: params.limit,
       unreadOnly: params.unreadOnly,
+      cursor: params.cursor,
     },
   });
 }
