@@ -42,6 +42,7 @@ export function LocaleSwitcher() {
       onOpenChange={setIsOpen}
       size="sm"
       ariaLabel={t("language")}
+      className="[&>button]:min-h-9 [&_button]:text-[clamp(13px,1vw,16px)]! min-[1200px]:[&>button]:min-h-10"
     />
   );
 }
