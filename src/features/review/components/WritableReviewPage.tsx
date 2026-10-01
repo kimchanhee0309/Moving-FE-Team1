@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ApiError } from "@/common/api/error";
@@ -27,6 +28,7 @@ interface ModalDraft {
  * GET type=WRITABLE 목록·POST /reviews 작성·pagination·empty만 담당합니다.
  */
 export function WritableReviewPage() {
+  const t = useTranslations("Review");
   const [currentPage, setCurrentPage] = useState(1);
   const [draft, setDraft] = useState<ModalDraft | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export function WritableReviewPage() {
           const message =
             error instanceof ApiError
               ? error.message
-              : "리뷰 작성에 실패했습니다. 다시 시도해 주세요.";
+              : t("submitError");
           setSubmitError(message);
         },
       },
@@ -97,10 +99,10 @@ export function WritableReviewPage() {
 
       <main className="min-h-[calc(100vh-108px)] bg-[#fafafa] min-[1200px]:min-h-[calc(100vh-168px)]">
         {reviewsQuery.isPending ? (
-          <LoadingState message="작성 가능한 리뷰를 불러오는 중이에요." />
+          <LoadingState message={t("writableLoading")} />
         ) : reviewsQuery.isError ? (
           <ErrorState
-            title="작성 가능한 리뷰를 불러오지 못했어요."
+            title={t("writableLoadError")}
             description={
               reviewsQuery.error instanceof ApiError
                 ? reviewsQuery.error.message
@@ -122,7 +124,7 @@ export function WritableReviewPage() {
             ].join(" ")}
             aria-live="polite"
           >
-            <EmptyReview message="작성 가능한 리뷰가 없어요!" />
+            <EmptyReview message={t("writableEmpty")} />
           </section>
         ) : (
           <div
@@ -159,7 +161,7 @@ export function WritableReviewPage() {
                 onPageChange={setCurrentPage}
                 size="lg"
                 isLoading={reviewsQuery.isFetching}
-                ariaLabel="작성 가능한 리뷰 페이지"
+                ariaLabel={t("writablePagination")}
               />
             </div>
           </div>

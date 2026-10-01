@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { Pagination } from "@/common/components/Pagination";
 import { ReviewListCard } from "@/common/components/ReviewListCard";
@@ -33,6 +34,7 @@ export function MoverSearchDetailReviews({
   onPageChange,
   isLoading,
 }: MoverSearchDetailReviewsProps) {
+  const t = useTranslations("MoverDetail");
   const maxCount = Math.max(...ratingCounts.map((item) => item.count), 0);
   const filledStars = Math.min(Math.max(Math.round(rating), 0), 5);
 
@@ -42,16 +44,16 @@ export function MoverSearchDetailReviews({
         id="mover-review-heading"
         className="text-lg-semibold text-[var(--content-strong)] min-[744px]:text-xl-semibold"
       >
-        리뷰
+        {t("reviews")}
       </h2>
 
       {totalCount === 0 && !isLoading ? (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <p className="text-lg-semibold leading-7 text-[var(--black-500)]">
-            아직 등록된 리뷰가 없어요!
+            {t("noReviews")}
           </p>
           <p className="text-md-regular leading-7 text-[var(--input-placeholder)]">
-            가장 먼저 리뷰를 등록해보세요
+            {t("firstReview")}
           </p>
         </div>
       ) : (
@@ -64,7 +66,7 @@ export function MoverSearchDetailReviews({
               <div className="flex flex-col">
                 <div
                   className="flex"
-                  aria-label={`평점 ${rating.toFixed(1)}점`}
+                  aria-label={t("ratingLabel", { rating: rating.toFixed(1) })}
                 >
                   {STAR_NUMBERS.map((starNumber) => (
                     <Image
@@ -78,7 +80,7 @@ export function MoverSearchDetailReviews({
                   ))}
                 </div>
                 <p className="text-md-regular text-[var(--content-muted)]">
-                  {reviewCount.toLocaleString("ko-KR")}개의 리뷰
+                  {t("reviewCount", { count: reviewCount })}
                 </p>
               </div>
             </div>
@@ -117,7 +119,7 @@ export function MoverSearchDetailReviews({
                 totalPages={totalPages}
                 size="sm"
                 className="mt-2 justify-center min-[1200px]:hidden"
-                ariaLabel="기사님 리뷰 페이지 이동"
+                ariaLabel={t("reviewPagination")}
                 onPageChange={onPageChange}
                 isLoading={isLoading}
               />
@@ -126,7 +128,7 @@ export function MoverSearchDetailReviews({
                 totalPages={totalPages}
                 size="lg"
                 className="mt-2 hidden justify-center min-[1200px]:flex"
-                ariaLabel="기사님 리뷰 페이지 이동"
+                ariaLabel={t("reviewPagination")}
                 onPageChange={onPageChange}
                 isLoading={isLoading}
               />

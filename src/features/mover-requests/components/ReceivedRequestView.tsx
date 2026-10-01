@@ -12,6 +12,7 @@
  * API 호출과 응답 변환은 hooks/API 파일에 위임합니다.
  */
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { Button } from "@/common/components/button";
@@ -41,31 +42,20 @@ import { RejectRequestModal } from "./RejectRequestModal";
 import { SendQuoteModal } from "./SendQuoteModal";
 
 const SERVICE_FILTERS = [
-  {
-    value: SERVICE_TYPE.SMALL,
-    label: "소형이사",
-  },
-  {
-    value: SERVICE_TYPE.HOME,
-    label: "가정이사",
-  },
-  {
-    value: SERVICE_TYPE.OFFICE,
-    label: "사무실이사",
-  },
-] satisfies {
-  value: ServiceType;
-  label: string;
-}[];
+  SERVICE_TYPE.SMALL,
+  SERVICE_TYPE.HOME,
+  SERVICE_TYPE.OFFICE,
+] satisfies ServiceType[];
 
+/** 정렬 value는 API query 값이고, 라벨은 MoverRequests 번역 키로 표시합니다. */
 const SORT_OPTIONS = [
   {
     value: "MOVE_DATE_ASC",
-    label: "이사 빠른순",
+    labelKey: "moveSoon",
   },
   {
     value: "REQUESTED_AT_DESC",
-    label: "최근 요청 순",
+    labelKey: "recent",
   },
 ] as const;
 
@@ -89,6 +79,7 @@ function SendQuoteModalContent({
   request,
   onClose,
 }: SendQuoteModalContentProps) {
+  const t = useTranslations("MoverRequests");
   const mutation = useSendQuoteMutation();
   const { setModalDismissible } = useModal();
 
@@ -131,7 +122,7 @@ function SendQuoteModalContent({
         mutation.error
           ? getApiErrorMessage(
               mutation.error,
-              "견적을 보내지 못했습니다. 다시 시도해 주세요.",
+              t("sendError"),
             )
           : undefined
       }
@@ -153,6 +144,7 @@ function RejectRequestModalContent({
   request,
   onClose,
 }: RejectRequestModalContentProps) {
+  const t = useTranslations("MoverRequests");
   const mutation = useRejectReceivedRequestMutation();
   const { setModalDismissible } = useModal();
 
@@ -191,7 +183,7 @@ function RejectRequestModalContent({
         mutation.error
           ? getApiErrorMessage(
               mutation.error,
-              "요청을 반려하지 못했습니다. 다시 시도해 주세요.",
+              t("rejectError"),
             )
           : undefined
       }
@@ -202,6 +194,9 @@ function RejectRequestModalContent({
 }
 
 export function ReceivedRequestsView() {
+  const t = useTranslations("MoverRequests");
+  const options = useTranslations("Options");
+  const common = useTranslations("Common");
   const { openModal, closeModal } = useModal();
 
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -249,7 +244,7 @@ export function ReceivedRequestsView() {
     openModal(
       <SendQuoteModalContent request={request} onClose={closeModal} />,
       {
-        ariaLabel: "견적 보내기",
+        ariaLabel: t("sendQuote"),
       },
     );
   };
@@ -264,7 +259,7 @@ export function ReceivedRequestsView() {
     openModal(
       <RejectRequestModalContent request={request} onClose={closeModal} />,
       {
-        ariaLabel: "반려 요청",
+        ariaLabel: t("reject"),
       },
     );
   };
@@ -293,7 +288,7 @@ export function ReceivedRequestsView() {
     receivedRequestsQuery.error
       ? getApiErrorMessage(
           receivedRequestsQuery.error,
-          "받은 요청을 불러오지 못했습니다.",
+          t("loadError"),
         )
       : undefined;
 
@@ -306,7 +301,7 @@ export function ReceivedRequestsView() {
     receivedRequestsQuery.isFetchNextPageError && receivedRequestsQuery.error
       ? getApiErrorMessage(
           receivedRequestsQuery.error,
-          "추가 요청을 불러오지 못했습니다. 다시 시도해 주세요.",
+          t("loadMoreError"),
         )
       : undefined;
 
@@ -320,7 +315,7 @@ export function ReceivedRequestsView() {
         */}
         <div className="mx-auto w-full max-w-[1920px] px-6 py-8 min-[744px]:px-18 min-[1200px]:px-40 max-[743px]:py-[10px]">
           <h1 className="text-[24px] font-semibold leading-8 text-[var(--black-500)] max-[743px]:text-[18px]">
-            받은 요청
+            {t("title")}
           </h1>
         </div>
       </section>
@@ -329,9 +324,9 @@ export function ReceivedRequestsView() {
         <section className="flex flex-col gap-6">
           <div className="hidden min-[744px]:block">
             <SearchInput
-              label="고객 검색"
+              label={t("searchLabel")}
               inputSize="md"
-              placeholder="어떤 고객님을 찾고 계세요?"
+              placeholder={t("searchPlaceholder")}
               value={searchKeyword}
               onChange={(event) => setSearchKeyword(event.target.value)}
               onClear={() => setSearchKeyword("")}
@@ -341,11 +336,11 @@ export function ReceivedRequestsView() {
 
           <div className="hidden gap-3 min-[744px]:flex">
             {SERVICE_FILTERS.map((service) => {
-              const isSelected = selectedService === service.value;
+              const isSelected = selectedService === service;
 
               return (
                 <button
-                  key={service.value}
+                  key={service}
                   type="button"
                   aria-pressed={isSelected}
                   className={[
@@ -358,10 +353,10 @@ export function ReceivedRequestsView() {
                       : "border-[var(--gray-300)] bg-[var(--background-100)] text-[var(--black-400)]",
                   ].join(" ")}
                   onClick={() =>
-                    setSelectedService(isSelected ? null : service.value)
+                    setSelectedService(isSelected ? null : service)
                   }
                 >
-                  {service.label}
+                  {options(service)}
                 </button>
               );
             })}
@@ -371,8 +366,7 @@ export function ReceivedRequestsView() {
         <section className="flex flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
             <strong className="text-[18px] font-semibold max-[743px]:text-[13px]">
-              받은 요청 {requests.length}
-              {receivedRequestsQuery.hasNextPage ? "건 이상" : "건"}
+              {t(receivedRequestsQuery.hasNextPage ? "countMore" : "count", {count: requests.length})}
             </strong>
 
             <div className="flex items-center gap-3">
@@ -384,11 +378,11 @@ export function ReceivedRequestsView() {
                   onChange={(event) => setDesignatedOnly(event.target.checked)}
                 />
 
-                <span className="text-[16px]">지정 견적 요청</span>
+                <span className="text-[16px]">{t("designated")}</span>
               </label>
 
               <SortDropdown
-                options={SORT_OPTIONS}
+                options={SORT_OPTIONS.map(({ value, labelKey }) => ({ value, label: t(labelKey) }))}
                 value={sortValue}
                 isOpen={isSortOpen}
                 size="md"
@@ -400,10 +394,10 @@ export function ReceivedRequestsView() {
           </div>
 
           {receivedRequestsQuery.isPending ? (
-            <LoadingState message="받은 요청을 불러오는 중이에요" />
+            <LoadingState message={t("loading")} />
           ) : initialErrorMessage ? (
             <ErrorState
-              title="받은 요청을 불러오지 못했어요."
+              title={t("loadErrorTitle")}
               description={initialErrorMessage}
               onRetry={() => {
                 void receivedRequestsQuery.refetch();
@@ -413,13 +407,13 @@ export function ReceivedRequestsView() {
             <EmptyState
               title={
                 hasActiveFilter
-                  ? "조건에 맞는 받은 요청이 없어요."
-                  : "받은 요청이 없어요."
+                  ? t("noFiltered")
+                  : t("noRequests")
               }
               description={
                 hasActiveFilter
-                  ? "검색어나 필터 조건을 다시 확인해 주세요."
-                  : "새로운 견적 요청이 도착하면 이곳에 표시돼요."
+                  ? t("filterHint")
+                  : t("emptyHint")
               }
             />
           ) : (
@@ -453,7 +447,7 @@ export function ReceivedRequestsView() {
                       void receivedRequestsQuery.fetchNextPage();
                     }}
                   >
-                    다시 시도
+                    {common("retry")}
                   </Button>
                 </div>
               ) : receivedRequestsQuery.hasNextPage ? (
@@ -467,7 +461,7 @@ export function ReceivedRequestsView() {
                       void receivedRequestsQuery.fetchNextPage();
                     }}
                   >
-                    더 보기
+                    {t("more")}
                   </Button>
                 </div>
               ) : null}

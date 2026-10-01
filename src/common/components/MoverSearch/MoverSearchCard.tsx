@@ -1,16 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 const SERVICE_TYPE_ICON: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "/icons/ic-solid-box.svg",
@@ -55,7 +50,8 @@ function ServiceTypeChip({
   serviceType: ServiceType;
   isSm: boolean;
 }) {
-  const label = SERVICE_TYPE_LABEL[serviceType];
+  const moveType = useTranslations("MoveType");
+  const label = moveType(serviceType);
   const icon = SERVICE_TYPE_ICON[serviceType];
   const bg = SERVICE_TYPE_CHIP_BG[serviceType];
 
@@ -231,6 +227,7 @@ function FavoriteButton({
   size: 20 | 24;
   className?: string;
 }) {
+  const t = useTranslations("Quote");
   const iconSizeClass = size === 24 ? "size-6" : "size-5";
   const content = (
     <>
@@ -266,7 +263,7 @@ function FavoriteButton({
           onFavoriteClick();
         }}
         className={sharedClassName}
-        aria-label={isFavorite ? "찜 해제" : "찜하기"}
+        aria-label={isFavorite ? t("unfavorite") : t("favorite")}
         aria-pressed={isFavorite}
       >
         {content}
@@ -281,6 +278,7 @@ function FavoriteButton({
   );
 }
 
+/** 카드 폭이 고정이라 999를 넘는 수는 locale과 무관하게 "999+"로 줄입니다. */
 function formatCappedCount(count: number, cap = 999): string {
   return count > cap ? `${cap}+` : count.toLocaleString("ko-KR");
 }
@@ -344,6 +342,7 @@ function MoverStatsRow({
   confirmedCount: number;
   dividerInset: 6 | 8;
 }) {
+  const t = useTranslations("Quote");
   const dividerClass = [
     "h-3.5 w-px shrink-0 bg-[var(--line-200)]",
     dividerInset === 6 ? "mx-1.5" : "mx-2",
@@ -373,17 +372,21 @@ function MoverStatsRow({
       <span className={dividerClass} aria-hidden="true" />
 
       <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
-        <span className="text-[#ababab]">경력</span>
-        <span className="text-[var(--black-300)]">{careerYears}년</span>
+        <span className="text-[#ababab]">{t("career")}</span>
+        <span className="text-[var(--black-300)]">
+          {t("careerYears", { count: careerYears })}
+        </span>
       </div>
 
       <span className={dividerClass} aria-hidden="true" />
 
       <div className="text-sm-medium flex items-center gap-1 whitespace-nowrap">
         <span className="text-[var(--black-300)]">
-          {formatCappedCount(confirmedCount)}건
+          {confirmedCount > 999
+            ? formatCappedCount(confirmedCount)
+            : t("confirmedCount", { count: confirmedCount })}
         </span>
-        <span className="text-[#ababab]">확정</span>
+        <span className="text-[#ababab]">{t("confirmedLabel")}</span>
       </div>
     </div>
   );
@@ -411,8 +414,9 @@ export function MoverSearchCard({
   className,
 }: MoverSearchCardProps) {
   const isSm = size === "sm";
-  const avatarAlt = `${moverName} 기사님 프로필`;
-  const checkboxLabel = selectLabel ?? `${moverName} 기사님 선택`;
+  const t = useTranslations("Quote");
+  const avatarAlt = t("moverProfile", { name: moverName });
+  const checkboxLabel = selectLabel ?? t("selectMover", { name: moverName });
   const chipTypes =
     serviceTypes && serviceTypes.length > 0 ? serviceTypes : [serviceType];
 
@@ -470,7 +474,7 @@ export function MoverSearchCard({
                 <div className="flex items-center gap-1">
                   <MovingBadge compact />
                   <p className="text-md-semibold whitespace-nowrap text-[var(--black-300)]">
-                    {moverName} 기사님
+                    {t("moverName", { name: moverName })}
                   </p>
                 </div>
                 <FavoriteButton
@@ -519,7 +523,7 @@ export function MoverSearchCard({
                   <div className="flex min-w-0 items-center gap-1">
                     <MovingBadge />
                     <p className="text-md-semibold min-w-0 truncate whitespace-nowrap text-[var(--black-300)]">
-                      {moverName} 기사님
+                      {t("moverName", { name: moverName })}
                     </p>
                   </div>
                   <FavoriteButton
@@ -564,7 +568,7 @@ export function MoverSearchCard({
                   <div className="flex items-center gap-1">
                     <MovingBadge />
                     <p className="text-lg-semibold whitespace-nowrap text-[var(--black-300)]">
-                      {moverName} 기사님
+                      {t("moverName", { name: moverName })}
                     </p>
                   </div>
                   <MoverStatsRow

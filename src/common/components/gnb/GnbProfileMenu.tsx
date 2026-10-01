@@ -1,10 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
-import { GNB_PROFILE_GREETING_SUFFIX_BY_ROLE } from "./gnb.constants";
 import type { GnbProfileMenuProps } from "./gnb.types";
+import { useGnbLabel } from "./useGnbLabel";
 
 const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
@@ -66,8 +67,10 @@ export function GnbProfileMenu({
   onLogout,
   onClose,
 }: GnbProfileMenuProps) {
+  const t = useTranslations("Common");
+  const navLabel = useGnbLabel();
   const panelRef = useRef<HTMLDivElement>(null);
-  const greetingSuffix = GNB_PROFILE_GREETING_SUFFIX_BY_ROLE[role];
+  const greetingSuffix = t(role === "MOVER" ? "moverHonorific" : "customerHonorific");
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -126,7 +129,7 @@ export function GnbProfileMenu({
       ref={panelRef}
       id={menuId}
       role="menu"
-      aria-label="계정 메뉴"
+      aria-label={t("accountMenu")}
       className={`absolute top-full right-0 z-10 mt-2 flex flex-col items-start rounded-2xl border border-(--line-200) bg-(--gray-50) shadow-[2px_2px_4px_rgba(224,224,224,0.2)] ${PROFILE_MENU_SIZE.containerPadding}`}
     >
       <div role="none" className={`${PROFILE_MENU_SIZE.rowWidth} ${PROFILE_MENU_SIZE.headerPadding}`}>
@@ -148,7 +151,7 @@ export function GnbProfileMenu({
             onClick={onNavigate}
             className={`block whitespace-nowrap no-underline hover:bg-(--background-200) ${PROFILE_MENU_SIZE.rowWidth} ${isLastItem ? PROFILE_MENU_SIZE.lastItemPadding : PROFILE_MENU_SIZE.itemPadding} ${PROFILE_MENU_SIZE.itemText} ${FOCUS_RING}`}
           >
-            {item.label}
+            {navLabel(item.label)}
           </Link>
         );
       })}
@@ -159,7 +162,7 @@ export function GnbProfileMenu({
         onClick={onLogout}
         className={`flex cursor-pointer items-center justify-center border-0 border-t border-(--line-100) text-center hover:bg-(--background-200)! ${PROFILE_MENU_SIZE.rowWidth} ${PROFILE_MENU_SIZE.logoutPadding} ${PROFILE_MENU_SIZE.logoutText} ${FOCUS_RING}`}
       >
-        로그아웃
+        {t("logout")}
       </button>
     </div>
   );

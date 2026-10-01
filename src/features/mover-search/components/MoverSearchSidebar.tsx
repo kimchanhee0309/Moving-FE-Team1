@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 import { MoverSearchCard } from "@/common/components/MoverSearch";
 import { ROUTES } from "@/common/constants/routes";
 
-import { MOVER_SEARCH_SIDEBAR_TITLE } from "../mover-search.constants";
 import type {
   MoverSearchResult,
   MoverSearchSidebarVariant,
@@ -26,22 +26,21 @@ export function MoverSearchSidebar({
   favoriteIdSet,
   onFavoriteClick,
 }: MoverSearchSidebarProps) {
-  const title = MOVER_SEARCH_SIDEBAR_TITLE[variant];
+  const t = useTranslations("Search");
+  const title = t(variant === "favorite" ? "favorite" : "recommended");
 
   return (
     <aside className="hidden w-[327px] shrink-0 flex-col gap-4 min-[1200px]:flex">
       {isLoading ? (
         <p className="text-md-regular text-[var(--gray-500)]">
-          불러오는 중이에요.
+          {t("loading")}
         </p>
       ) : (
         <>
           <h2 className="text-xl-semibold text-[var(--black-400)]">{title}</h2>
           {movers.length === 0 ? (
             <p className="text-md-regular text-[var(--gray-500)]">
-              {variant === "favorite"
-                ? "찜한 기사님이 없어요."
-                : "추천 기사님이 없어요."}
+              {t(variant === "favorite" ? "noFavorites" : "noRecommended")}
             </p>
           ) : (
             <ul className="flex flex-col gap-4">
@@ -50,7 +49,7 @@ export function MoverSearchSidebar({
                   <Link
                     href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
                     className="block"
-                    aria-label={`${mover.moverName} 기사님 상세 보기`}
+                    aria-label={t("detail", {name: mover.moverName})}
                   >
                     <MoverSearchCard
                       size="sm"

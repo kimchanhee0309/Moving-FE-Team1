@@ -1,11 +1,20 @@
 "use client";
 
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+
+import { formatLongDate } from "@/common/utils/date-format";
 
 import type { MoveDateCalendarProps } from "./MoveDateCalendar.types";
 
-const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
+// 2023-01-01은 일요일이라 일~토 순서의 요일 이름을 locale별로 만들 때 기준일로 씁니다.
+const WEEKDAY_REFERENCE_DATES = Array.from({ length: 7 }, (_, index) => new Date(2023, 0, 1 + index));
+
+function getWeekdayLabels(locale: string): string[] {
+  const formatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  return WEEKDAY_REFERENCE_DATES.map((date) => formatter.format(date));
+}
 
 interface CalendarCell {
   date: Date;
@@ -106,6 +115,9 @@ export function MoveDateCalendar({
   // 않는다. 그래서 value 변화를 다시 동기화하는 effect 없이 lazy initializer만으로 충분하다.
   const [viewingMonth, setViewingMonth] = useState(() => startOfMonth(value ?? new Date()));
 
+  const t = useTranslations("Calendar");
+  const locale = useLocale();
+  const weekdayLabels = getWeekdayLabels(locale);
   const config = SIZE_CONFIG[size];
   const weeks = buildCalendarWeeks(viewingMonth);
   // BE(`move-request.service.ts`)가 moveDate를 "오늘(UTC 기준)보다 미래"만 허용하므로,
@@ -128,7 +140,7 @@ export function MoveDateCalendar({
       <div className="flex h-8 items-center justify-center gap-3">
         <button
           type="button"
-          aria-label="이전 달"
+          aria-label={t("previousMonth")}
           onClick={goToPrevMonth}
           className="flex size-6 shrink-0 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary-400)"
         >
@@ -139,7 +151,7 @@ export function MoveDateCalendar({
         </p>
         <button
           type="button"
-          aria-label="다음 달"
+          aria-label={t("nextMonth")}
           onClick={goToNextMonth}
           className="flex size-6 shrink-0 items-center justify-center rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary-400)"
         >
@@ -147,9 +159,9 @@ export function MoveDateCalendar({
         </button>
       </div>
 
-      <div className="flex flex-col items-center" role="group" aria-label="날짜 선택">
+      <div className="flex flex-col items-center" role="group" aria-label={t("selectDate")}>
         <div className="flex items-center">
-          {WEEKDAY_LABELS.map((label) => (
+          {weekdayLabels.map((label) => (
             <span
               key={label}
               className={`flex ${config.cellClass} items-center justify-center ${config.weekdayText}`}
@@ -171,7 +183,7 @@ export function MoveDateCalendar({
                   type="button"
                   disabled={!isSelectable}
                   aria-pressed={selected}
-                  aria-label={`${cell.date.getFullYear()}년 ${cell.date.getMonth() + 1}월 ${cell.date.getDate()}일`}
+                  aria-label={formatLongDate(cell.date, locale)}
                   onClick={() => onSelect(cell.date)}
                   className={[
                     "flex items-center justify-center rounded-xl transition-colors",

@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/navigation";
 
 import { ROUTES } from "@/common/constants/routes";
+import { authPageMetadata } from "@/i18n/metadata";
 
-export const metadata: Metadata = { title: "비밀번호 찾기 | 무빙" };
+export function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  return authPageMetadata(params, "forgotPassword");
+}
 
-export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ role?: string }> }) {
-  const { role } = await searchParams;
+export default async function ForgotPasswordPage({ searchParams, params }: { searchParams: Promise<{ role?: string }>; params: Promise<{ locale: string }> }) {
+  const [{ role }, { locale }] = await Promise.all([searchParams, params]);
   const loginPath = role === "MOVER" ? ROUTES.AUTH.LOGIN.MOVER : ROUTES.AUTH.LOGIN.CUSTOMER;
-  redirect(`${loginPath}?${new URLSearchParams({ recovery: "forgot-password" })}`);
+  redirect({ href: `${loginPath}?${new URLSearchParams({ recovery: "forgot-password" })}`, locale });
 }

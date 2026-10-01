@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
 
 import {
@@ -37,9 +38,11 @@ export function SortDropdown({
   size = "sm",
   disabled = false,
   isLoading = false,
-  ariaLabel = "정렬 기준 선택",
+  ariaLabel: ariaLabelProp,
   className,
 }: SortDropdownProps) {
+  const t = useTranslations("Common");
+  const ariaLabel = ariaLabelProp ?? t("sortLabel");
   const isDisabled = disabled || isLoading;
   const selectedLabel =
     options.find((option) => option.value === value)?.label ?? value;

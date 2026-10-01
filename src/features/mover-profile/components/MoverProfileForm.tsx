@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/common/components/button";
@@ -27,20 +28,22 @@ const EMPTY_TEXT_VALUES: MoverTextValues = {
   description: "",
 };
 
-function getMoverTextErrors(values: MoverTextValues) {
+type ProfileTranslator = ReturnType<typeof useTranslations<"Profile">>;
+
+function getMoverTextErrors(values: MoverTextValues, t: ProfileTranslator) {
   return {
     nickname: !values.nickname.trim()
-      ? "별명을 입력해 주세요."
-      : values.nickname.trim().length > 50 ? "별명은 50자 이하여야 합니다." : undefined,
+      ? t("nicknameRequired")
+      : values.nickname.trim().length > 50 ? t("nicknameTooLong") : undefined,
     careerYears: !/^\d+$/.test(values.careerYears.trim()) || Number(values.careerYears) > 50
-      ? "경력은 0~50 사이의 정수로 입력해 주세요."
+      ? t("experienceInvalid")
       : undefined,
     shortIntroduction: !values.shortIntroduction.trim()
-      ? "한 줄 소개를 입력해 주세요."
-      : values.shortIntroduction.trim().length > 255 ? "한 줄 소개는 255자 이하여야 합니다." : undefined,
+      ? t("shortIntroductionRequired")
+      : values.shortIntroduction.trim().length > 255 ? t("shortIntroductionTooLong") : undefined,
     description: !values.description.trim()
-      ? "상세 설명을 입력해 주세요."
-      : values.description.trim().length > 1000 ? "상세 설명은 1,000자 이하여야 합니다." : undefined,
+      ? t("descriptionRequired")
+      : values.description.trim().length > 1000 ? t("descriptionTooLong") : undefined,
   };
 }
 
@@ -55,6 +58,7 @@ export function MoverProfileForm({
   submissionError,
   onSubmit,
 }: MoverProfileFormProps) {
+  const t = useTranslations("Profile");
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imageInputVersion, setImageInputVersion] = useState(0);
   const [profileImageError, setProfileImageError] = useState<string | null>(null);
@@ -77,7 +81,7 @@ export function MoverProfileForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const isBusy = isLoading || isSubmitting;
-  const rawFieldErrors = getMoverTextErrors(textValues);
+  const rawFieldErrors = getMoverTextErrors(textValues, t);
   const changedFields = {
     nickname: !initialValues || textValues.nickname.trim() !== initialValues.nickname.trim(),
     careerYears: !initialValues || textValues.careerYears.trim() !== initialValues.careerYears.trim(),
@@ -142,7 +146,7 @@ export function MoverProfileForm({
       await onSubmit(values);
       setProfileImage(null);
       setImageInputVersion((current) => current + 1);
-      setStatusMessage(mode === "register" ? "기사님 프로필이 등록되었습니다." : "기사님 프로필이 수정되었습니다.");
+      setStatusMessage(t(mode === "register" ? "moverRegistered" : "moverUpdated"));
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
     } finally {
@@ -168,11 +172,11 @@ export function MoverProfileForm({
       >
         <header className="border-b border-[var(--line-100)] pb-6 min-[1200px]:pb-12">
           <h1 className="text-xl-bold text-[var(--black-400)] min-[1200px]:text-3xl-bold">
-            {mode === "register" ? "기사님 프로필 등록" : "프로필 수정"}
+            {t(mode === "register" ? "moverRegisterTitle" : "editTitle")}
           </h1>
           {mode === "register" ? (
             <p className="text-md-regular mt-2 text-[var(--gray-500)] min-[1200px]:mt-6 min-[1200px]:text-xl-regular">
-              추가 정보를 입력하여 회원가입을 완료해주세요.
+              {t("registerHint")}
             </p>
           ) : null}
         </header>
@@ -195,11 +199,11 @@ export function MoverProfileForm({
 
             <div className={sectionClass}>
               <Input
-                label="별명"
+                label={t("nickname")}
                 required
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
-                placeholder="사이트에 노출될 별명을 입력해 주세요"
+                placeholder={t("nicknamePlaceholder")}
                 value={textValues.nickname}
                 error={mode === "register"
                   ? touched.nickname || textValues.nickname ? rawFieldErrors.nickname : undefined
@@ -211,7 +215,7 @@ export function MoverProfileForm({
             </div>
             <div className={sectionClass}>
               <Input
-                label="경력"
+                label={t("experience")}
                 required
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
@@ -219,7 +223,7 @@ export function MoverProfileForm({
                 min="0"
                 max="50"
                 inputMode="numeric"
-                placeholder="기사님의 경력을 입력해 주세요"
+                placeholder={t("experiencePlaceholder")}
                 value={textValues.careerYears}
                 error={mode === "register"
                   ? touched.careerYears || textValues.careerYears ? rawFieldErrors.careerYears : undefined
@@ -231,11 +235,11 @@ export function MoverProfileForm({
             </div>
             <div className={sectionClass}>
               <Input
-                label="한 줄 소개"
+                label={t("shortIntroduction")}
                 required
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
-                placeholder="한 줄 소개를 입력해 주세요"
+                placeholder={t("shortIntroductionPlaceholder")}
                 value={textValues.shortIntroduction}
                 error={mode === "register"
                   ? touched.shortIntroduction || textValues.shortIntroduction ? rawFieldErrors.shortIntroduction : undefined
@@ -250,11 +254,11 @@ export function MoverProfileForm({
           <div className="flex flex-col">
             <div className={sectionClass}>
               <Textarea
-                label="상세 설명"
+                label={t("description")}
                 required
                 inputSize="sm"
                 containerClassName={responsiveTextareaClass}
-                placeholder="상세 내용을 입력해 주세요"
+                placeholder={t("descriptionPlaceholder")}
                 value={textValues.description}
                 error={mode === "register"
                   ? touched.description || textValues.description ? rawFieldErrors.description : undefined
@@ -267,7 +271,7 @@ export function MoverProfileForm({
 
             <section className={`flex flex-col gap-4 min-[1200px]:min-h-[160px] ${sectionClass}`} aria-labelledby="mover-service-title">
               <h2 id="mover-service-title" className="text-lg-semibold text-[var(--black-300)]">
-                제공 서비스 <span className="text-[var(--primary-400)]" aria-hidden="true">*</span>
+                {t("providedServices")} <span className="text-[var(--primary-400)]" aria-hidden="true">*</span>
               </h2>
               <ProfileMultiSelectChipGroup
                 options={PROFILE_SERVICE_OPTIONS}
@@ -276,7 +280,7 @@ export function MoverProfileForm({
                 disabled={isBusy}
                 isInvalid={hasServiceError}
                 className="min-[1200px]:gap-[14px]"
-                ariaLabel="제공 서비스 선택"
+                ariaLabel={t("providedServicesSelect")}
                 ariaDescribedBy={hasServiceError ? "mover-service-error" : undefined}
                 onValuesChange={(nextValues) => {
                   setServiceTouched(true);
@@ -286,14 +290,14 @@ export function MoverProfileForm({
               />
               {hasServiceError ? (
                 <p id="mover-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">
-                  제공 서비스를 한 개 이상 선택해 주세요.
+                  {t("providedServicesError")}
                 </p>
               ) : null}
             </section>
 
             <section className="flex flex-col gap-4 py-6 min-[1200px]:py-8" aria-labelledby="mover-region-title">
               <h2 id="mover-region-title" className="text-lg-semibold text-[var(--black-300)]">
-                서비스 가능 지역 <span className="text-[var(--primary-400)]" aria-hidden="true">*</span>
+                {t("serviceRegions")} <span className="text-[var(--primary-400)]" aria-hidden="true">*</span>
               </h2>
               <ProfileMultiSelectChipGroup
                 options={PROFILE_REGION_OPTIONS}
@@ -302,7 +306,7 @@ export function MoverProfileForm({
                 disabled={isBusy}
                 isInvalid={hasRegionError}
                 className="min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]"
-                ariaLabel="서비스 가능 지역 선택"
+                ariaLabel={t("serviceRegionsSelect")}
                 ariaDescribedBy={hasRegionError ? "mover-region-error" : undefined}
                 onValuesChange={(nextValues) => {
                   setRegionTouched(true);
@@ -312,7 +316,7 @@ export function MoverProfileForm({
               />
               {hasRegionError ? (
                 <p id="mover-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">
-                  서비스 가능 지역을 한 개 이상 선택해 주세요.
+                  {t("serviceRegionsError")}
                 </p>
               ) : null}
             </section>
@@ -330,15 +334,15 @@ export function MoverProfileForm({
 
             {mode === "register" ? (
               <Button type="submit" size="sm" fullWidth disabled={isIncomplete || hasTextError || isBusy} isLoading={isBusy} className={responsiveButtonClass}>
-                시작하기
+                {t("submit")}
               </Button>
             ) : (
               <div className="flex flex-col gap-2 min-[1200px]:mt-10 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
                 <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isIncomplete || hasTextError || isBusy} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
-                  수정하기
+                  {t("edit")}
                 </Button>
                 <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => window.history.back()}>
-                  취소
+                  {t("cancel")}
                 </Button>
               </div>
             )}

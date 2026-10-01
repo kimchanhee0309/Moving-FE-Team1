@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { CalendarIcon, ChevronDownIcon, LoadingSpinner } from "./DropdownIcons";
@@ -26,12 +27,14 @@ export function DateDropdown({
   isOpen,
   onOpenChange,
   panel,
-  ariaLabel = "이사 날짜 선택",
+  ariaLabel: ariaLabelProp,
   disabled = false,
   isLoading = false,
   error,
   className,
 }: DateDropdownProps) {
+  const t = useTranslations("Calendar");
+  const ariaLabel = ariaLabelProp ?? t("dropdownLabel");
   const isDisabled = disabled || isLoading;
   const { menuId, rootRef, toggle, triggerRef } = useDropdown({
     isOpen,

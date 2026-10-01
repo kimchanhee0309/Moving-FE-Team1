@@ -1,5 +1,8 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+import { useProfileOptionLabel } from "@/common/components/ProfileSelectionChip/useProfileOptionLabel";
+
 import { FilterDropdown } from "@/common/components/Dropdown/FilterDropdown";
 import { SortDropdown } from "@/common/components/Dropdown/SortDropdown";
 import { SearchInput } from "@/common/components/Input/SearchInput";
@@ -51,11 +54,16 @@ export function MoverSearchToolbar({
   dropdownSize,
   searchSize,
 }: MoverSearchToolbarProps) {
+  const t = useTranslations("Search");
+  const optionLabel = useProfileOptionLabel();
+  const regionOptions = REGION_FILTER_OPTIONS.map((option) => ({...option, label: optionLabel(option.label, option.label)}));
+  const serviceOptions = SERVICE_FILTER_OPTIONS.map((option) => ({...option, label: optionLabel(option.value, option.label)}));
+  const sortOptions = SORT_OPTIONS.map((option) => ({...option, label: t(option.value === "reviewCount" ? "reviewsSort" : option.value === "rating" ? "ratingSort" : option.value === "careerYears" ? "experienceSort" : "confirmedSort")}));
   return (
     <div className="flex w-full flex-col gap-4 min-[1200px]:gap-8">
       <SearchInput
-        label="기사님 별명 검색"
-        placeholder="텍스트를 입력해 주세요."
+        label={t("searchLabel")}
+        placeholder={t("searchPlaceholder")}
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         onClear={() => onSearchChange("")}
@@ -67,8 +75,9 @@ export function MoverSearchToolbar({
         <div className="flex flex-wrap items-center">
           <div className="flex flex-wrap items-center gap-3">
             <FilterDropdown
-              label="지역"
-              options={REGION_FILTER_OPTIONS}
+              label={t("region")}
+              options={regionOptions}
+              allOptionLabel={t("all")}
               values={regionValues}
               isAllSelected={isAllRegions}
               onChange={(values, meta) =>
@@ -82,8 +91,9 @@ export function MoverSearchToolbar({
               size={dropdownSize}
             />
             <FilterDropdown
-              label="서비스"
-              options={SERVICE_FILTER_OPTIONS}
+              label={t("service")}
+              options={serviceOptions}
+              allOptionLabel={t("all")}
               values={serviceValues}
               isAllSelected={isAllServices}
               onChange={(values, meta) =>
@@ -103,12 +113,12 @@ export function MoverSearchToolbar({
             disabled={!canReset}
             className="text-lg-medium hidden text-[var(--gray-300)] disabled:cursor-not-allowed disabled:opacity-40 min-[1200px]:ml-[25px] min-[1200px]:inline"
           >
-            초기화
+            {t("reset")}
           </button>
         </div>
 
         <SortDropdown
-          options={SORT_OPTIONS}
+          options={sortOptions}
           value={sort}
           onChange={(value) => {
             const next = SORT_OPTIONS.find((option) => option.value === value);
@@ -119,7 +129,7 @@ export function MoverSearchToolbar({
           isOpen={openMenu === "sort"}
           onOpenChange={(isOpen) => onOpenMenuChange(isOpen ? "sort" : null)}
           size={dropdownSize === "md" ? "md" : "sm"}
-          ariaLabel="기사님 목록 정렬"
+          ariaLabel={t("sortLabel")}
         />
       </div>
     </div>

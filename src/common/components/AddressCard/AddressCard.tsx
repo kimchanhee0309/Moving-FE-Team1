@@ -1,19 +1,23 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import type { AddressCardProps } from "./AddressCard.types";
 
 const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
 
 interface AddressLineProps {
-  type: "도로명" | "지번";
+  type: "road" | "jibun";
   value: string;
 }
 
-function AddressChip({ label }: { label: AddressLineProps["type"] }) {
+function AddressChip({ type }: { type: AddressLineProps["type"] }) {
+  const t = useTranslations("Address");
+
   return (
     <span className="flex w-[54px] shrink-0 items-center justify-center rounded-2xl bg-(--primary-100) px-1 py-0.5 text-xs-semibold text-(--primary-400) min-[744px]:text-md-semibold">
-      {label}
+      {t(type)}
     </span>
   );
 }
@@ -21,7 +25,7 @@ function AddressChip({ label }: { label: AddressLineProps["type"] }) {
 function AddressLine({ type, value }: AddressLineProps) {
   return (
     <div className="flex w-full items-start gap-2">
-      <AddressChip label={type} />
+      <AddressChip type={type} />
       <span className="min-w-0 flex-1 [word-break:break-word] text-md-regular text-(--black-400) min-[744px]:text-lg-regular">
         {value}
       </span>
@@ -64,8 +68,8 @@ export function AddressCard({
         {address.zonecode}
       </p>
       <div className="flex w-full flex-col gap-4">
-        <AddressLine type="도로명" value={address.roadAddress} />
-        <AddressLine type="지번" value={address.jibunAddress} />
+        <AddressLine type="road" value={address.roadAddress} />
+        <AddressLine type="jibun" value={address.jibunAddress} />
       </div>
     </button>
   );

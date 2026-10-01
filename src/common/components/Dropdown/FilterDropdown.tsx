@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import type { KeyboardEvent } from "react";
 
 import { ChevronDownIcon, ChevronUpIcon, LoadingSpinner } from "./DropdownIcons";
@@ -51,9 +52,11 @@ export function FilterDropdown({
   isLoading = false,
   error,
   showAllOption = true,
-  allOptionLabel = "전체",
+  allOptionLabel: allOptionLabelProp,
   className,
 }: FilterDropdownProps) {
+  const t = useTranslations("Common");
+  const allOptionLabel = allOptionLabelProp ?? t("all");
   const isDisabled = disabled || isLoading;
   const hasAllSelection = showAllOption && isAllSelected;
   const isActive = isOpen || hasAllSelection || values.length > 0;
@@ -69,7 +72,7 @@ export function FilterDropdown({
   const displayedLabel = hasAllSelection
     ? allOptionLabel
     : selectedOptionLabels.length > 1
-      ? `${selectedOptionLabels[0]} 외 ${selectedOptionLabels.length - 1}개`
+      ? t("selectedMore", { first: selectedOptionLabels[0], count: selectedOptionLabels.length - 1 })
       : (selectedOptionLabels[0] ?? label);
 
   const handleSelect = (value: string) => {
@@ -154,7 +157,7 @@ export function FilterDropdown({
 
       {isOpen && !isDisabled ? (
         <DropdownOptionList
-          ariaLabel={`${label} 필터 옵션`}
+          ariaLabel={t("filterOptions", { label })}
           className={[
             "rounded-2xl",
             // 2열 한 칸을 1열 패널(sm 140 / md 160)과 맞춘 뒤 패딩·간격만 더한다.

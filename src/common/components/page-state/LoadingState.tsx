@@ -1,12 +1,13 @@
+import { useTranslations } from "next-intl";
+
 import styles from "./PageState.module.css";
 
 interface LoadingStateProps {
   message?: string;
 }
 
-export function LoadingState({
-  message = "불러오는 중이에요.",
-}: LoadingStateProps) {
+export function LoadingState({ message }: LoadingStateProps) {
+  const t = useTranslations("Common");
   return (
     <section
       className={styles.container}
@@ -16,7 +17,7 @@ export function LoadingState({
     >
       <div className={styles.spinner} aria-hidden="true" />
 
-      <p className={`${styles.description} text-md-regular`}>{message}</p>
+      <p className={`${styles.description} text-md-regular`}>{message ?? t("loading")}</p>
     </section>
   );
 }

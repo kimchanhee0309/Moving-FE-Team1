@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "@/i18n/navigation";
 
 import { ApiError } from "@/common/api/error";
 import { AddressSearchModal } from "@/common/components/AddressSearchModal";
@@ -54,26 +55,6 @@ export interface MoveRequestFormValues {
 
 const SERVICE_TYPES: ServiceType[] = [SERVICE_TYPE.SMALL, SERVICE_TYPE.HOME, SERVICE_TYPE.OFFICE];
 
-const STEP_COPY: Record<MoveRequestStep, { title: string; subtitle: string }> = {
-  1: {
-    title: "이사 유형을 선택해주세요",
-    subtitle: "견적을 요청하면 최대 5개의 견적을 받을 수 있어요 :)",
-  },
-  2: {
-    title: "이사 예정일을 선택해주세요",
-    subtitle: "견적을 요청하면 최대 5개의 견적을 받을 수 있어요 :)",
-  },
-  3: {
-    title: "이사 지역을 선택해주세요",
-    subtitle: "견적을 요청하면 최대 5개의 견적을 받을 수 있어요 :)",
-  },
-};
-
-const ADDRESS_MODAL_TITLE: Record<AddressSlot, string> = {
-  from: "출발지를 선택해주세요",
-  to: "도착지를 선택해주세요",
-};
-
 interface MobileStepIndicatorProps {
   /** 지금 보여주는 단계. 이 값과 같은 dot만 강조되고, 지나온 단계도 다시 회색으로 돌아간다(Figma 원본 그대로). */
   currentStep: MoveRequestStep;
@@ -84,10 +65,11 @@ interface MobileStepIndicatorProps {
  * 태블릿/데스크톱은 Figma에 이 UI가 없다 — 항목을 한 화면에 모두 보여주므로 별도 단계 표시가 없다.
  */
 function MobileStepIndicator({ currentStep }: MobileStepIndicatorProps) {
+  const t = useTranslations("MoveRequest");
   const steps: MoveRequestStep[] = [1, 2, 3];
 
   return (
-    <ol className="flex items-center gap-2" aria-label={`${steps.length}단계 중 ${currentStep}단계`}>
+    <ol className="flex items-center gap-2" aria-label={t("step", {current: currentStep, total: steps.length})}>
       {steps.map((step) => {
         const isCurrent = step === currentStep;
         return (
@@ -127,25 +109,27 @@ interface AddressFieldProps {
  * 실제 주소 검색은 공통 `AddressSearchModal`이 담당하므로 이 컴포넌트는 트리거 버튼만 그린다.
  */
 function AddressField({ label, address, onOpen, className }: AddressFieldProps) {
+  const t = useTranslations("MoveRequest");
+  const translatedLabel = t(label === "출발지" ? "from" : "to");
   return (
     <div className={["flex w-full flex-col items-end gap-2", className].filter(Boolean).join(" ")}>
       <div className="flex w-full flex-col gap-3">
-        <span className="text-lg-medium text-(--content-strong)">{label}</span>
+        <span className="text-lg-medium text-(--content-strong)">{translatedLabel}</span>
         <button
           type="button"
           onClick={onOpen}
-          aria-label={address ? `${label} 다시 선택하기` : `${label} 선택하기`}
+          aria-label={t(address ? "chooseAgain" : "choose", {label: translatedLabel})}
           className="flex h-[54px] w-full items-center rounded-xl border border-(--primary-400) px-6 py-4 text-left"
         >
           <span className="text-lg-semibold min-w-0 flex-1 truncate text-(--primary-400)">
-            {address ? address.roadAddress : `${label} 선택하기`}
+            {address ? address.roadAddress : t("choose", {label: translatedLabel})}
           </span>
         </button>
       </div>
 
       {address ? (
         <button type="button" onClick={onOpen} className="text-xs-medium text-(--black-100) underline">
-          수정하기
+          {t("edit")}
         </button>
       ) : null}
     </div>
@@ -195,7 +179,9 @@ function MobileMoveRequestWizard({
   submitLabel,
   submittingLabel,
 }: MobileMoveRequestWizardProps) {
-  const { title, subtitle } = STEP_COPY[step];
+  const t = useTranslations("MoveRequest");
+  const title = t(step === 1 ? "step1" : step === 2 ? "step2" : "step3");
+  const subtitle = t("subtitle");
 
   const canGoNextFromStep1 = serviceType !== null;
   // "수정하기"로 열면 예전 moveDate가 그대로 채워지는데, 시간이 지나 이미 오늘/과거가 됐을 수
@@ -250,7 +236,7 @@ function MobileMoveRequestWizard({
             onClick={() => onStepChange(2)}
             className="ml-auto flex h-[54px] w-[158px] items-center justify-center rounded-xl bg-(--primary-400) text-lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
           >
-            다음
+            {t("next")}
           </button>
         ) : (
           <>
@@ -259,7 +245,7 @@ function MobileMoveRequestWizard({
               onClick={() => onStepChange((step - 1) as MoveRequestStep)}
               className="flex h-[54px] flex-1 items-center justify-center rounded-xl border border-(--primary-400) text-lg-semibold text-(--primary-400)"
             >
-              이전
+              {t("previous")}
             </button>
             {step === 2 ? (
               <button
@@ -268,7 +254,7 @@ function MobileMoveRequestWizard({
                 onClick={() => onStepChange(3)}
                 className="flex h-[54px] flex-1 items-center justify-center rounded-xl bg-(--primary-400) text-lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
               >
-                다음
+                {t("next")}
               </button>
             ) : (
               <button
@@ -336,20 +322,22 @@ function DesktopMoveRequestForm({
   submitLabel,
   submittingLabel,
 }: DesktopMoveRequestFormProps) {
+  const t = useTranslations("MoveRequest");
+  const locale = useLocale();
   return (
     <div className="hidden min-[744px]:block">
       <div className="mx-auto w-full max-w-[700px] px-6 py-10 min-[1200px]:max-w-[894px] min-[1200px]:px-0 min-[1200px]:py-16">
         <div className="w-full rounded-[40px] bg-(--gray-50) px-6 py-10 min-[1200px]:px-12 min-[1200px]:py-[70px]">
           <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-2xl-bold text-(--black-500)">이사 유형, 예정일과 지역을 선택해주세요</h1>
+            <h1 className="text-2xl-bold text-(--black-500)">{t("allSteps")}</h1>
             <p className="text-lg-regular text-(--input-placeholder)">
-              견적을 요청하면 최대 5개의 견적을 받을 수 있어요 :)
+              {t("subtitle")}
             </p>
           </div>
 
           <div className="mt-14 flex flex-col gap-12 min-[1200px]:gap-16">
             <section className="flex flex-col gap-4">
-              <h2 className="text-2lg-bold text-(--black-300)">이사 유형</h2>
+              <h2 className="text-2lg-bold text-(--black-300)">{t("type")}</h2>
               <div className="flex gap-3 min-[1200px]:gap-4">
                 {SERVICE_TYPES.map((type) => (
                   <MoveTypeCard
@@ -366,10 +354,10 @@ function DesktopMoveRequestForm({
 
             <div className="flex flex-col gap-8">
               <div className="flex w-full items-start justify-between gap-4">
-                <h2 className="text-2lg-bold shrink-0 text-(--black-300)">이사 예정일</h2>
+                <h2 className="text-2lg-bold shrink-0 text-(--black-300)">{t("date")}</h2>
                 <div className="w-[400px] shrink-0">
                   <DateDropdown
-                    valueLabel={moveDate ? formatMoveDateLabel(moveDate) : "이사 예정일을 선택해주세요"}
+                    valueLabel={moveDate ? formatMoveDateLabel(moveDate, locale) : t("dateSelect")}
                     isOpen={isDateDropdownOpen}
                     onOpenChange={onDateDropdownOpenChange}
                     panel={
@@ -381,7 +369,7 @@ function DesktopMoveRequestForm({
                           onClick={() => onDateDropdownOpenChange(false)}
                           className="flex h-[54px] w-[279px] items-center justify-center rounded-xl bg-(--primary-400) text-lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
                         >
-                          선택완료
+                          {t("done")}
                         </button>
                       </div>
                     }
@@ -392,7 +380,7 @@ function DesktopMoveRequestForm({
               <div className="h-px w-full bg-(--line-100)" aria-hidden="true" />
 
               <div className="flex w-full items-start justify-between gap-4">
-                <h2 className="text-2lg-bold shrink-0 text-(--black-300)">이사 지역</h2>
+                <h2 className="text-2lg-bold shrink-0 text-(--black-300)">{t("region")}</h2>
                 <div className="flex w-[400px] flex-col gap-4 min-[1200px]:w-[520px] min-[1200px]:flex-row">
                   <AddressField
                     label="출발지"
@@ -456,13 +444,14 @@ function toEditInitialValues(moveRequest: MoveRequestDto) {
  * 새 값으로 채워둔 뒤라 카드에 수정된 내용이 바로 보인다.
  */
 export default function MoveRequestPage() {
+  const t = useTranslations("MoveRequest");
   const { data: activeMoveRequest, isPending, isError, refetch } = useActiveMoveRequest();
   const [isEditing, setIsEditing] = useState(false);
 
   if (isPending) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-(--background-100)">
-        <LoadingState message="견적 요청 상태를 불러오는 중이에요." />
+        <LoadingState message={t("loading")} />
       </main>
     );
   }
@@ -471,7 +460,7 @@ export default function MoveRequestPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-(--background-100)">
         <ErrorState
-          title="견적 요청 상태를 불러오지 못했어요."
+          title={t("loadError")}
           onRetry={() => void refetch()}
         />
       </main>
@@ -549,6 +538,7 @@ function MoveRequestForm({
   onEditSuccess,
   onCancelEdit,
 }: MoveRequestFormProps = {}) {
+  const t = useTranslations("MoveRequest");
   const isEditMode = mode === "edit" && initialValues !== undefined;
 
   const [step, setStep] = useState<MoveRequestStep>(1);
@@ -648,15 +638,15 @@ function MoveRequestForm({
       if (error instanceof ApiError && error.status === 409) {
         setSubmitError(
           isEditMode
-            ? "요청을 수정하지 못했어요. 잠시 후 다시 시도해주세요."
-            : "이미 진행 중인 견적 요청이 있어요. 완료 후 다시 시도해주세요.",
+            ? t("conflictEdit")
+            : t("conflictCreate"),
         );
         return;
       }
       setSubmitError(
         isEditMode
-          ? "견적 요청 수정에 실패했어요. 잠시 후 다시 시도해주세요."
-          : "견적 요청에 실패했어요. 잠시 후 다시 시도해주세요.",
+          ? t("submitEditError")
+          : t("submitCreateError"),
       );
     }
   };
@@ -671,7 +661,7 @@ function MoveRequestForm({
             disabled={isSubmitting}
             className="text-sm-medium text-(--gray-500) underline disabled:cursor-not-allowed disabled:opacity-50"
           >
-            수정 취소하고 돌아가기
+            {t("cancelEdit")}
           </button>
         </div>
       ) : null}
@@ -694,8 +684,8 @@ function MoveRequestForm({
         onOpenAddressModal={openAddressModal}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        submitLabel={isEditMode ? "수정하기" : "견적 요청하기"}
-        submittingLabel={isEditMode ? "수정 중..." : "요청 중..."}
+        submitLabel={t(isEditMode ? "edit" : "submit")}
+        submittingLabel={t(isEditMode ? "editing" : "submitting")}
       />
 
       <DesktopMoveRequestForm
@@ -711,13 +701,13 @@ function MoveRequestForm({
         canSubmit={canSubmit}
         onSubmit={handleSubmit}
         isSubmitting={isSubmitting}
-        submitLabel={isEditMode ? "수정하기" : "견적 요청하기"}
-        submittingLabel={isEditMode ? "수정 중..." : "요청 중..."}
+        submitLabel={t(isEditMode ? "edit" : "submit")}
+        submittingLabel={t(isEditMode ? "editing" : "submitting")}
       />
 
       <AddressSearchModal
         isOpen={addressModalSlot !== null}
-        title={addressModalSlot ? ADDRESS_MODAL_TITLE[addressModalSlot] : ""}
+        title={addressModalSlot ? t(addressModalSlot === "from" ? "fromModal" : "toModal") : ""}
         searchValue={searchValue}
         onSearchChange={setSearchValue}
         onSearchSubmit={() => setSubmittedSearchQuery(searchValue)}

@@ -1,4 +1,5 @@
 import type { AddressResult } from "@/common/components/AddressCard";
+import { formatLongDate } from "@/common/utils/date-format";
 
 /**
  * 캘린더가 고른 로컬 날짜를 `moveDate` 요청 필드 형식(YYYY-MM-DD)으로 바꿉니다.
@@ -38,13 +39,13 @@ export function formatAddressForApi(address: AddressResult, detailAddress = ""):
 }
 
 /**
- * `이사 예정일` 표시용 날짜 문자열을 만든다("2025년 7월 1일"). 원래 `page.tsx`(`MoveRequestForm`)
+ * `이사 예정일` 표시용 날짜 문자열을 만든다(ko "2025년 7월 1일", en "July 1, 2025"). 원래 `page.tsx`(`MoveRequestForm`)
  * 안에만 있던 로컬 함수였는데, 활성 요청 카드(`MoveRequestBlockedState`)에서도 같은 형식으로
  * `moveDate`를 보여줘야 해서 공용 유틸로 옮겼다 — 서버 전송용 직렬화(`formatMoveDateForApi`)와는
  * 별개이며 화면 표시 전용이다.
  */
-export function formatMoveDateLabel(date: Date): string {
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+export function formatMoveDateLabel(date: Date, locale: string): string {
+  return formatLongDate(date, locale);
 }
 
 /**

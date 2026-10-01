@@ -4,7 +4,6 @@ import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 
 import {
   DEFAULT_MOVER_PROFILE_IMAGE,
-  SERVICE_TYPE_LABEL,
   type CustomerQuoteDetail,
 } from "../model/customer-quote.model";
 import type {
@@ -15,8 +14,6 @@ import type {
   CustomerQuoteListItemView,
   CustomerQuoteMoveRequestView,
 } from "./customer-quote.types";
-
-const DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function toServiceType(value: string): ServiceType {
   if (value === SERVICE_TYPE.SMALL) return SERVICE_TYPE.SMALL;
@@ -37,19 +34,6 @@ function pad2(value: number) {
   return String(value).padStart(2, "0");
 }
 
-export function formatDateLong(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
-}
-
-export function formatMoveDateWithWeekday(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const week = DAY_LABELS[date.getDay()];
-  return `${date.getFullYear()}년 ${pad2(date.getMonth() + 1)}월 ${pad2(date.getDate())}일 (${week})`;
-}
-
 export function formatDateShortDots(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
@@ -62,16 +46,6 @@ export function formatDateCompact(iso: string): string {
   if (Number.isNaN(date.getTime())) return iso;
   const yy = String(date.getFullYear()).slice(2);
   return `${yy}.${pad2(date.getMonth() + 1)}.${pad2(date.getDate())}`;
-}
-
-export function formatMoveDateDetail(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  const week = DAY_LABELS[date.getDay()];
-  const hours = date.getHours();
-  const period = hours < 12 ? "오전" : "오후";
-  const hour12 = hours % 12 === 0 ? 12 : hours % 12;
-  return `${date.getFullYear()}. ${pad2(date.getMonth() + 1)}. ${pad2(date.getDate())}(${week}) ${period} ${pad2(hour12)}:${pad2(date.getMinutes())}`;
 }
 
 /** BE 주소 앞 `[06236]` 같은 우편번호 표기를 화면용으로 제거합니다. */
@@ -87,10 +61,11 @@ export function mapQuoteListItem(
     serviceType: toServiceType(item.moveRequest.serviceType),
     isDesignated: item.isDesignated,
     status: mapApiQuoteStatus(item.status),
+    // 둘 다 비어 있으면 빈 문자열을 두고, 화면이 현재 locale의 기본 소개 문구를 표시합니다.
     message:
       item.comment?.trim() ||
       item.mover.shortIntroduction?.trim() ||
-      "고객님의 물품을 안전하게 운송해 드립니다.",
+      "",
     moverName: item.mover.nickname,
     moverProfileImageUrl: resolveApiAssetUrl(item.mover.profileImageUrl),
     rating: item.mover.averageRating ?? 0,
@@ -108,10 +83,10 @@ export function mapActiveMoveRequest(
   return {
     id: moveRequest.id,
     serviceType: toServiceType(moveRequest.serviceType),
-    requestedAt: formatDateLong(moveRequest.createdAt),
+    requestedAt: moveRequest.createdAt,
     from: stripPostalCodePrefix(moveRequest.fromAddress),
     to: stripPostalCodePrefix(moveRequest.toAddress),
-    moveDate: formatMoveDateWithWeekday(moveRequest.moveDate),
+    moveDate: moveRequest.moveDate,
   };
 }
 
@@ -136,7 +111,7 @@ export function groupHistoryQuotes(
       serviceType: toServiceType(item.moveRequest.serviceType),
       from: stripPostalCodePrefix(item.moveRequest.fromAddress),
       to: stripPostalCodePrefix(item.moveRequest.toAddress),
-      moveDate: formatMoveDateWithWeekday(item.moveRequest.moveDate),
+      moveDate: item.moveRequest.moveDate,
       quotes: [quote],
     });
   }
@@ -157,10 +132,11 @@ export function mapQuoteDetail(
     serviceType,
     isDesignated: item.isDesignated,
     status: mapApiQuoteStatus(item.status),
+    // 둘 다 비어 있으면 빈 문자열을 두고, 화면이 현재 locale의 기본 소개 문구를 표시합니다.
     message:
       item.comment?.trim() ||
       item.mover.shortIntroduction?.trim() ||
-      "고객님의 물품을 안전하게 운송해 드립니다.",
+      "",
     moverName: item.mover.nickname,
     profileImageUrl:
       resolveApiAssetUrl(item.mover.profileImageUrl) ??
@@ -172,8 +148,7 @@ export function mapQuoteDetail(
     favoriteCount: item.mover.favoriteCount,
     price: item.price ?? 0,
     requestedAt: formatDateCompact(requestedAtIso),
-    serviceLabel: SERVICE_TYPE_LABEL[serviceType],
-    moveDateLabel: formatMoveDateDetail(item.moveRequest.moveDate),
+    moveDate: item.moveRequest.moveDate,
     from: stripPostalCodePrefix(item.moveRequest.fromAddress),
     to: stripPostalCodePrefix(item.moveRequest.toAddress),
   };

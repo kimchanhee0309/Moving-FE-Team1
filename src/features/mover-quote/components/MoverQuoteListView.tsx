@@ -11,7 +11,7 @@
  * - 다음 페이지 조회
  */
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { Button } from "@/common/components/button";
@@ -21,12 +21,15 @@ import {
   LoadingState,
 } from "@/common/components/page-state";
 import { ROUTES } from "@/common/constants/routes";
+import { useRouter } from "@/i18n/navigation";
 
 import { useMoverQuotes } from "../mover-quote.hooks";
 import { MoverQuoteCard } from "./MoverQuoteCard";
 import { MoverQuoteTabs } from "./MoverQuoteTabs";
 
 export function MoverQuoteListView() {
+  const t = useTranslations("MoverQuote");
+  const common = useTranslations("Common");
   const router = useRouter();
   const quotesQuery = useMoverQuotes();
 
@@ -46,7 +49,7 @@ export function MoverQuoteListView() {
     quotesQuery.isError && !hasLoadedQuotes && quotesQuery.error
       ? getApiErrorMessage(
           quotesQuery.error,
-          "보낸 견적을 불러오지 못했습니다.",
+          t("loadError"),
         )
       : undefined;
 
@@ -58,7 +61,7 @@ export function MoverQuoteListView() {
     quotesQuery.isFetchNextPageError && quotesQuery.error
       ? getApiErrorMessage(
           quotesQuery.error,
-          "추가 견적을 불러오지 못했습니다. 다시 시도해 주세요.",
+          t("loadMoreError"),
         )
       : undefined;
 
@@ -72,10 +75,10 @@ export function MoverQuoteListView() {
 
       <main className="min-h-[calc(100vh-142px)] bg-[var(--background-100)]">
         {quotesQuery.isPending ? (
-          <LoadingState message="보낸 견적을 불러오는 중이에요." />
+          <LoadingState message={t("loading")} />
         ) : initialErrorMessage ? (
           <ErrorState
-            title="보낸 견적을 불러오지 못했어요."
+            title={t("loadErrorTitle")}
             description={initialErrorMessage}
             onRetry={() => {
               void quotesQuery.refetch();
@@ -83,8 +86,8 @@ export function MoverQuoteListView() {
           />
         ) : quotes.length === 0 ? (
           <EmptyState
-            title="보낸 견적이 없어요."
-            description="받은 요청에서 고객님에게 견적을 보내보세요."
+            title={t("empty")}
+            description={t("emptyDescription")}
           />
         ) : (
           <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-6 py-16 max-[743px]:max-w-[375px] max-[743px]:py-6">
@@ -116,7 +119,7 @@ export function MoverQuoteListView() {
                     void quotesQuery.fetchNextPage();
                   }}
                 >
-                  다시 시도
+                  {common("retry")}
                 </Button>
               </div>
             ) : quotesQuery.hasNextPage ? (
@@ -130,7 +133,7 @@ export function MoverQuoteListView() {
                     void quotesQuery.fetchNextPage();
                   }}
                 >
-                  더 보기
+                  {t("more")}
                 </Button>
               </div>
             ) : null}

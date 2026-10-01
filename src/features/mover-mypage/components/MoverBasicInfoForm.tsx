@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/common/components/button";
@@ -10,7 +10,9 @@ import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/va
 import { getEmailError } from "@/common/validation/email";
 import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
+import { useValidationMessage } from "@/common/validation/useValidationMessage";
 import { AccountWithdrawalButton } from "@/features/auth/components/AccountWithdrawalButton";
+import { useRouter } from "@/i18n/navigation";
 
 import type {
   MoverBasicInfoFormProps,
@@ -48,6 +50,10 @@ export function MoverBasicInfoForm({
   onCurrentPasswordChange,
   onSubmit,
 }: MoverBasicInfoFormProps) {
+  const auth = useTranslations("Auth");
+  const account = useTranslations("Account");
+  const profile = useTranslations("Profile");
+  const translateValidation = useValidationMessage();
   const router = useRouter();
   const [values, setValues] = useState<MoverBasicInfoFormValues>({
     ...INITIAL_VALUES,
@@ -68,26 +74,26 @@ export function MoverBasicInfoForm({
   const requiresCurrentPassword = changedFields.email || isChangingPassword;
 
   const errors: Partial<Record<BasicInfoField, string>> = {
-    name: getNameError(values.name),
-    email: getEmailError(values.email),
-    phone: getPhoneError(values.phone),
+    name: translateValidation(getNameError(values.name)),
+    email: translateValidation(getEmailError(values.email)),
+    phone: translateValidation(getPhoneError(values.phone)),
     currentPassword:
       requiresCurrentPassword && !values.currentPassword
-        ? "현재 비밀번호를 입력해 주세요."
+        ? account("currentPasswordRequired")
         : values.currentPassword
-          ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
+          ? translateValidation(getCurrentPasswordError(values.currentPassword) ?? currentPasswordError)
           : undefined,
     newPassword:
       isChangingPassword && !values.newPassword
-        ? "새 비밀번호를 입력해 주세요."
+        ? account("newPasswordRequired")
         : isChangingPassword
-          ? getNewPasswordError(values.newPassword)
+          ? translateValidation(getNewPasswordError(values.newPassword))
           : undefined,
     newPasswordConfirm:
       isChangingPassword && !values.newPasswordConfirm
-        ? "새 비밀번호를 다시 입력해 주세요."
+        ? account("newPasswordConfirmRequired")
         : isChangingPassword && values.newPassword !== values.newPasswordConfirm
-          ? "새 비밀번호가 일치하지 않습니다."
+          ? account("newPasswordMismatch")
           : undefined,
   };
   const hasError = Boolean(
@@ -138,7 +144,7 @@ export function MoverBasicInfoForm({
         newPassword: "",
         newPasswordConfirm: "",
       });
-      setStatusMessage("기본정보가 수정되었습니다.");
+      setStatusMessage(account("basicInfoUpdated"));
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
     } finally {
@@ -155,7 +161,7 @@ export function MoverBasicInfoForm({
         onSubmit={handleSubmit}
       >
         <h1 className="text-xl-bold border-b border-[var(--line-100)] pb-6 text-[var(--black-400)] min-[1200px]:text-3xl-bold min-[1200px]:pb-12">
-          기본정보 수정
+          {account("basicInfoTitle")}
         </h1>
 
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
@@ -163,7 +169,7 @@ export function MoverBasicInfoForm({
             <div className={firstRowClass}>
               <Input
                 name="name"
-                label="이름"
+                label={auth("name")}
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
                 value={values.name}
@@ -176,7 +182,7 @@ export function MoverBasicInfoForm({
             <div className={rowClass}>
               <Input
                 name="email"
-                label="이메일"
+                label={auth("email")}
                 type="email"
                 autoComplete="email"
                 inputSize="sm"
@@ -191,7 +197,7 @@ export function MoverBasicInfoForm({
             <div className={`${rowClass} min-[1200px]:border-b-0`}>
               <Input
                 name="phone"
-                label="전화번호"
+                label={auth("phone")}
                 type="tel"
                 autoComplete="tel"
                 inputMode="tel"
@@ -210,17 +216,17 @@ export function MoverBasicInfoForm({
             <div className={firstRowClass}>
               <Input
                 name="currentPassword"
-                label="현재 비밀번호"
+                label={account("currentPassword")}
                 type="password"
                 autoComplete="current-password"
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
-                placeholder="현재 비밀번호를 입력해 주세요"
+                placeholder={account("currentPasswordPlaceholder")}
                 value={values.currentPassword}
                 error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
                 helperText={
                   !currentPasswordError
-                    ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다."
+                    ? account("currentPasswordHint")
                     : undefined
                 }
                 disabled={isBusy}
@@ -231,12 +237,12 @@ export function MoverBasicInfoForm({
             <div className={rowClass}>
               <Input
                 name="newPassword"
-                label="새 비밀번호"
+                label={account("newPassword")}
                 type="password"
                 autoComplete="new-password"
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
-                placeholder="새 비밀번호를 입력해 주세요"
+                placeholder={account("newPasswordPlaceholder")}
                 value={values.newPassword}
                 error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined}
                 disabled={isBusy}
@@ -247,12 +253,12 @@ export function MoverBasicInfoForm({
             <div className={`${rowClass} min-[1200px]:border-b-0`}>
               <Input
                 name="newPasswordConfirm"
-                label="새 비밀번호 확인"
+                label={account("newPasswordConfirm")}
                 type="password"
                 autoComplete="new-password"
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
-                placeholder="새 비밀번호를 다시 입력해 주세요"
+                placeholder={account("newPasswordConfirmPlaceholder")}
                 value={values.newPasswordConfirm}
                 error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
                 disabled={isBusy}
@@ -278,10 +284,10 @@ export function MoverBasicInfoForm({
         <div className="ml-auto mt-8 flex w-full flex-col min-[1200px]:mt-6 min-[1200px]:max-w-[500px]">
           <div className="flex flex-col gap-2 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
             <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
-              수정하기
+              {profile("edit")}
             </Button>
             <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => router.push(ROUTES.MOVER.MY_PAGE)}>
-              취소
+              {profile("cancel")}
             </Button>
           </div>
           <AccountWithdrawalButton className="mt-4 min-[1200px]:mt-5" buttonClassName={responsiveButtonClass} disabled={isBusy} />

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 
@@ -11,21 +12,15 @@ import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
  */
 const MOVE_TYPE_CONTENT: Record<
   ServiceType,
-  { title: string; description: string; imageSrc: string }
+  { imageSrc: string }
 > = {
   [SERVICE_TYPE.SMALL]: {
-    title: "소형이사",
-    description: "원룸, 투룸, 20평대 미만",
     imageSrc: "/images/move-type-small.png",
   },
   [SERVICE_TYPE.HOME]: {
-    title: "가정이사",
-    description: "쓰리룸, 20평대 이상",
     imageSrc: "/images/move-type-home.png",
   },
   [SERVICE_TYPE.OFFICE]: {
-    title: "사무실이사",
-    description: "사무실, 상업공간",
     imageSrc: "/images/move-type-office.png",
   },
 };
@@ -72,7 +67,10 @@ export function MoveTypeCard({
   onChange,
   className,
 }: MoveTypeCardProps) {
-  const { title, description, imageSrc } = MOVE_TYPE_CONTENT[value];
+  const t = useTranslations("MoveType");
+  const { imageSrc } = MOVE_TYPE_CONTENT[value];
+  const title = t(value);
+  const description = t(`${value}Description`);
 
   return (
     <label

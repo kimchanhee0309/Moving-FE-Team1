@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 interface RequestModalPanelProps {
@@ -16,6 +17,8 @@ export function RequestModalPanel({
   isSubmitting = false,
   onClose,
 }: RequestModalPanelProps) {
+  const t = useTranslations("MoverRequests");
+
   return (
     <section
       className={[
@@ -34,7 +37,7 @@ export function RequestModalPanel({
         <button
           type="button"
           className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg hover:bg-[var(--gray-100)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] disabled:cursor-not-allowed disabled:opacity-50 max-[743px]:size-6"
-          aria-label={`${title} 닫기`}
+          aria-label={t("closeModal", { title })}
           disabled={isSubmitting}
           onClick={onClose}
         >

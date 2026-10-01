@@ -60,12 +60,12 @@ export interface ReceivedRequestViewModel {
   customerName: string;
   serviceType: ServiceType;
   isDesignated: boolean;
+  /** ISO 원문. 화면에서 현재 locale의 상대 시간으로 표시합니다. */
   requestedAt: string;
-  requestedAtLabel: string;
   departureLabel: string;
   arrivalLabel: string;
+  /** ISO 원문. 화면에서 현재 locale 날짜로 표시합니다. */
   moveDate: string;
-  moveDateLabel: string;
 }
 
 /** ViewModel로 변환된 받은 요청 한 페이지 */

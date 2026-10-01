@@ -10,6 +10,8 @@
  * - 다음 페이지 조회
  */
 
+import { useTranslations } from "next-intl";
+
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { Button } from "@/common/components/button";
 import {
@@ -23,6 +25,8 @@ import { MoverQuoteTabs } from "./MoverQuoteTabs";
 import { RejectedRequestCard } from "./RejectedRequestCard";
 
 export function RejectedRequestListView() {
+  const t = useTranslations("MoverQuote");
+  const common = useTranslations("Common");
   const rejectedRequestsQuery = useRejectedRequests();
 
   const requests =
@@ -40,7 +44,7 @@ export function RejectedRequestListView() {
     rejectedRequestsQuery.error
       ? getApiErrorMessage(
           rejectedRequestsQuery.error,
-          "반려 요청을 불러오지 못했습니다.",
+          t("rejectedLoadError"),
         )
       : undefined;
 
@@ -52,7 +56,7 @@ export function RejectedRequestListView() {
     rejectedRequestsQuery.isFetchNextPageError && rejectedRequestsQuery.error
       ? getApiErrorMessage(
           rejectedRequestsQuery.error,
-          "추가 반려 요청을 불러오지 못했습니다. 다시 시도해 주세요.",
+          t("rejectedLoadMoreError"),
         )
       : undefined;
 
@@ -62,10 +66,10 @@ export function RejectedRequestListView() {
 
       <main className="min-h-[calc(100vh-142px)] bg-[var(--background-100)]">
         {rejectedRequestsQuery.isPending ? (
-          <LoadingState message="반려 요청을 불러오는 중이에요." />
+          <LoadingState message={t("rejectedLoading")} />
         ) : initialErrorMessage ? (
           <ErrorState
-            title="반려 요청을 불러오지 못했어요."
+            title={t("rejectedLoadErrorTitle")}
             description={initialErrorMessage}
             onRetry={() => {
               void rejectedRequestsQuery.refetch();
@@ -73,8 +77,8 @@ export function RejectedRequestListView() {
           />
         ) : requests.length === 0 ? (
           <EmptyState
-            title="반려한 요청이 없어요."
-            description="반려한 견적 요청이 이곳에 표시돼요."
+            title={t("rejectedEmpty")}
+            description={t("rejectedEmptyDescription")}
           />
         ) : (
           <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-6 py-16 max-[743px]:max-w-[375px] max-[743px]:py-6">
@@ -102,7 +106,7 @@ export function RejectedRequestListView() {
                     void rejectedRequestsQuery.fetchNextPage();
                   }}
                 >
-                  다시 시도
+                  {common("retry")}
                 </Button>
               </div>
             ) : rejectedRequestsQuery.hasNextPage ? (
@@ -116,7 +120,7 @@ export function RejectedRequestListView() {
                     void rejectedRequestsQuery.fetchNextPage();
                   }}
                 >
-                  더 보기
+                  {t("more")}
                 </Button>
               </div>
             ) : null}

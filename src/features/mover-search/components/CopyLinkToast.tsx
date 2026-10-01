@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 export interface CopyLinkToastProps {
@@ -15,6 +16,8 @@ export function CopyLinkToast({
   onClose,
   className,
 }: CopyLinkToastProps) {
+  const t = useTranslations("Common");
+
   useEffect(() => {
     if (!isVisible) {
       return;
@@ -49,7 +52,7 @@ export function CopyLinkToast({
         ].join(" ")}
       >
         <p className="text-lg-semibold whitespace-nowrap text-[var(--primary-400)] min-[1200px]:text-2lg-semibold">
-          링크가 복사되었어요
+          {t("linkCopied")}
         </p>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 
 const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -31,6 +32,7 @@ export function ProfileImageInput({
   isLoading = false,
   className,
 }: ProfileImageInputProps) {
+  const t = useTranslations("ProfileImage");
   const inputId = useId();
   const messageId = `${inputId}-message`;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -55,7 +57,7 @@ export function ProfileImageInput({
     const selectedFile = event.currentTarget.files?.[0] ?? null;
 
     if (selectedFile && !ALLOWED_IMAGE_TYPES.has(selectedFile.type)) {
-      const validationError = "JPG, PNG, WebP 이미지만 선택해 주세요.";
+      const validationError = t("invalidType");
       setFileTypeError(validationError);
       onValidationErrorChange?.(validationError);
       setSelectedPreviewUrl(undefined);
@@ -65,7 +67,7 @@ export function ProfileImageInput({
     }
 
     if (selectedFile && selectedFile.size > MAX_IMAGE_SIZE_BYTES) {
-      const validationError = "프로필 이미지는 5MB 이하여야 합니다.";
+      const validationError = t("tooLarge");
       setFileTypeError(validationError);
       onValidationErrorChange?.(validationError);
       setSelectedPreviewUrl(undefined);
@@ -90,7 +92,7 @@ export function ProfileImageInput({
 
   return (
     <div className={["flex flex-col gap-4", className].filter(Boolean).join(" ")}>
-      <span className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">프로필 이미지</span>
+      <span className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">{t("label")}</span>
       <label
         htmlFor={inputId}
         className={`relative flex size-[100px] items-center justify-center overflow-hidden rounded-md ${previewUrl ? "bg-[var(--black-400)]" : "bg-[var(--background-200)]"} transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--primary-400)] min-[1200px]:size-[160px] ${
@@ -100,7 +102,7 @@ export function ProfileImageInput({
         {previewUrl ? (
           <Image
             src={previewUrl}
-            alt="선택한 프로필 이미지 미리보기"
+            alt={t("previewAlt")}
             fill
             sizes="(min-width: 1200px) 160px, 100px"
             className="scale-110 object-cover"
@@ -144,7 +146,7 @@ export function ProfileImageInput({
           disabled={isInteractionDisabled}
           onClick={clearSelectedFile}
         >
-          이미지 선택 취소
+          {t("cancel")}
         </button>
       ) : null}
     </div>

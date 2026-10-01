@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { useState, type ReactNode } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
@@ -10,6 +11,7 @@ import {
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
 import { QUOTE_STATUS } from "@/common/constants/domain";
+import { formatDateTimeWithWeekday } from "@/common/utils/date-format";
 import { shareToKakaoTalk } from "@/common/utils/kakao-share";
 
 import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
@@ -95,6 +97,8 @@ function ShareButton({
 }
 
 function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
+  const t = useTranslations("Quote");
+
   if (isConfirmed) {
     return (
       <span className="flex shrink-0 items-center justify-center gap-1 rounded-md px-2 py-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
@@ -107,7 +111,7 @@ function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
           unoptimized
         />
         <span className="text-lg-bold whitespace-nowrap text-[var(--primary-400)]">
-          확정견적
+          {t("confirmed")}
         </span>
       </span>
     );
@@ -115,7 +119,7 @@ function StatusBadge({ isConfirmed }: { isConfirmed: boolean }) {
 
   return (
     <span className="text-lg-semibold shrink-0 rounded-md px-2 text-[var(--content-placeholder)] shadow-[4px_4px_4px_rgba(217,217,217,0.1)]">
-      견적대기
+      {t("pending")}
     </span>
   );
 }
@@ -131,9 +135,13 @@ export function CustomerQuoteDetailView({
   isConfirmPending = false,
   confirmError = null,
 }: CustomerQuoteDetailViewProps) {
+  const t = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const locale = useLocale();
   const isConfirmed = quote.status === QUOTE_STATUS.CONFIRMED;
   const canConfirm = variant === "pending";
-  const priceLabel = `${quote.price.toLocaleString("ko-KR")}원`;
+  const priceLabel = t("priceValue", { price: quote.price });
+  const displayMessage = quote.message || t("defaultMessage");
   const ratingLabel = quote.rating.toFixed(1);
 
   const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
@@ -155,14 +163,12 @@ export function CustomerQuoteDetailView({
     const shareUrl = getShareUrl();
     void shareToKakaoTalk({
       url: shareUrl,
-      title: `${quote.moverName} 기사님 견적서`,
-      description: quote.message || "무빙에서 견적서를 확인해 보세요.",
+      title: t("kakaoTitle", { name: quote.moverName }),
+      description: quote.message || t("kakaoDescription"),
       imageUrl: quote.profileImageUrl,
-      buttonTitle: "견적서 보기",
+      buttonTitle: t("kakaoButton"),
     }).catch(() => {
-      window.alert(
-        "카카오톡 공유를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
-      );
+      window.alert(t("kakaoError"));
     });
   };
 
@@ -190,7 +196,7 @@ export function CustomerQuoteDetailView({
           ].join(" ")}
         >
           <h1 className="text-2xl-semibold text-[var(--black-500)]">
-            견적 상세
+            {t("detailTitle")}
           </h1>
         </div>
       </header>
@@ -209,7 +215,7 @@ export function CustomerQuoteDetailView({
             <div className="relative mb-5 size-[134px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
               <Image
                 src={quote.profileImageUrl}
-                alt={`${quote.moverName} 기사님 프로필`}
+                alt={t("moverProfile", { name: quote.moverName })}
                 width={134}
                 height={134}
                 className="size-[134px] object-cover"
@@ -229,7 +235,7 @@ export function CustomerQuoteDetailView({
               </div>
               <div className="flex w-full items-center justify-between gap-3">
                 <p className="text-2xl-semibold text-[var(--black-300)]">
-                  {quote.message}
+                  {displayMessage}
                 </p>
                 <StatusBadge isConfirmed={isConfirmed} />
               </div>
@@ -242,7 +248,7 @@ export function CustomerQuoteDetailView({
                 <div className="flex items-center gap-1">
                   <MovingBadge />
                   <p className="text-2lg-semibold text-[var(--black-300)]">
-                    {quote.moverName} 기사님
+                    {t("moverName", { name: quote.moverName })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
@@ -281,9 +287,9 @@ export function CustomerQuoteDetailView({
                   aria-hidden="true"
                 />
                 <p className="text-md-medium flex items-center gap-1 whitespace-nowrap">
-                  <span className="text-[var(--content-placeholder)]">경력</span>
+                  <span className="text-[var(--content-placeholder)]">{t("career")}</span>
                   <span className="text-[var(--black-300)]">
-                    {quote.careerYears}년
+                    {t("careerYears", { count: quote.careerYears })}
                   </span>
                 </p>
                 <span
@@ -292,9 +298,9 @@ export function CustomerQuoteDetailView({
                 />
                 <p className="text-md-medium flex items-center gap-1 whitespace-nowrap">
                   <span className="text-[var(--black-300)]">
-                    {quote.confirmedCount.toLocaleString("ko-KR")}건
+                    {t("confirmedCount", { count: quote.confirmedCount })}
                   </span>
-                  <span className="text-[var(--content-placeholder)]">확정</span>
+                  <span className="text-[var(--content-placeholder)]">{t("confirmedLabel")}</span>
                 </p>
               </div>
             </div>
@@ -302,7 +308,7 @@ export function CustomerQuoteDetailView({
             <div className="h-px w-full bg-[var(--line-200)]" />
 
             <div className="flex items-center gap-[61px]">
-              <h2 className="text-xl-semibold text-[var(--black-400)]">견적가</h2>
+              <h2 className="text-xl-semibold text-[var(--black-400)]">{t("priceTitle")}</h2>
               <p className="text-2xl-bold text-[var(--black-400)]">{priceLabel}</p>
             </div>
 
@@ -310,18 +316,21 @@ export function CustomerQuoteDetailView({
 
             <div className="flex flex-col gap-6">
               <h2 className="text-xl-semibold text-[var(--black-400)]">
-                견적 정보
+                {t("info")}
               </h2>
               <dl className="flex flex-col gap-4">
-                <QuoteInfoRow label="견적 요청일" value={quote.requestedAt} />
-                <QuoteInfoRow label="서비스" value={quote.serviceLabel} />
-                <QuoteInfoRow label="이용일" value={quote.moveDateLabel} />
-                <QuoteInfoRow label="출발지" value={quote.from} />
-                <QuoteInfoRow label="도착지" value={quote.to} />
+                <QuoteInfoRow label={t("requestedAt")} value={quote.requestedAt} />
+                <QuoteInfoRow label={t("service")} value={moveType(quote.serviceType)} />
+                <QuoteInfoRow
+                  label={t("useDate")}
+                  value={formatDateTimeWithWeekday(quote.moveDate, locale)}
+                />
+                <QuoteInfoRow label={t("from")} value={quote.from} />
+                <QuoteInfoRow label={t("to")} value={quote.to} />
               </dl>
             </div>
 
-            <p className="sr-only">견적 번호 {quote.id}</p>
+            <p className="sr-only">{t("quoteNumber", { id: quote.id })}</p>
           </section>
 
           <aside
@@ -338,7 +347,7 @@ export function CustomerQuoteDetailView({
               <>
                 <div className="flex flex-col">
                   <p className="text-2lg-semibold text-[var(--content-placeholder)]">
-                    견적가
+                    {t("priceTitle")}
                   </p>
                   <p className="text-2xl-bold text-[var(--black-400)]">
                     {priceLabel}
@@ -356,7 +365,7 @@ export function CustomerQuoteDetailView({
                     "disabled:cursor-not-allowed disabled:opacity-50",
                   ].join(" ")}
                 >
-                  {isConfirmPending ? "확정 중..." : "견적 확정하기"}
+                  {isConfirmPending ? t("confirming") : t("confirm")}
                 </button>
                 {confirmError ? (
                   <p
@@ -376,11 +385,11 @@ export function CustomerQuoteDetailView({
               ].join(" ")}
             >
               <h2 className="text-xl-semibold text-[var(--black-400)]">
-                견적서 공유하기
+                {t("share")}
               </h2>
               <div className="flex items-start gap-4">
                 <ShareButton
-                  label="링크 복사"
+                  label={t("copyLink")}
                   onClick={() => {
                     void handleCopyLink();
                   }}
@@ -398,7 +407,7 @@ export function CustomerQuoteDetailView({
                   </span>
                 </ShareButton>
                 <ShareButton
-                  label="카카오톡으로 공유"
+                  label={t("shareKakao")}
                   onClick={handleShareKakao}
                   className="bg-[#fae100] p-3.5"
                 >
@@ -412,7 +421,7 @@ export function CustomerQuoteDetailView({
                   />
                 </ShareButton>
                 <ShareButton
-                  label="페이스북으로 공유"
+                  label={t("shareFacebook")}
                   onClick={handleShareFacebook}
                   className="bg-[var(--primary-400)] p-3.5"
                 >

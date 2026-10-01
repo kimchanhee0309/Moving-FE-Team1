@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 
 import { Textarea } from "@/common/components/Input";
@@ -27,6 +28,7 @@ export function RejectRequestModal({
   onClose,
   onSubmit,
 }: RejectRequestModalProps) {
+  const t = useTranslations("MoverRequests");
   const [reason, setReason] = useState("");
 
   const trimmedReason = reason.trim();
@@ -46,7 +48,7 @@ export function RejectRequestModal({
 
   return (
     <RequestModalPanel
-      title="반려 요청"
+      title={t("reject")}
       isSubmitting={isSubmitting}
       onClose={onClose}
     >
@@ -59,9 +61,9 @@ export function RejectRequestModal({
           <RequestInfo request={request} hideMobileDivider />
 
           <Textarea
-            label="반려 사유를 입력해 주세요"
+            label={t("rejectReasonLabel")}
             inputSize="md"
-            placeholder="최소 10자 이상 입력해주세요"
+            placeholder={t("minLengthPlaceholder")}
             minLength={10}
             value={reason}
             required
@@ -88,7 +90,7 @@ export function RejectRequestModal({
           isLoading={isSubmitting}
           disabled={!canSubmit}
         >
-          반려하기
+          {t("rejectSubmit")}
         </Button>
       </form>
     </RequestModalPanel>

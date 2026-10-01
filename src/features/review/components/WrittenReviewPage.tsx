@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ApiError } from "@/common/api/error";
@@ -17,6 +18,7 @@ import { WrittenReviewCard } from "./WrittenReviewCard";
  * GET type=WRITTEN 목록·pagination·empty(CTA → 작성 가능)만 담당합니다.
  */
 export function WrittenReviewPage() {
+  const t = useTranslations("Review");
   const [currentPage, setCurrentPage] = useState(1);
   const reviewsQuery = useWrittenReviews(currentPage);
 
@@ -42,10 +44,10 @@ export function WrittenReviewPage() {
 
       <main className="min-h-[calc(100vh-108px)] bg-[#fafafa] min-[1200px]:min-h-[calc(100vh-168px)]">
         {reviewsQuery.isPending ? (
-          <LoadingState message="작성한 리뷰를 불러오는 중이에요." />
+          <LoadingState message={t("writtenLoading")} />
         ) : reviewsQuery.isError ? (
           <ErrorState
-            title="작성한 리뷰를 불러오지 못했어요."
+            title={t("writtenLoadError")}
             description={
               reviewsQuery.error instanceof ApiError
                 ? reviewsQuery.error.message
@@ -67,8 +69,8 @@ export function WrittenReviewPage() {
             aria-live="polite"
           >
             <EmptyReview
-              message="아직 등록된 리뷰가 없어요!"
-              actionLabel="리뷰 작성하러 가기"
+              message={t("writtenEmpty")}
+              actionLabel={t("goWrite")}
               href={ROUTES.CUSTOMER.REVIEW.CREATE}
             />
           </section>
@@ -108,7 +110,7 @@ export function WrittenReviewPage() {
                 onPageChange={setCurrentPage}
                 size="lg"
                 isLoading={reviewsQuery.isFetching}
-                ariaLabel="내가 작성한 리뷰 페이지"
+                ariaLabel={t("writtenPagination")}
               />
             </div>
           </div>

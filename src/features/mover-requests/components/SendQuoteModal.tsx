@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useState, type ChangeEvent, type FormEvent } from "react";
 
 import { Input, Textarea } from "@/common/components/Input";
@@ -28,6 +29,7 @@ export function SendQuoteModal({
   onClose,
   onSubmit,
 }: SendQuoteModalProps) {
+  const t = useTranslations("MoverRequests");
   const [priceInput, setPriceInput] = useState("");
   const [comment, setComment] = useState("");
 
@@ -67,7 +69,7 @@ export function SendQuoteModal({
 
   return (
     <RequestModalPanel
-      title="견적 보내기"
+      title={t("sendQuote")}
       isSubmitting={isSubmitting}
       onClose={onClose}
     >
@@ -80,12 +82,12 @@ export function SendQuoteModal({
           <RequestInfo request={request} />
 
           <Input
-            label="견적가를 입력해주세요"
+            label={t("priceLabel")}
             inputSize="md"
             type="text"
             inputMode="numeric"
             autoComplete="off"
-            placeholder="견적가 입력"
+            placeholder={t("pricePlaceholder")}
             value={formattedPrice}
             required
             disabled={isSubmitting}
@@ -103,9 +105,9 @@ export function SendQuoteModal({
           />
 
           <Textarea
-            label="코멘트를 입력해 주세요"
+            label={t("commentLabel")}
             inputSize="md"
-            placeholder="최소 10자 이상 입력해주세요"
+            placeholder={t("minLengthPlaceholder")}
             minLength={10}
             value={comment}
             required
@@ -131,7 +133,7 @@ export function SendQuoteModal({
           isLoading={isSubmitting}
           disabled={!canSubmit}
         >
-          견적 보내기
+          {t("sendQuote")}
         </Button>
       </form>
     </RequestModalPanel>

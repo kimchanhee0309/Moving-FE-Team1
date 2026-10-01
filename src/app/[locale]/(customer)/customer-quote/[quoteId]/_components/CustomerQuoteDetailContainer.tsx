@@ -1,7 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
 
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { EmptyState } from "@/common/components/page-state";
@@ -12,6 +12,7 @@ import {
   useConfirmReceivedQuoteMutation,
   useReceivedQuoteDetailQuery,
 } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
+import { useRouter } from "@/i18n/navigation";
 
 import { CustomerQuoteDetailView } from "./CustomerQuoteDetailView";
 
@@ -22,6 +23,8 @@ interface CustomerQuoteDetailContainerProps {
 export function CustomerQuoteDetailContainer({
   quoteId,
 }: CustomerQuoteDetailContainerProps) {
+  const t = useTranslations("CustomerQuote");
+  const quote = useTranslations("Quote");
   const router = useRouter();
   const detailQuery = useReceivedQuoteDetailQuery(quoteId);
   const confirmMutation = useConfirmReceivedQuoteMutation();
@@ -46,7 +49,7 @@ export function CustomerQuoteDetailContainer({
   if (detailQuery.isLoading) {
     return (
       <main className="min-h-screen bg-[var(--gray-50)]">
-        <LoadingState message="견적 상세를 불러오는 중..." />
+        <LoadingState message={t("detailLoading")} />
       </main>
     );
   }
@@ -55,8 +58,8 @@ export function CustomerQuoteDetailContainer({
     return (
       <main className="min-h-screen bg-[var(--gray-50)]">
         <ErrorState
-          title="견적 상세를 불러오지 못했습니다"
-          description="견적이 없거나 접근 권한이 없을 수 있습니다."
+          title={t("detailLoadError")}
+          description={t("detailLoadErrorDescription")}
           onRetry={() => {
             void detailQuery.refetch();
           }}
@@ -69,8 +72,8 @@ export function CustomerQuoteDetailContainer({
     return (
       <main className="min-h-screen bg-[var(--gray-50)]">
         <EmptyState
-          title="견적을 찾을 수 없습니다"
-          description="삭제되었거나 만료된 견적일 수 있습니다."
+          title={t("detailEmpty")}
+          description={t("detailEmptyDescription")}
         />
       </main>
     );
@@ -85,7 +88,7 @@ export function CustomerQuoteDetailContainer({
         confirmMutation.error
           ? getApiErrorMessage(
               confirmMutation.error,
-              "견적을 확정하지 못했습니다. 다시 시도해 주세요.",
+              quote("confirmError"),
             )
           : null
       }

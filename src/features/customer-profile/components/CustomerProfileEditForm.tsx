@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/common/components/button";
@@ -17,7 +17,9 @@ import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/va
 import { getEmailError } from "@/common/validation/email";
 import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
+import { useValidationMessage } from "@/common/validation/useValidationMessage";
 import { AccountWithdrawalButton } from "@/features/auth/components/AccountWithdrawalButton";
+import { useRouter } from "@/i18n/navigation";
 
 import type {
   CustomerProfileEditFormProps,
@@ -43,6 +45,10 @@ export function CustomerProfileEditForm({
   onCurrentPasswordChange,
   onSubmit,
 }: CustomerProfileEditFormProps) {
+  const t = useTranslations("Profile");
+  const auth = useTranslations("Auth");
+  const account = useTranslations("Account");
+  const translateValidation = useValidationMessage();
   const router = useRouter();
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imageInputVersion, setImageInputVersion] = useState(0);
@@ -77,26 +83,26 @@ export function CustomerProfileEditForm({
   const requiresCurrentPassword = changedFields.email || isChangingPassword;
 
   const errors: Partial<Record<TextField, string>> = {
-    name: getNameError(values.name),
-    email: getEmailError(values.email),
-    phone: getPhoneError(values.phone),
+    name: translateValidation(getNameError(values.name)),
+    email: translateValidation(getEmailError(values.email)),
+    phone: translateValidation(getPhoneError(values.phone)),
     currentPassword:
       requiresCurrentPassword && !values.currentPassword
-        ? "현재 비밀번호를 입력해 주세요."
+        ? account("currentPasswordRequired")
         : values.currentPassword
-          ? getCurrentPasswordError(values.currentPassword) ?? currentPasswordError
+          ? translateValidation(getCurrentPasswordError(values.currentPassword) ?? currentPasswordError)
           : undefined,
     newPassword:
       isChangingPassword && !values.newPassword
-        ? "새 비밀번호를 입력해 주세요."
+        ? account("newPasswordRequired")
         : isChangingPassword
-          ? getNewPasswordError(values.newPassword)
+          ? translateValidation(getNewPasswordError(values.newPassword))
           : undefined,
     newPasswordConfirm:
       isChangingPassword && !values.newPasswordConfirm
-        ? "새 비밀번호를 다시 입력해 주세요."
+        ? account("newPasswordConfirmRequired")
         : isChangingPassword && values.newPassword !== values.newPasswordConfirm
-          ? "새 비밀번호가 일치하지 않습니다."
+          ? account("newPasswordMismatch")
           : undefined,
   };
   // 서버에 이미 저장된 기존 값이 현재 프론트 규칙과 다르더라도, 사용자가 변경하지
@@ -166,7 +172,7 @@ export function CustomerProfileEditForm({
         newPassword: "",
         newPasswordConfirm: "",
       });
-      setStatusMessage("프로필이 수정되었습니다.");
+      setStatusMessage(t("updated"));
     } catch {
       // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
     } finally {
@@ -190,28 +196,28 @@ export function CustomerProfileEditForm({
         onSubmit={handleSubmit}
       >
         <h1 className="text-xl-bold border-b border-[var(--line-100)] pb-6 text-[var(--black-400)] min-[1200px]:text-3xl-bold min-[1200px]:pb-12">
-          프로필 수정
+          {t("editTitle")}
         </h1>
 
         <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
           <div className="flex flex-col">
             <div className={inputSectionClassName}>
-              <Input name="name" label="이름" inputSize="sm" containerClassName={inputClassName} value={values.name} error={changedFields.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
+              <Input name="name" label={auth("name")} inputSize="sm" containerClassName={inputClassName} value={values.name} error={changedFields.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
             </div>
             <div className={inputSectionClassName}>
-              <Input name="email" label="이메일" type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={changedFields.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.currentTarget.value)} />
+              <Input name="email" label={auth("email")} type="email" autoComplete="email" inputSize="sm" containerClassName={inputClassName} value={values.email} error={changedFields.email ? errors.email : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, email: true }))} onChange={(event) => updateValue("email", event.currentTarget.value)} />
             </div>
             <div className={inputSectionClassName}>
-              <Input name="phone" label="전화번호" type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={changedFields.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
+              <Input name="phone" label={auth("phone")} type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={changedFields.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
             </div>
             <div className={inputSectionClassName}>
-              <Input name="currentPassword" label="현재 비밀번호" type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder="현재 비밀번호를 입력해 주세요" value={values.currentPassword} error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다." : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
+              <Input name="currentPassword" label={account("currentPassword")} type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder={account("currentPasswordPlaceholder")} value={values.currentPassword} error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? account("currentPasswordHint") : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
             </div>
             <div className={inputSectionClassName}>
-              <Input name="newPassword" label="새 비밀번호" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 입력해 주세요" value={values.newPassword} error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
+              <Input name="newPassword" label={account("newPassword")} type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder={account("newPasswordPlaceholder")} value={values.newPassword} error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
             </div>
             <div className={`${inputSectionClassName} min-[1200px]:border-b-0`}>
-              <Input name="newPasswordConfirm" label="새 비밀번호 확인" type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder="새 비밀번호를 다시 입력해 주세요" value={values.newPasswordConfirm} error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
+              <Input name="newPasswordConfirm" label={account("newPasswordConfirm")} type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder={account("newPasswordConfirmPlaceholder")} value={values.newPasswordConfirm} error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
             </div>
           </div>
 
@@ -219,25 +225,25 @@ export function CustomerProfileEditForm({
             <ProfileImageInput key={imageInputVersion} className={selectionSectionClassName} file={profileImage} initialImageUrl={initialValues.profileImageUrl} disabled={isBusy} isLoading={isPending} onFileChange={(file) => { setProfileImage(file); setStatusMessage(""); }} onValidationErrorChange={setProfileImageError} />
 
             <section className={`flex flex-col min-[1200px]:min-h-[208px] ${selectionSectionClassName}`} aria-labelledby="customer-edit-service-title">
-              <h2 id="customer-edit-service-title" className="text-lg-semibold text-[var(--black-300)]">이용 서비스</h2>
-              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">*견적 요청 시 이용 서비스를 선택할 수 있어요.</p>
-              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} className="mt-4 min-[1200px]:mt-8 min-[1200px]:gap-[14px]" ariaLabel="이용 서비스 선택" ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTouched(true); setServiceTypeIds(nextValues); setStatusMessage(""); }} />
-              {hasServiceError ? <p id="customer-edit-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">이용 서비스를 한 개 이상 선택해 주세요.</p> : null}
+              <h2 id="customer-edit-service-title" className="text-lg-semibold text-[var(--black-300)]">{t("customerServices")}</h2>
+              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">{t("customerServicesEditHint")}</p>
+              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} className="mt-4 min-[1200px]:mt-8 min-[1200px]:gap-[14px]" ariaLabel={t("customerServicesSelect")} ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTouched(true); setServiceTypeIds(nextValues); setStatusMessage(""); }} />
+              {hasServiceError ? <p id="customer-edit-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">{t("customerServicesError")}</p> : null}
             </section>
 
             <section className="flex flex-col py-6 min-[1200px]:py-8" aria-labelledby="customer-edit-region-title">
-              <h2 id="customer-edit-region-title" className="text-lg-semibold text-[var(--black-300)]">내가 사는 지역</h2>
-              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">*견적 요청 시 지역을 설정할 수 있어요.</p>
-              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required className="mt-4 min-[1200px]:mt-8 min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]" ariaLabel="거주 지역 선택" ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegionTouched(true); setRegion(nextRegion); setStatusMessage(""); }} />
-              {hasRegionError ? <p id="customer-edit-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">지역을 선택해 주세요.</p> : null}
+              <h2 id="customer-edit-region-title" className="text-lg-semibold text-[var(--black-300)]">{t("livingRegion")}</h2>
+              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">{t("livingRegionEditHint")}</p>
+              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required className="mt-4 min-[1200px]:mt-8 min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]" ariaLabel={t("livingRegionSelect")} ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegionTouched(true); setRegion(nextRegion); setStatusMessage(""); }} />
+              {hasRegionError ? <p id="customer-edit-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">{t("livingRegionRequired")}</p> : null}
             </section>
 
             {submissionError ? <p role="alert" className="text-md-medium mb-3 rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">{submissionError}</p> : null}
             {statusMessage ? <p role="status" className="text-md-medium mb-3 rounded-xl bg-[var(--primary-100)] px-4 py-3 text-[var(--primary-400)]">{statusMessage}</p> : null}
 
             <div className="flex flex-col gap-2 min-[1200px]:mt-16 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
-              <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError || serviceTypeIds.length === 0 || region === null || Boolean(profileImageError)} isLoading={isBusy} className={`min-[1200px]:order-2 ${buttonClassName}`}>수정하기</Button>
-              <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${buttonClassName}`} onClick={() => router.push(ROUTES.HOME)}>취소</Button>
+              <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError || serviceTypeIds.length === 0 || region === null || Boolean(profileImageError)} isLoading={isBusy} className={`min-[1200px]:order-2 ${buttonClassName}`}>{t("edit")}</Button>
+              <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${buttonClassName}`} onClick={() => router.push(ROUTES.HOME)}>{t("cancel")}</Button>
             </div>
             <AccountWithdrawalButton className="mt-4 min-[1200px]:mt-5" buttonClassName={buttonClassName} disabled={isBusy} />
           </div>

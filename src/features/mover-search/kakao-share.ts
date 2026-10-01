@@ -37,7 +37,8 @@ export function getKakaoShareImageUrl(
 
 export function shareMoverDetailToKakao(params: {
   url: string;
-  moverName: string;
+  /** 호출부가 현재 locale로 만든 공유 카드 제목 */
+  title: string;
   introduction: string;
   imageUrl: string;
 }): boolean {
@@ -54,7 +55,7 @@ export function shareMoverDetailToKakao(params: {
     kakao.Share.sendDefault({
       objectType: "feed",
       content: {
-        title: `${params.moverName} 기사님`,
+        title: params.title,
         description: params.introduction,
         imageUrl: params.imageUrl,
         link: {

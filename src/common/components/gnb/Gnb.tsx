@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { ROUTES } from "@/common/constants/routes";
@@ -9,6 +10,8 @@ import { ROUTES } from "@/common/constants/routes";
 import { GnbMobileMenu } from "./GnbMobileMenu";
 import { GnbNotificationMenu } from "./GnbNotificationMenu";
 import { GnbProfileMenu } from "./GnbProfileMenu";
+import { LocaleSwitcher } from "./LocaleSwitcher";
+import { useGnbLabel } from "./useGnbLabel";
 import {
   GNB_DEFAULT_LOGIN_HREF,
   GNB_GUEST_NAV_ITEMS,
@@ -21,6 +24,8 @@ const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
 
 export function Gnb(props: GnbProps) {
+  const t = useTranslations("Common");
+  const navLabel = useGnbLabel();
   const {
     isLoading = false,
     hasUnreadNotification = false,
@@ -188,7 +193,7 @@ export function Gnb(props: GnbProps) {
           <Link
             href={ROUTES.HOME}
             onClick={handleCloseMenu}
-            aria-label="무빙 홈으로 이동"
+            aria-label={t("goHome")}
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg ${FOCUS_RING}`}
           >
             <Image
@@ -200,14 +205,14 @@ export function Gnb(props: GnbProps) {
             />
             <Image
               src="/images/gnb/logo-wordmark.svg"
-              alt="무빙"
+              alt={t("brand")}
               width={66}
               height={34}
               className="block h-6.5 w-auto min-[1200px]:h-8.5"
             />
           </Link>
 
-          <nav aria-label="주요 메뉴" className="hidden min-[1200px]:block">
+          <nav aria-label={t("menu")} className="hidden min-[1200px]:block">
             <ul className="flex list-none items-center gap-10 m-0 p-0">
               {navItems.map((item) => (
                 <li key={item.href}>
@@ -215,7 +220,7 @@ export function Gnb(props: GnbProps) {
                     href={item.href}
                     className={`text-2lg-bold inline-flex h-22 items-center justify-center whitespace-nowrap py-4 text-(--black-500)! no-underline hover:text-(--primary-400)! ${FOCUS_RING}`}
                   >
-                    {item.label}
+                    {navLabel(item.label)}
                   </Link>
                 </li>
               ))}
@@ -223,11 +228,12 @@ export function Gnb(props: GnbProps) {
           </nav>
         </div>
 
-        <div className="flex shrink-0 items-center gap-6 min-[1200px]:gap-8">
+        <div className="flex shrink-0 items-center gap-3 min-[1200px]:gap-8">
+          <LocaleSwitcher />
           {isLoading && (
             <div
               role="status"
-              aria-label="로그인 정보 확인 중"
+              aria-label={t("checkingLogin")}
               className="hidden h-11 w-29 animate-pulse rounded-xl bg-(--gray-100) min-[1200px]:block"
             />
           )}
@@ -244,8 +250,8 @@ export function Gnb(props: GnbProps) {
                   aria-controls={notificationMenuId}
                   aria-label={
                     hasUnreadNotification
-                      ? `새 알림이 있습니다. 알림 ${isNotificationMenuOpen ? "닫기" : "열기"}`
-                      : `알림 ${isNotificationMenuOpen ? "닫기" : "열기"}`
+                      ? t("newNotifications", { action: t(isNotificationMenuOpen ? "closeNotifications" : "openNotifications") })
+                      : t(isNotificationMenuOpen ? "closeNotifications" : "openNotifications")
                   }
                   className={`relative inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:size-9 ${FOCUS_RING} focus-visible:rounded-full`}
                 >
@@ -287,7 +293,7 @@ export function Gnb(props: GnbProps) {
                   aria-haspopup="menu"
                   aria-expanded={isProfileMenuOpen}
                   aria-controls={profileMenuId}
-                  aria-label={`${authenticatedUser.name} 계정 메뉴 ${isProfileMenuOpen ? "닫기" : "열기"}`}
+                  aria-label={t(isProfileMenuOpen ? "closeAccountMenu" : "openAccountMenu", { name: authenticatedUser.name })}
                   className={`inline-flex cursor-pointer items-center gap-4 rounded-lg border-0 bg-transparent p-0 text-(--black-500)! ${FOCUS_RING}`}
                 >
                   <Image
@@ -324,7 +330,7 @@ export function Gnb(props: GnbProps) {
               href={loginHref}
               className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50)! no-underline hover:bg-(--primary-500) min-[1200px]:inline-flex ${FOCUS_RING}`}
             >
-              로그인
+              {t("login")}
             </Link>
           )}
 
@@ -332,7 +338,7 @@ export function Gnb(props: GnbProps) {
             ref={menuButtonRef}
             type="button"
             onClick={handleToggleMenu}
-            aria-label={isMenuOpen ? "메뉴 닫기" : "메뉴 열기"}
+            aria-label={t(isMenuOpen ? "closeMenu" : "openMenu")}
             aria-expanded={isMenuOpen}
             aria-controls={menuId}
             className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:hidden ${FOCUS_RING}`}

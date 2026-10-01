@@ -1,15 +1,18 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { EmptyState } from "@/common/components/page-state";
 import { ROUTES } from "@/common/constants/routes";
+import { Link } from "@/i18n/navigation";
 
 export default function PendingQuoteNotFound() {
+  const t = useTranslations("CustomerQuote");
+
   return (
     <EmptyState
-      title="견적을 찾을 수 없어요."
-      description="없거나 삭제된 대기 견적입니다."
+      title={t("notFoundTitle")}
+      description={t("pendingNotFound")}
       action={
-        <Link href={ROUTES.CUSTOMER.QUOTE.PENDING}>대기 중인 견적 목록으로</Link>
+        <Link href={ROUTES.CUSTOMER.QUOTE.PENDING}>{t("backToPending")}</Link>
       }
     />
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 
 import {
   getApiErrorMessage,
@@ -19,6 +20,8 @@ import type { MoverMyPageData } from "../mover-mypage.types";
 import { MoverBasicInfoForm } from "./MoverBasicInfoForm";
 
 export function MoverBasicInfoContent() {
+  const t = useTranslations("Account");
+  const common = useTranslations("Common");
   const queryClient = useQueryClient();
   const { refetchUser } = useAuth();
   const myPageQuery = useQuery({
@@ -41,12 +44,12 @@ export function MoverBasicInfoContent() {
     },
   });
 
-  if (myPageQuery.isPending) return <LoadingState message="기본정보를 불러오는 중이에요." />;
+  if (myPageQuery.isPending) return <LoadingState message={t("basicInfoLoading")} />;
   if (myPageQuery.isError || !myPageQuery.data) {
     return (
       <ErrorState
-        title="기본정보를 불러오지 못했어요."
-        description={getApiErrorMessage(myPageQuery.error, "잠시 후 다시 시도해 주세요.")}
+        title={t("basicInfoLoadError")}
+        description={getApiErrorMessage(myPageQuery.error, common("errorDescription"))}
         onRetry={() => { void myPageQuery.refetch(); }}
       />
     );
@@ -65,7 +68,7 @@ export function MoverBasicInfoContent() {
       currentPasswordError={currentPasswordError}
       submissionError={
         mutation.error && !currentPasswordError
-          ? getApiErrorMessage(mutation.error, "기본정보를 수정하지 못했습니다.")
+          ? getApiErrorMessage(mutation.error, t("basicInfoUpdateError"))
           : undefined
       }
       onCurrentPasswordChange={() => mutation.reset()}

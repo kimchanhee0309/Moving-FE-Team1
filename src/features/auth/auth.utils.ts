@@ -2,6 +2,7 @@ import { ROUTES } from "@/common/constants/routes";
 import { getEmailError } from "@/common/validation/email";
 import { getNameError } from "@/common/validation/name";
 import { getNewPasswordError } from "@/common/validation/password";
+import { routing } from "@/i18n/routing";
 
 import type { AuthField, AuthFormErrors, AuthFormValues, AuthMode, AuthUser } from "./auth.types";
 
@@ -42,15 +43,45 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
   return errors;
 }
 
+// routing.locales에서 만들어 locale을 추가해도 redirect 접두어 판정이 함께 바뀌게 합니다.
+const LOCALE_PREFIX_PATTERN = new RegExp(`^/(${routing.locales.join("|")})(?=/|$)`);
+
+type AppLocale = (typeof routing.locales)[number];
+
+function toAppLocale(value: string): AppLocale {
+  return routing.locales.find((locale) => locale === value) ?? routing.defaultLocale;
+}
+
 /** redirect 파라미터로 외부 URL/프로토콜 상대 URL/역슬래시 경로를 전달하지 못하게 합니다. */
 export function safeAuthRedirect(value: string | string[] | undefined): string | undefined {
   if (typeof value !== "string" || value.length > 2048 || !value.startsWith("/") || value.startsWith("//") || /[\\\u0000-\u0020]/.test(value)) return undefined;
   try {
     const url = new URL(value, "https://moving.local");
-    return url.origin === "https://moving.local" && !/^\/(auth|login|signup)(\/|$)/.test(url.pathname) ? `${url.pathname}${url.search}${url.hash}` : undefined;
+    const pathname = url.pathname.replace(LOCALE_PREFIX_PATTERN, "") || "/";
+    return url.origin === "https://moving.local" && !/^\/(auth|login|signup)(\/|$)/.test(pathname) ? `${url.pathname}${url.search}${url.hash}` : undefined;
   } catch {
     return undefined;
   }
+}
+
+/** OAuth의 루트 callback으로 돌아온 뒤에도 시작 언어를 복원합니다. */
+export function authNavigationTarget(path: string, fallbackLocale: string) {
+  const url = new URL(path, "https://moving.local");
+  const prefix = LOCALE_PREFIX_PATTERN.exec(url.pathname);
+  const locale = prefix?.[1] ?? fallbackLocale;
+  const pathname = prefix ? url.pathname.slice(prefix[0].length) || "/" : url.pathname;
+  return {
+    href: `${pathname}${url.search}${url.hash}`,
+    locale: toAppLocale(locale),
+  };
+}
+
+export function localizedAuthRedirect(path: string, locale: string) {
+  const safePath = safeAuthRedirect(path);
+  if (!safePath) return undefined;
+  const { href } = authNavigationTarget(safePath, locale);
+  const appLocale = toAppLocale(locale);
+  return appLocale === routing.defaultLocale ? href : `/${appLocale}${href === "/" ? "" : href}`;
 }
 
 /** 로그인/회원가입 사이를 이동할 때 검증한 원래 목적지를 유지합니다. */
@@ -71,7 +102,7 @@ export function resolveAuthenticatedPath(user: AuthUser, redirectTo?: string): s
   const target = safeAuthRedirect(redirectTo);
   const defaultPath = user.role === "MOVER" ? ROUTES.MOVER.MY_PAGE : ROUTES.PUBLIC.MOVER_SEARCH;
   if (!target) return defaultPath;
-  const pathname = new URL(target, "https://moving.local").pathname;
+  const pathname = new URL(authNavigationTarget(target, routing.defaultLocale).href, "https://moving.local").pathname;
   const ownPaths = user.role === "MOVER"
     ? ["/mover-profile", "/mover-mypage", "/requests", "/mover-quote"]
     : ["/customer-profile", "/move-request", "/customer-quote", "/favorite", "/review"];

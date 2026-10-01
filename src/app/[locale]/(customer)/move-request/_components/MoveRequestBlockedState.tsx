@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 import { ApiError } from "@/common/api/error";
 import { Button } from "@/common/components/button";
 import { Modal } from "@/common/components/MoverModal/Modal";
 import { ROUTES } from "@/common/constants/routes";
-import { MOVE_REQUEST_STATUS, SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+import { MOVE_REQUEST_STATUS } from "@/common/constants/domain";
 import { useDeleteMoveRequest } from "@/features/move-request/hooks/useMoveRequest";
 import type { MoveRequestDto } from "@/features/move-request/move-request.types";
 import { formatMoveDateLabel, parseAddressFromApi } from "@/features/move-request/move-request.utils";
@@ -19,12 +20,6 @@ import { formatMoveDateLabel, parseAddressFromApi } from "@/features/move-reques
  * 화면 전용으로 같은 라벨을 로컬로 들고 있는 것과 같은 패턴으로, 여기서도 카드 한 곳에서만
  * 쓰는 표시용 문구라 공용 상수로 올리지 않고 이 파일 안에 둔다.
  */
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
-
 interface MoveRequestBlockedStateProps {
   /** 지금 진행 중인 활성 견적 요청(`useActiveMoveRequest`). 카드에 그대로 표시한다. */
   moveRequest: MoveRequestDto;
@@ -51,6 +46,10 @@ export function MoveRequestBlockedState({
   moveRequest,
   onEditRequest,
 }: MoveRequestBlockedStateProps) {
+  const t = useTranslations("MoveRequest");
+  const moveType = useTranslations("MoveType");
+  const profile = useTranslations("Profile");
+  const locale = useLocale();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const deleteMoveRequestMutation = useDeleteMoveRequest();
@@ -80,10 +79,10 @@ export function MoveRequestBlockedState({
       // 이 컴포넌트 자체가 unmount되므로 모달을 별도로 닫을 필요가 없다.
     } catch (error) {
       if (error instanceof ApiError) {
-        setDeleteError(error.message || "견적 요청을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
+        setDeleteError(error.message || t("deleteError"));
         return;
       }
-      setDeleteError("견적 요청을 삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
+      setDeleteError(t("deleteError"));
     }
   };
 
@@ -105,7 +104,7 @@ export function MoveRequestBlockedState({
       <header className="w-full shrink-0 bg-(--gray-50) shadow-[0px_2px_10px_rgba(248,248,248,0.1)] min-[744px]:shadow-none min-[1200px]:shadow-[0px_2px_10px_rgba(248,248,248,0.1)]">
         <div className="mx-auto flex w-full max-w-[1920px] items-center p-6 min-[744px]:h-[54px] min-[744px]:px-18 min-[744px]:py-0 min-[1200px]:h-auto min-[1200px]:px-40 min-[1200px]:py-8">
           <p className="m-0 text-2lg-semibold text-(--content-strong) min-[744px]:text-(--black-500) min-[1200px]:text-2xl-semibold">
-            견적요청
+            {t("activeTitle")}
           </p>
         </div>
       </header>
@@ -131,11 +130,11 @@ export function MoveRequestBlockedState({
           </div>
 
           <div className="text-md-regular text-center text-(--input-placeholder) min-[1200px]:text-xl-regular">
-            <p className="m-0">현재 진행 중인 이사 견적이 있어요!</p>
+            <p className="m-0">{t("activeDescription")}</p>
             <p className="m-0">
               {canEditOrDelete
-                ? "아래에서 요청 내용을 수정하거나 삭제할 수 있어요."
-                : "견적이 확정되어 요청 내용은 더 이상 수정·삭제할 수 없어요."}
+                ? t("activeEditable")
+                : t("activeConfirmed")}
             </p>
           </div>
         </div>
@@ -147,14 +146,14 @@ export function MoveRequestBlockedState({
         */}
         <article className="flex w-full max-w-[520px] flex-col gap-6 rounded-[20px] border-[0.5px] border-(--line-100) bg-(--gray-50) px-6 py-6 shadow-[-2px_-2px_10px_rgba(220,220,220,0.2),2px_2px_10px_rgba(220,220,220,0.2)] min-[744px]:px-10 min-[744px]:py-8">
           <span className="inline-flex w-fit items-center rounded-md bg-(--primary-100) px-2 py-1 text-md-semibold text-(--primary-400)">
-            {SERVICE_TYPE_LABEL[moveRequest.serviceType]}
+            {moveType(moveRequest.serviceType)}
           </span>
 
           <dl className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-4">
-              <dt className="text-md-medium text-(--gray-400)">이사 예정일</dt>
+              <dt className="text-md-medium text-(--gray-400)">{t("date")}</dt>
               <dd className="text-md-semibold text-(--black-400)">
-                {formatMoveDateLabel(new Date(moveRequest.moveDate))}
+                {formatMoveDateLabel(new Date(moveRequest.moveDate), locale)}
               </dd>
             </div>
 
@@ -167,14 +166,14 @@ export function MoveRequestBlockedState({
               드러나지 않았다). parseAddressFromApi로 roadAddress만 뽑아 고객에게 보여준다.
             */}
             <div className="flex items-start justify-between gap-4">
-              <dt className="shrink-0 text-md-medium text-(--gray-400)">출발지</dt>
+              <dt className="shrink-0 text-md-medium text-(--gray-400)">{t("from")}</dt>
               <dd className="min-w-0 flex-1 text-right text-md-regular text-(--black-400) [word-break:break-word]">
                 {parseAddressFromApi(moveRequest.fromAddress).roadAddress}
               </dd>
             </div>
 
             <div className="flex items-start justify-between gap-4">
-              <dt className="shrink-0 text-md-medium text-(--gray-400)">도착지</dt>
+              <dt className="shrink-0 text-md-medium text-(--gray-400)">{t("to")}</dt>
               <dd className="min-w-0 flex-1 text-right text-md-regular text-(--black-400) [word-break:break-word]">
                 {parseAddressFromApi(moveRequest.toAddress).roadAddress}
               </dd>
@@ -184,7 +183,7 @@ export function MoveRequestBlockedState({
           {canEditOrDelete ? (
             <div className="grid grid-cols-2 gap-3">
               <Button type="button" variant="outlined" fullWidth onClick={onEditRequest}>
-                수정하기
+                {t("edit")}
               </Button>
               <Button
                 type="button"
@@ -193,7 +192,7 @@ export function MoveRequestBlockedState({
                 onClick={openDeleteModal}
                 className="border-(--secondary-red-200)! text-(--secondary-red-200)! shadow-none!"
               >
-                삭제하기
+                {t("delete")}
               </Button>
             </div>
           ) : null}
@@ -203,7 +202,7 @@ export function MoveRequestBlockedState({
           href={ROUTES.CUSTOMER.QUOTE.PENDING}
           className="inline-flex h-[54px] items-center justify-center rounded-xl bg-(--primary-400) px-6 py-4 text-lg-semibold text-(--gray-50) min-[1200px]:h-16 min-[1200px]:rounded-2xl min-[1200px]:text-2lg-semibold"
         >
-          받은 견적 보러가기
+          {t("viewQuotes")}
         </Link>
       </div>
 
@@ -211,16 +210,16 @@ export function MoveRequestBlockedState({
         ? createPortal(
             <Modal
               isOpen={isDeleteModalOpen}
-              title="견적 요청 삭제"
+              title={t("deleteTitle")}
               mobileLayout="centered"
               closeOnBackdrop={!deleteMoveRequestMutation.isPending}
               onClose={closeDeleteModal}
             >
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2 text-(--black-300)">
-                  <p className="text-lg-semibold">이 견적 요청을 삭제할까요?</p>
+                  <p className="text-lg-semibold">{t("deleteQuestion")}</p>
                   <p className="text-sm-regular text-(--gray-500)">
-                    삭제하면 받은 견적도 함께 사라지고 되돌릴 수 없어요.
+                    {t("deleteWarning")}
                   </p>
                 </div>
 
@@ -241,7 +240,7 @@ export function MoveRequestBlockedState({
                     disabled={deleteMoveRequestMutation.isPending}
                     onClick={closeDeleteModal}
                   >
-                    취소
+                    {profile("cancel")}
                   </Button>
                   <Button
                     type="button"
@@ -250,7 +249,7 @@ export function MoveRequestBlockedState({
                     onClick={handleDelete}
                     className="enabled:bg-(--secondary-red-200)! enabled:hover:bg-(--secondary-red-200)!"
                   >
-                    삭제하기
+                    {t("delete")}
                   </Button>
                 </div>
               </div>

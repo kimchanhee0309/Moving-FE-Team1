@@ -1,10 +1,12 @@
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 
 import {
   DESIGNATED_REQUEST_CHIP,
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
 import type { ServiceType } from "@/common/constants/domain";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 
 import type { ReceivedRequestViewModel } from "../mover-requests.types";
 
@@ -46,6 +48,9 @@ export function RequestBadges({
 }
 
 export function RequestSummary({ request, variant }: RequestSummaryProps) {
+  const t = useTranslations("MoverRequests");
+  const quoteText = useTranslations("Quote");
+  const locale = useLocale();
   const isModal = variant === "modal";
 
   /**
@@ -107,10 +112,10 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
     : CARD_INFO_VALUE_CLASS_NAME;
 
   return (
-    <dl className={`w-full ${summaryClassName}`} aria-label="이사 요청 정보">
+    <dl className={`w-full ${summaryClassName}`} aria-label={t("requestInfo")}>
       <div className="flex min-w-0 w-full items-end gap-3">
         <div className={departureItemClassName}>
-          <dt className={INFO_LABEL_CLASS_NAME}>출발지</dt>
+          <dt className={INFO_LABEL_CLASS_NAME}>{quoteText("from")}</dt>
 
           <dd className={infoValueClassName} title={request.departureLabel}>
             {request.departureLabel}
@@ -127,7 +132,7 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
         />
 
         <div className={arrivalItemClassName}>
-          <dt className={INFO_LABEL_CLASS_NAME}>도착지</dt>
+          <dt className={INFO_LABEL_CLASS_NAME}>{quoteText("to")}</dt>
 
           <dd className={infoValueClassName} title={request.arrivalLabel}>
             {request.arrivalLabel}
@@ -136,10 +141,12 @@ export function RequestSummary({ request, variant }: RequestSummaryProps) {
       </div>
 
       <div className={moveDateItemClassName}>
-        <dt className={INFO_LABEL_CLASS_NAME}>이사일</dt>
+        <dt className={INFO_LABEL_CLASS_NAME}>{quoteText("moveDate")}</dt>
 
         <dd className={infoValueClassName}>
-          <time dateTime={request.moveDate}>{request.moveDateLabel}</time>
+          <time dateTime={request.moveDate}>
+            {formatDateWithWeekday(request.moveDate, locale, SERVICE_TIME_ZONE)}
+          </time>
         </dd>
       </div>
     </dl>
@@ -150,6 +157,8 @@ export function RequestInfo({
   request,
   hideMobileDivider = false,
 }: RequestInfoProps) {
+  const t = useTranslations("MoverRequests");
+  const quoteText = useTranslations("Quote");
   const mobileDividerClassName = hideMobileDivider
     ? "max-[743px]:border-b-0 max-[743px]:pb-0"
     : "";
@@ -164,7 +173,7 @@ export function RequestInfo({
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label={`${request.customerName} 고객님의 이사 요청`}
+      aria-label={t("customerRequest", { name: request.customerName })}
     >
       <RequestBadges
         serviceType={request.serviceType}
@@ -172,7 +181,7 @@ export function RequestInfo({
       />
 
       <h3 className="text-[20px] font-semibold leading-8 text-[var(--black-300)]">
-        {request.customerName} 고객님
+        {quoteText("customerName", { name: request.customerName })}
       </h3>
 
       <RequestSummary request={request} variant="modal" />

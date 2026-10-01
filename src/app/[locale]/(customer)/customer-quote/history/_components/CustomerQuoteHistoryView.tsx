@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 import { FilterDropdown } from "@/common/components/Dropdown";
@@ -11,19 +11,21 @@ import { Tabs } from "@/common/components/Tabs";
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
+import { formatDateWithWeekday } from "@/common/utils/date-format";
 import { groupHistoryQuotes } from "@/features/customer-quote/api/customer-quote.mapper";
 import type { CustomerQuoteHistoryGroupView } from "@/features/customer-quote/api/customer-quote.types";
 import { QuoteHistoryCard } from "@/features/customer-quote/components";
 import { useCustomerQuoteLoadMoreSentinel } from "@/features/customer-quote/hooks/useCustomerQuoteLoadMoreSentinel";
 import { useReceivedQuoteHistoryQuery } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
-import { SERVICE_TYPE_LABEL } from "@/features/customer-quote/model/customer-quote.model";
+import { Link } from "@/i18n/navigation";
 
 type QuoteFilterValue = "all" | QuoteStatus;
 
-const QUOTE_FILTER_OPTIONS = [
-  { value: QUOTE_STATUS.CONFIRMED, label: "확정견적" },
-  { value: QUOTE_STATUS.PENDING, label: "견적대기" },
-] as const;
+const QUOTE_FILTER_VALUES = [QUOTE_STATUS.CONFIRMED, QUOTE_STATUS.PENDING] as const;
+const QUOTE_FILTER_LABEL_KEYS = {
+  [QUOTE_STATUS.CONFIRMED]: "confirmed",
+  [QUOTE_STATUS.PENDING]: "pending",
+} as const;
 
 function QuoteInfoRow({ label, value }: { label: string; value: string }) {
   return (
@@ -39,6 +41,14 @@ function QuoteInfoRow({ label, value }: { label: string; value: string }) {
 }
 
 function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView }) {
+  const t = useTranslations("CustomerQuote");
+  const quote = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const locale = useLocale();
+  const filterOptions = QUOTE_FILTER_VALUES.map((value) => ({
+    value,
+    label: quote(QUOTE_FILTER_LABEL_KEYS[value]),
+  }));
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filter, setFilter] = useState<QuoteFilterValue>("all");
 
@@ -69,7 +79,7 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
               id={`${group.id}-info-title`}
               className="text-xl-semibold text-[var(--black-400)]"
             >
-              견적 정보
+              {quote("info")}
             </h2>
             <p className="text-md-regular text-[var(--content-muted)]">
               {group.requestedAt}
@@ -77,12 +87,15 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
           </div>
           <dl className="flex flex-col gap-4">
             <QuoteInfoRow
-              label="이사 유형"
-              value={SERVICE_TYPE_LABEL[group.serviceType]}
+              label={quote("moveType")}
+              value={moveType(group.serviceType)}
             />
-            <QuoteInfoRow label="출발지" value={group.from} />
-            <QuoteInfoRow label="도착지" value={group.to} />
-            <QuoteInfoRow label="이용일" value={group.moveDate} />
+            <QuoteInfoRow label={quote("from")} value={group.from} />
+            <QuoteInfoRow label={quote("to")} value={group.to} />
+            <QuoteInfoRow
+              label={quote("useDate")}
+              value={formatDateWithWeekday(group.moveDate, locale)}
+            />
           </dl>
         </section>
 
@@ -99,17 +112,17 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
             id={`${group.id}-quote-list-title`}
             className="text-xl-semibold flex items-start gap-2"
           >
-            <span className="text-[var(--black-400)]">견적서 목록</span>
+            <span className="text-[var(--black-400)]">{t("quoteList")}</span>
             <span className="text-[var(--primary-400)]">
               {group.quotes.length}
             </span>
           </h2>
 
           <FilterDropdown
-            allOptionLabel="전체"
+            allOptionLabel={t("all")}
             isAllSelected={false}
             isOpen={isFilterOpen}
-            label="전체"
+            label={t("all")}
             onChange={(values) => {
               const nextValue = values[0];
               setFilter(
@@ -120,7 +133,7 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
               );
             }}
             onOpenChange={setIsFilterOpen}
-            options={QUOTE_FILTER_OPTIONS}
+            options={filterOptions}
             selectionMode="single"
             showAllOption
             size="md"
@@ -129,30 +142,30 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
 
           {visibleQuotes.length > 0 ? (
             <ul className="flex w-full flex-col">
-              {visibleQuotes.map((quote) => (
-                <li key={quote.id}>
+              {visibleQuotes.map((item) => (
+                <li key={item.id}>
                   <Link
-                    aria-label={`${quote.moverName} 기사님 견적 상세 보기`}
+                    aria-label={t("detailLink", { name: item.moverName })}
                     className={[
                       "block w-full rounded-xl text-left",
                       "hover:bg-[var(--background-200)]",
                       "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
                     ].join(" ")}
-                    href={ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(quote.id)}
+                    href={ROUTES.CUSTOMER.QUOTE.HISTORY_DETAIL(item.id)}
                   >
                     <QuoteHistoryCard
-                      careerYears={quote.careerYears}
-                      confirmedCount={quote.confirmedCount}
-                      favoriteCount={quote.favoriteCount}
-                      isDesignated={quote.isDesignated}
-                      message={quote.message}
-                      moverName={quote.moverName}
-                      moverProfileImageUrl={quote.moverProfileImageUrl}
-                      price={quote.price}
-                      rating={quote.rating}
-                      reviewCount={quote.reviewCount}
-                      serviceType={quote.serviceType}
-                      status={quote.status}
+                      careerYears={item.careerYears}
+                      confirmedCount={item.confirmedCount}
+                      favoriteCount={item.favoriteCount}
+                      isDesignated={item.isDesignated}
+                      message={item.message}
+                      moverName={item.moverName}
+                      moverProfileImageUrl={item.moverProfileImageUrl}
+                      price={item.price}
+                      rating={item.rating}
+                      reviewCount={item.reviewCount}
+                      serviceType={item.serviceType}
+                      status={item.status}
                     />
                   </Link>
                 </li>
@@ -160,7 +173,7 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
             </ul>
           ) : (
             <p className="text-md-regular py-10 text-center text-[var(--content-muted)]">
-              조건에 맞는 견적서가 없습니다.
+              {t("noFilteredQuotes")}
             </p>
           )}
         </section>
@@ -170,6 +183,8 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
 }
 
 export function CustomerQuoteHistoryView() {
+  const t = useTranslations("CustomerQuote");
+  const common = useTranslations("Common");
   const historyQuery = useReceivedQuoteHistoryQuery();
 
   const groups = useMemo(() => {
@@ -191,25 +206,25 @@ export function CustomerQuoteHistoryView() {
 
   return (
     <main className="min-h-screen bg-[var(--background-100)]">
-      <h1 className="sr-only">받았던 견적</h1>
+      <h1 className="sr-only">{t("historyTab")}</h1>
       <Tabs
-        ariaLabel="견적 목록"
+        ariaLabel={t("tabs")}
         items={[
           {
             href: ROUTES.CUSTOMER.QUOTE.PENDING,
             id: "pending",
-            label: "대기 중인 견적",
+            label: t("pendingTab"),
           },
           {
             href: ROUTES.CUSTOMER.QUOTE.HISTORY,
             id: "history",
-            label: "받았던 견적",
+            label: t("historyTab"),
           },
         ]}
         value="history"
       />
       <section
-        aria-label="받았던 견적 목록"
+        aria-label={t("historyList")}
         className={[
           "flex flex-col gap-10 px-6 py-6",
           "min-[744px]:px-[72px] min-[744px]:py-10",
@@ -217,13 +232,13 @@ export function CustomerQuoteHistoryView() {
         ].join(" ")}
       >
         {historyQuery.isLoading ? (
-          <LoadingState message="받았던 견적을 불러오는 중..." />
+          <LoadingState message={t("historyLoading")} />
         ) : null}
 
         {historyQuery.isError ? (
           <ErrorState
-            title="받았던 견적을 불러오지 못했습니다"
-            description="잠시 후 다시 시도해 주세요."
+            title={t("historyLoadError")}
+            description={common("errorDescription")}
             onRetry={() => {
               void historyQuery.refetch();
             }}
@@ -234,8 +249,8 @@ export function CustomerQuoteHistoryView() {
         !historyQuery.isError &&
         groups.length === 0 ? (
           <EmptyState
-            title="받았던 견적이 없습니다"
-            description="확정한 견적이 생기면 여기에 표시됩니다."
+            title={t("historyEmpty")}
+            description={t("historyEmptyDescription")}
           />
         ) : null}
 
@@ -251,7 +266,7 @@ export function CustomerQuoteHistoryView() {
 
             {historyQuery.isFetchingNextPage ? (
               <p className="text-md-regular text-center text-[var(--content-muted)]">
-                견적을 더 불러오는 중...
+                {t("loadingMore")}
               </p>
             ) : null}
           </>

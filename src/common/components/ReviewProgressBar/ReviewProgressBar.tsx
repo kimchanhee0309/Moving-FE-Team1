@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 import type { ReviewProgressBarProps } from "./ReviewProgressBar.types";
 
 /**
@@ -11,6 +13,7 @@ export function ReviewProgressBar({
   isLoading = false,
   className,
 }: ReviewProgressBarProps) {
+  const t = useTranslations("Review");
   const safeCount = Math.max(0, count);
   const safeMaxCount = Math.max(0, maxCount);
   const accessibleMaxCount = Math.max(safeMaxCount, 1);
@@ -24,7 +27,7 @@ export function ReviewProgressBar({
           .filter(Boolean)
           .join(" ")}
         role="status"
-        aria-label={`${score}점 리뷰 분포를 불러오는 중`}
+        aria-label={t("distributionLoading", { score })}
         aria-busy="true"
       >
         <span className="h-5 w-9 rounded bg-[var(--background-300)]" />
@@ -41,11 +44,11 @@ export function ReviewProgressBar({
         .join(" ")}
     >
       <span className="text-md-medium w-9 shrink-0 text-[var(--black-300)]">
-        {score}점
+        {t("scoreLabel", { score })}
       </span>
       <span
         role="progressbar"
-        aria-label={`${score}점 리뷰 ${safeCount}개`}
+        aria-label={t("distribution", { score, count: safeCount })}
         aria-valuemin={0}
         aria-valuemax={accessibleMaxCount}
         aria-valuenow={safeCount}

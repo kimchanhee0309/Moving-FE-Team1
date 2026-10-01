@@ -1,25 +1,19 @@
 "use client";
 
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
-import { SERVICE_TYPE } from "@/common/constants/domain";
+import { formatDateWithWeekday } from "@/common/utils/date-format";
 
 import { toDisplayRegionAddress } from "../review.utils";
-
-const SERVICE_TYPE_LABEL: Record<ServiceType, string> = {
-  [SERVICE_TYPE.SMALL]: "소형이사",
-  [SERVICE_TYPE.HOME]: "가정이사",
-  [SERVICE_TYPE.OFFICE]: "사무실이사",
-};
 
 const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 const STAR_NUMBERS = [1, 2, 3, 4, 5] as const;
 const MIN_CONTENT_LENGTH = 10;
-const WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"] as const;
 const FOCUS_RING =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]";
 const SECTION_TITLE =
@@ -40,13 +34,8 @@ function cn(...classNames: ClassValue[]) {
   return classNames.filter(Boolean).join(" ");
 }
 
-function formatMoveDate(date: string) {
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return "";
-  const y = parsed.getFullYear();
-  const m = String(parsed.getMonth() + 1).padStart(2, "0");
-  const d = String(parsed.getDate()).padStart(2, "0");
-  return `${y}년 ${m}월 ${d}일 (${WEEKDAY_LABELS[parsed.getDay()]})`;
+function formatMoveDate(date: string, locale: string) {
+  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale);
 }
 
 function useModalAccessibility(isOpen: boolean, onClose: () => void) {
@@ -250,6 +239,7 @@ function StarRating({
   rating: number;
   onChange: (rating: number) => void;
 }) {
+  const t = useTranslations("Review");
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   // 호버 미리보기 > 확정 점수 순으로 표시
   const displayRating = hoverRating ?? rating;
@@ -258,7 +248,7 @@ function StarRating({
     <div
       className="flex items-start"
       role="group"
-      aria-label="평점 선택"
+      aria-label={t("ratingGroup")}
       onMouseLeave={() => setHoverRating(null)}
     >
       {STAR_NUMBERS.map((starNumber) => {
@@ -272,7 +262,7 @@ function StarRating({
             onMouseEnter={() => setHoverRating(starNumber)}
             onFocus={() => setHoverRating(starNumber)}
             onBlur={() => setHoverRating(null)}
-            aria-label={`${starNumber}점`}
+            aria-label={t("ratingOption", { count: starNumber })}
             aria-pressed={isSelected}
             className={cn(
               "relative size-6 shrink-0 min-[1200px]:size-9",
@@ -338,6 +328,11 @@ export function ReviewWriteModal({
   closeOnBackdrop = true,
   className,
 }: ReviewWriteModalProps) {
+  const review = useTranslations("Review");
+  const quote = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const common = useTranslations("Common");
+  const locale = useLocale();
   const titleId = useId();
   const contentId = useId();
   const dialogRef = useModalAccessibility(isOpen, onClose);
@@ -389,12 +384,12 @@ export function ReviewWriteModal({
               "min-[1200px]:text-[24px] min-[1200px]:leading-8 min-[1200px]:font-semibold",
             ].join(" ")}
           >
-            리뷰 쓰기
+            {review("modalTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="닫기"
+            aria-label={common("close")}
             className={cn(
               "group relative flex size-6 shrink-0 items-center justify-center rounded-lg min-[1200px]:size-9",
               "transition-colors hover:bg-[var(--background-200)]",
@@ -417,13 +412,13 @@ export function ReviewWriteModal({
             <div className="flex items-center gap-2 min-[1200px]:gap-3">
               <Chip
                 iconSrc="/icons/ic-solid-box.svg"
-                label={SERVICE_TYPE_LABEL[serviceType]}
+                label={moveType(serviceType)}
                 tone="service"
               />
               {isDesignatedRequest ? (
                 <Chip
                   iconSrc="/icons/ic-solid-document.svg"
-                  label="지정 견적 요청"
+                  label={moveType("designated")}
                   tone="designated"
                 />
               ) : null}
@@ -433,12 +428,12 @@ export function ReviewWriteModal({
               <div className="flex flex-col items-start gap-1">
                 <MovingBadge />
                 <p className="text-lg-semibold whitespace-nowrap text-[#373737] min-[1200px]:text-2lg-semibold">
-                  {moverName} 기사님
+                  {quote("moverName", { name: moverName })}
                 </p>
               </div>
               <ProfileAvatar
                 src={profileSrc}
-                alt={`${moverName} 기사님 프로필`}
+                alt={quote("moverProfile", { name: moverName })}
                 isDefault={isDefaultProfile}
               />
             </div>
@@ -449,7 +444,7 @@ export function ReviewWriteModal({
             <div className="flex w-full min-w-0 flex-col gap-3 min-[1200px]:flex-row min-[1200px]:items-end min-[1200px]:gap-10">
               <div className="flex min-w-0 w-full items-end gap-2 min-[1200px]:flex-1 min-[1200px]:gap-3">
                 <MoveInfoItem
-                  label="출발지"
+                  label={quote("from")}
                   value={toDisplayRegionAddress(departure)}
                   className="min-w-0 flex-1"
                 />
@@ -467,14 +462,14 @@ export function ReviewWriteModal({
                   />
                 </div>
                 <MoveInfoItem
-                  label="도착지"
+                  label={quote("to")}
                   value={toDisplayRegionAddress(arrival)}
                   className="min-w-0 flex-1"
                 />
               </div>
               <MoveInfoItem
-                label="이사일"
-                value={formatMoveDate(movedAt)}
+                label={quote("moveDate")}
+                value={formatMoveDate(movedAt, locale)}
                 className="w-full shrink-0 min-[1200px]:w-auto"
               />
             </div>
@@ -482,19 +477,19 @@ export function ReviewWriteModal({
             <div className="h-px w-full bg-[var(--line-100)]" aria-hidden="true" />
           </div>
 
-          <FieldSection title="평점을 선택해 주세요">
+          <FieldSection title={review("ratingTitle")}>
             <StarRating rating={rating} onChange={onRatingChange} />
           </FieldSection>
 
           <div className="flex w-full flex-col items-start gap-3">
             <label htmlFor={contentId} className={SECTION_TITLE}>
-              상세 후기를 작성해 주세요
+              {review("contentLabel")}
             </label>
             <textarea
               id={contentId}
               value={content}
               onChange={(event) => onContentChange(event.target.value)}
-              placeholder="최소 10자 이상 입력해주세요"
+              placeholder={review("contentPlaceholder")}
               rows={5}
               className={cn(
                 "h-40 w-full resize-none rounded-2xl border! border-[var(--line-200)]! bg-[var(--gray-50)]!",
@@ -521,7 +516,7 @@ export function ReviewWriteModal({
               : "cursor-not-allowed bg-[var(--gray-300)]!",
           )}
         >
-          {isSubmitting ? "등록 중..." : "리뷰 등록"}
+          {isSubmitting ? review("submitting") : review("submit")}
         </button>
       </div>
     </div>

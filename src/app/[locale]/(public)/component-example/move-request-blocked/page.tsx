@@ -5,7 +5,7 @@ import { useState } from "react";
 import { MOVE_REQUEST_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
 import type { MoveRequestDto } from "@/features/move-request/move-request.types";
 
-import { MoveRequestBlockedState } from "@/app/(customer)/move-request/_components/MoveRequestBlockedState";
+import { MoveRequestBlockedState } from "@/app/[locale]/(customer)/move-request/_components/MoveRequestBlockedState";
 
 /**
  * QA 전용 미리보기 페이지입니다. `MoveRequestBlockedState`가 이제 활성 요청(`MoveRequestDto`)과

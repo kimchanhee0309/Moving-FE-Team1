@@ -6,6 +6,8 @@
  * 상세 표현은 MoverQuoteDetail에 위임하고,
  * 이 컴포넌트는 loading/error/not-found/success 분기만 담당
  */
+import { useTranslations } from "next-intl";
+
 import { getApiErrorMessage } from "@/common/api/get-error-message";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
@@ -17,19 +19,20 @@ interface MoverQuoteDetailViewProps {
 }
 
 export function MoverQuoteDetailView({ quoteId }: MoverQuoteDetailViewProps) {
+  const t = useTranslations("MoverQuote");
   const quoteQuery = useMoverQuoteDetail(quoteId);
 
   if (quoteQuery.isPending) {
-    return <LoadingState message="견적 상세를 불러오는 중이에요." />;
+    return <LoadingState message={t("detailLoading")} />;
   }
 
   if (quoteQuery.error) {
     return (
       <ErrorState
-        title="견적 상세를 불러오지 못했어요."
+        title={t("detailLoadErrorTitle")}
         description={getApiErrorMessage(
           quoteQuery.error,
-          "견적 상세를 불러오지 못했습니다.",
+          t("detailLoadError"),
         )}
         onRetry={() => {
           void quoteQuery.refetch();
@@ -45,8 +48,8 @@ export function MoverQuoteDetailView({ quoteId }: MoverQuoteDetailViewProps) {
   if (!quoteQuery.data) {
     return (
       <ErrorState
-        title="견적을 찾을 수 없어요."
-        description="삭제되었거나 접근할 수 없는 견적입니다."
+        title={t("detailNotFound")}
+        description={t("detailNotFoundDescription")}
       />
     );
   }

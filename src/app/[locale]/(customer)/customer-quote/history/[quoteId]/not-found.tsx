@@ -1,15 +1,18 @@
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { EmptyState } from "@/common/components/page-state";
 import { ROUTES } from "@/common/constants/routes";
+import { Link } from "@/i18n/navigation";
 
 export default function HistoryQuoteNotFound() {
+  const t = useTranslations("CustomerQuote");
+
   return (
     <EmptyState
-      title="견적을 찾을 수 없어요."
-      description="없거나 삭제된 받았던 견적입니다."
+      title={t("notFoundTitle")}
+      description={t("historyNotFound")}
       action={
-        <Link href={ROUTES.CUSTOMER.QUOTE.HISTORY}>받았던 견적 목록으로</Link>
+        <Link href={ROUTES.CUSTOMER.QUOTE.HISTORY}>{t("backToHistory")}</Link>
       }
     />
   );
