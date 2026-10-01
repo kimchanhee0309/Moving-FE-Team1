@@ -64,6 +64,19 @@ export function AddressSearchModal({
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // onClose가 useCallback 없이 매 렌더마다 새로 만들어지는 부모(예: page.tsx의
+  // closeAddressModal)가 있으면, 이 값을 effect 의존성에 그대로 넣었을 때 검색어 입력마다
+  // (=searchValue가 바뀔 때마다 부모가 리렌더되어 onClose 참조가 바뀔 때마다) 아래 focus trap
+  // effect가 매번 cleanup(이전 포커스로 복귀) 후 재실행(input에 재포커스)됐다. 이 순간적인
+  // "포커스 이탈 후 복귀"가 한글 IME 조합 버퍼를 매 keystroke마다 끊어서 "진행"이
+  // "ㅈㅣㄴㅎㅐ"처럼 낱자로 쪼개져 보이는 원인이었다. ref로 최신 onClose만 읽고 effect
+  // 의존성에서는 빼서, 모달이 열리고 닫힐 때만 focus trap이 실행되게 한다.
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -79,7 +92,7 @@ export function AddressSearchModal({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -120,7 +133,7 @@ export function AddressSearchModal({
       document.body.style.overflow = previousOverflow;
       previouslyFocusedElement?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
@@ -167,7 +180,12 @@ export function AddressSearchModal({
           <div className="flex w-full items-center gap-3 rounded-2xl bg-(--background-100) px-4 py-3.5 min-[744px]:h-16 min-[744px]:gap-4 min-[744px]:px-6">
             <input
               ref={searchInputRef}
-              type="search"
+              // type="search"는 Chrome 계열에서 controlled value와 결합되면 한글 IME 조합을
+              // 깨뜨려(자음/모음이 조합 전에 매 입력마다 확정돼 "진행"이 "ㅈㅣㄴㅎㅐ"처럼 낱자로
+              // 쪼개짐) 이 서비스 주 사용자층(한국어 입력)에 치명적이다. 네이티브 검색 input의
+              // × 지우기 버튼도 이미 CSS로 숨기고 커스텀 버튼을 따로 만들어 써서 "search" 타입이
+              // 주는 이점이 없어 "text"로 바꾼다.
+              type="text"
               value={searchValue}
               onChange={(event) => onSearchChange(event.target.value)}
               onKeyDown={(event) => {

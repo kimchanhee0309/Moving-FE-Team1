@@ -90,7 +90,12 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
           {...inputProps}
           ref={ref}
           id={inputId}
-          type="search"
+          // type="search"는 Chrome 계열에서 controlled value와 결합되면 한글 IME 조합을
+          // 깨뜨려(자음/모음이 조합 전에 매 입력마다 확정돼 낱자로 쪼개짐) 이 서비스 주
+          // 사용자층(한국어 입력)에 치명적이다. 네이티브 검색 input의 × 지우기 버튼도 이미
+          // CSS로 숨기고 커스텀 버튼을 따로 만들어 써서 "search" 타입이 주는 이점이 없어
+          // "text"로 바꾼다.
+          type="text"
           value={value}
           disabled={isDisabled}
           aria-label={ariaLabel}

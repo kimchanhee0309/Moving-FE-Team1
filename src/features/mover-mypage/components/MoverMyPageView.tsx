@@ -42,7 +42,13 @@ export function MoverMyPageView({
 
   return (
     <main className="min-h-screen bg-[var(--gray-50)] pb-20">
-      <div className="mx-auto w-full max-w-[1280px] px-5 pb-4 pt-4 min-[744px]:px-10 min-[744px]:pb-6 min-[744px]:pt-8">
+      {/*
+        컨테이너 폭·padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` 기준과 맞춘다 — 예전엔
+        `max-w-[1280px]`에 1200px 이상 전용 padding이 아예 없어(744px 단계 `px-10`이 그대로
+        이어짐) 1200px 이상 화면에서 GNB 로고와 이 제목의 중앙정렬 기준 폭이 달라 화면이
+        커질수록 간격이 계속 벌어졌다. 744px 미만/744~1199px 구간의 기존 padding은 그대로 둔다.
+      */}
+      <div className="mx-auto w-full max-w-[1920px] px-5 pb-4 pt-4 min-[744px]:px-10 min-[744px]:pb-6 min-[744px]:pt-8 min-[1200px]:px-40">
         <h1 className="text-xl-bold text-[var(--black-500)] min-[1200px]:text-2xl-bold">마이페이지</h1>
       </div>
 

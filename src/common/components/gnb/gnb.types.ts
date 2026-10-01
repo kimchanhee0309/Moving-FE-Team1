@@ -152,6 +152,12 @@ export interface GnbNotificationMenuProps {
   menuId: string;
   /** 보여줄 알림 목록. 빈 배열이면 빈 상태 문구를 보여준다. */
   items: GnbNotificationItem[];
+  /** 스크롤로 더 불러올 알림이 남아있는지. */
+  hasMore: boolean;
+  /** 다음 페이지를 불러오는 중인지. 목록 하단에 로딩 표시를 보여줄 때 쓴다. */
+  isLoadingMore: boolean;
+  /** 목록 스크롤이 하단 근처에 닿으면 호출하는 콜백. */
+  onLoadMore: () => void;
   /**
    * 패널 안의 닫기(X) 버튼 ref. 패널이 열릴 때 포커스를 옮길 첫 번째(유일하게 보장된) 포커스 대상이다.
    * 알림 항목은 `href`가 있을 때만 포커스 가능한 링크가 되므로, 항상 존재하는 이 버튼을 기준으로 삼는다.
@@ -182,6 +188,15 @@ interface GnbBaseProps {
    * 조회/새로고침 로직을 갖지 않는다(공통 컴포넌트 원칙).
    */
   notificationItems?: GnbNotificationItem[];
+  /** 드롭다운 스크롤로 더 불러올 알림이 남아있는지. 기본값 `false`. */
+  hasMoreNotifications?: boolean;
+  /** 다음 페이지를 불러오는 중인지. `true`면 목록 하단에 로딩 표시를 보여준다. 기본값 `false`. */
+  isLoadingMoreNotifications?: boolean;
+  /**
+   * 알림 목록 스크롤이 하단 근처에 닿으면 호출되는 콜백. `Gnb`는 실제 알림 조회 로직을 갖지
+   * 않으므로(공통 컴포넌트 원칙) 호출부가 다음 페이지를 불러오는 용도로 쓴다.
+   */
+  onLoadMoreNotifications?: () => void;
   /** 비로그인 상태에서 "로그인" 버튼이 이동할 경로. 생략 시 `GNB_DEFAULT_LOGIN_HREF`를 쓴다. */
   loginHref?: string;
   /**

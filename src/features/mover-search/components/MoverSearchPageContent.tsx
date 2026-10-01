@@ -154,7 +154,13 @@ export function MoverSearchPageContent() {
   return (
     <div className="bg-[var(--gray-50)]">
       <header className="hidden bg-[var(--gray-50)] py-8 shadow-[0px_2px_10px_0px_rgba(248,248,248,0.1)] min-[1200px]:block">
-        <div className="mx-auto w-full max-w-[1200px] px-6 min-[1200px]:px-2">
+        {/*
+          컨테이너 폭·padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` + `px-40`(1200px+) 기준과
+          맞춘다 — 예전엔 `max-w-[1200px]`+`min-[1200px]:px-2`라 1200px 이상 화면에서 GNB 로고와
+          이 제목의 중앙정렬 기준 폭이 달라 화면이 커질수록 간격이 계속 벌어졌다. 이 헤더는
+          1200px 미만에서 숨겨지므로 744px 단계 padding은 두지 않는다.
+        */}
+        <div className="mx-auto w-full max-w-[1920px] px-6 min-[1200px]:px-40">
           <h1 className="text-2xl-semibold text-[var(--black-500)]">
             기사님 찾기
           </h1>

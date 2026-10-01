@@ -25,6 +25,11 @@ function isSameDay(a: Date | null, b: Date): boolean {
   );
 }
 
+/** 로컬 자정 기준으로 날짜만 비교하기 위해 시:분:초를 버린다. */
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 /**
  * `monthStart`가 속한 달의 날짜를 일~토 7열 그리드로 배열한다.
  * 첫 주/마지막 주의 빈 칸은 이전/다음 달의 실제 날짜로 채우되 `isCurrentMonth: false`로 표시해
@@ -103,6 +108,12 @@ export function MoveDateCalendar({
 
   const config = SIZE_CONFIG[size];
   const weeks = buildCalendarWeeks(viewingMonth);
+  // BE(`move-request.service.ts`)가 moveDate를 "오늘(UTC 기준)보다 미래"만 허용하므로,
+  // 오늘 포함 과거 날짜를 여기서도 선택 못 하게 막아 제출 후 400을 미리 방지한다. 이 컴포넌트는
+  // 로컬 자정 기준으로 비교한다 — 정확한 timezone 기준(UTC vs 로컬)은 BE 쪽에도 아직 팀 협의가
+  // 필요하다고 남겨진 미정 사항이라, 사용자가 실제로 보는 "오늘"을 기준으로 삼는 통상적인
+  // 날짜 선택기 관례를 따른다.
+  const today = startOfDay(new Date());
 
   const goToPrevMonth = () => {
     setViewingMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1));
@@ -152,11 +163,13 @@ export function MoveDateCalendar({
           <div key={week[0].date.toISOString()} className="flex items-center">
             {week.map((cell) => {
               const selected = cell.isCurrentMonth && isSameDay(value, cell.date);
+              const isPastOrToday = cell.date.getTime() <= today.getTime();
+              const isSelectable = cell.isCurrentMonth && !isPastOrToday;
               return (
                 <button
                   key={cell.date.toISOString()}
                   type="button"
-                  disabled={!cell.isCurrentMonth}
+                  disabled={!isSelectable}
                   aria-pressed={selected}
                   aria-label={`${cell.date.getFullYear()}년 ${cell.date.getMonth() + 1}월 ${cell.date.getDate()}일`}
                   onClick={() => onSelect(cell.date)}
@@ -165,7 +178,7 @@ export function MoveDateCalendar({
                     config.cellClass,
                     selected
                       ? `bg-(--primary-400) ${config.selectedText}`
-                      : cell.isCurrentMonth
+                      : isSelectable
                         ? `${config.dayText} hover:bg-(--background-200)`
                         : "cursor-default text-(--gray-300)",
                   ].join(" ")}

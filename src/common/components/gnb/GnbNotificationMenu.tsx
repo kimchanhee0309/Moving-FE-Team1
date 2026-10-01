@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 
 import type { GnbNotificationItem, GnbNotificationMenuProps } from "./gnb.types";
+import styles from "./GnbNotificationMenu.module.css";
 
 const FOCUS_RING =
   "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
@@ -41,6 +42,14 @@ const NOTIFICATION_MENU_SIZE = {
   itemText: "text-md-medium min-[1200px]:text-lg-medium",
   /** 상대 시간(예: "2시간 전") 타이포그래피/색상. */
   timeText: "text-sm-medium text-(--gray-400) min-[1200px]:text-md-medium",
+  /**
+   * 알림 목록 영역의 최대 높이(5건 분량) — 그 이상은 스크롤로 본다. 알림 문구가 1줄이라고
+   * 가정하고 `itemPadding` + (`itemText`/`timeText` line-height 합 + `gap-0.5` 2px) + 구분선
+   * 1px(4건)을 5건치 더한 근사치다(Figma 수치 아님): sm = (12*2 + 24+2+22)*5 + 4 = 364px,
+   * md = (16*2 + 26+2+24)*5 + 4 = 424px. 문구가 길어 2줄 이상이 되면 실제로는 5건보다 적게
+   * 보일 수 있다.
+   */
+  listMaxHeight: "max-h-[364px] min-[1200px]:max-h-[424px]",
 };
 
 function NotificationItemContent({ item }: { item: GnbNotificationItem }) {
@@ -81,12 +90,39 @@ function NotificationItemContent({ item }: { item: GnbNotificationItem }) {
 export function GnbNotificationMenu({
   menuId,
   items,
+  hasMore,
+  isLoadingMore,
+  onLoadMore,
   closeButtonRef,
   triggerRef,
   onNavigate,
   onClose,
 }: GnbNotificationMenuProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // 알림 목록은 패널 안의 내부 스크롤 영역이라(페이지 전체 스크롤이 아니라) root를 뷰포트가
+  // 아닌 이 스크롤 컨테이너로 지정해야 바닥에 닿았을 때만 정확히 트리거된다.
+  useEffect(() => {
+    if (!hasMore) return;
+
+    const root = listRef.current;
+    const sentinel = sentinelRef.current;
+    if (!root || !sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { root, rootMargin: "80px 0px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, onLoadMore]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -173,28 +209,46 @@ export function GnbNotificationMenu({
           새로운 알림이 없어요.
         </p>
       ) : (
-        items.map((item, index) => {
-          const isLastItem = index === items.length - 1;
-          const rowClassName = `flex w-full flex-col gap-0.5 ${
-            isLastItem ? "" : "border-b border-(--line-200)"
-          } ${NOTIFICATION_MENU_SIZE.itemPadding}`;
+        <div
+          ref={listRef}
+          className={`w-full overflow-y-auto overscroll-contain ${styles.notificationList} ${NOTIFICATION_MENU_SIZE.listMaxHeight}`}
+        >
+          {items.map((item, index) => {
+            const isLastItem = index === items.length - 1;
+            const rowClassName = `flex w-full flex-col gap-0.5 ${
+              isLastItem ? "" : "border-b border-(--line-200)"
+            } ${NOTIFICATION_MENU_SIZE.itemPadding}`;
 
-          return item.href ? (
-            <Link
-              key={item.id}
-              href={item.href}
-              role="menuitem"
-              onClick={onNavigate}
-              className={`no-underline hover:bg-(--background-200) ${rowClassName} ${FOCUS_RING}`}
+            return item.href ? (
+              <Link
+                key={item.id}
+                href={item.href}
+                role="menuitem"
+                onClick={onNavigate}
+                className={`no-underline hover:bg-(--background-200) ${rowClassName} ${FOCUS_RING}`}
+              >
+                <NotificationItemContent item={item} />
+              </Link>
+            ) : (
+              <div key={item.id} role="none" className={rowClassName}>
+                <NotificationItemContent item={item} />
+              </div>
+            );
+          })}
+
+          {/* 뷰포트가 아닌 이 스크롤 영역을 기준으로 바닥 근접을 감지하는 빈 sentinel. hasMore가
+              아니면 관찰 자체를 하지 않으므로(위 effect) 평소엔 아무 영향이 없다. */}
+          {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px w-full shrink-0" />}
+
+          {isLoadingMore && (
+            <p
+              role="none"
+              className={`m-0 w-full text-center ${NOTIFICATION_MENU_SIZE.timeText} ${NOTIFICATION_MENU_SIZE.itemPadding}`}
             >
-              <NotificationItemContent item={item} />
-            </Link>
-          ) : (
-            <div key={item.id} role="none" className={rowClassName}>
-              <NotificationItemContent item={item} />
-            </div>
-          );
-        })
+              불러오는 중...
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
