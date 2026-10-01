@@ -2,7 +2,6 @@ import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import { ENV } from "@/common/constants/env";
 
 import { KAKAO_SHARE_FALLBACK_IMAGE_PATH } from "./mover-search.constants";
-import "./kakao.types";
 
 function ensureKakaoReady(): boolean {
   if (!ENV.KAKAO_JAVASCRIPT_KEY) {
