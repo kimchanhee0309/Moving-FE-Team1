@@ -5,7 +5,7 @@ import { changeAuthSession, subscribeAuthFailure } from "../../src/common/api/au
 import { ApiError } from "../../src/common/api/error";
 import { canRecoverAuthAccess, getAuthAccess } from "../../src/common/auth/access";
 import { getAuthSessionState } from "../../src/common/auth/session";
-import { authHref, clearAuthFieldError, resolveAuthenticatedPath, resolveCredentialsPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
+import { authHref, authNavigationTarget, clearAuthFieldError, localizedAuthRedirect, resolveAuthenticatedPath, resolveCredentialsPath, safeAuthRedirect, validateAuthForm } from "../../src/features/auth/auth.utils";
 import { assertProfileCompleted } from "../../src/features/auth/auth.cache";
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
@@ -359,6 +359,22 @@ test("이메일 회원가입은 잘못된 완료 플래그가 와도 역할별 �
   );
   assert.equal(resolveCredentialsPath("login", customer), "/mover-search");
   assert.equal(resolveCredentialsPath("login", { ...customer, role: "MOVER" }), "/mover-mypage");
+});
+
+test("영어 OAuth callback의 목적지와 역할 제한을 보존한다", () => {
+  assert.equal(localizedAuthRedirect("/favorite?sort=recent", "en"), "/en/favorite?sort=recent");
+  assert.deepEqual(authNavigationTarget("/en/favorite?sort=recent", "ko"), {
+    href: "/favorite?sort=recent",
+    locale: "en",
+  });
+  assert.equal(resolveAuthenticatedPath(customer, "/en/favorite?sort=recent"), "/en/favorite?sort=recent");
+  assert.equal(resolveAuthenticatedPath(customer, "/en/requests"), "/mover-search");
+  assert.equal(safeAuthRedirect("/en/login/customer"), undefined);
+  assert.equal(safeAuthRedirect("/en/auth/callback"), undefined);
+  assert.equal(localizedAuthRedirect("/favorite", "zh"), "/zh/favorite");
+  assert.deepEqual(authNavigationTarget("/zh/requests", "ko"), { href: "/requests", locale: "zh" });
+  assert.equal(safeAuthRedirect("/zh/login/mover"), undefined);
+  assert.equal(localizedAuthRedirect("/favorite", "fr"), "/favorite");
 });
 
 test("백엔드 휴대전화·이름·비밀번호 바이트 제한에 맞춰 검증한다", () => {
