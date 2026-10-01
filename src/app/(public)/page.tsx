@@ -32,17 +32,21 @@ export default function HomePage() {
       </section>
 
       <section className={styles.request} aria-labelledby="request-title">
+        <div className={styles.requestCopy}>
+          <h2 id="request-title" className={`text-xl-bold ${styles.title} ${styles.requestTitle}`}>
+            원하는 이사 서비스를 요청하고<br />견적을 받아보세요
+          </h2>
+          <p>이사 정보를 한 번만 입력하면 내 조건에 맞는 견적을 받을 수 있어요.</p>
+        </div>
         <RequestLandingCta />
-        <h2 id="request-title" className={`text-xl-bold ${styles.title} ${styles.requestTitle}`}>
-          원하는 이사 서비스를 요청하고<br />견적을 받아보세요
-        </h2>
       </section>
 
       <section className={styles.compare} aria-labelledby="compare-title">
-        <CompareLandingCta />
         <h2 id="compare-title" className={`text-xl-bold ${styles.title} ${styles.compareTitle}`}>
           여러 업체의 견적을<br />한눈에 비교하고 선택해요
         </h2>
+        <p className={styles.compareDescription}>가격뿐 아니라 평점과 경력까지 살펴보고 안심할 수 있는 기사님을 선택하세요.</p>
+        <CompareLandingCta />
       </section>
 
       <section className={styles.footer} aria-label="무빙 서비스 소개">
