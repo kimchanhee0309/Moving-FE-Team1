@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { Pagination } from "@/common/components/Pagination";
 import { EmptyState, ErrorState, LoadingState } from "@/common/components/page-state";
 import { ReviewListCard } from "@/common/components/ReviewListCard";
+import { OriginalTextNotice } from "@/common/components/OriginalTextNotice";
 import { ReviewProgressBar } from "@/common/components/ReviewProgressBar";
 import { ROUTES } from "@/common/constants/routes";
 
@@ -82,8 +83,9 @@ export function MoverMyPageView({
                 <p className="text-md-medium mt-1 text-[var(--black-300)]" aria-label={t("favorites", { count: data.favoriteCount })}>♥ {data.favoriteCount}</p>
               </div>
             </div>
-            <p className="text-lg-semibold mt-4 text-[var(--black-300)] min-[1200px]:mt-3">{data.shortIntroduction}</p>
-            <p className="text-md-regular mt-3 max-w-[820px] whitespace-pre-line text-[var(--gray-500)]">{data.description}</p>
+            <p lang="ko" className="text-lg-semibold mt-4 text-[var(--black-300)] min-[1200px]:mt-3">{data.shortIntroduction}</p>
+            <p lang="ko" className="text-md-regular mt-3 max-w-[820px] whitespace-pre-line text-[var(--gray-500)]">{data.description}</p>
+            <OriginalTextNotice className="mt-2" />
           </div>
 
           <div className="flex flex-col gap-2 min-[1200px]:pt-[72px]">

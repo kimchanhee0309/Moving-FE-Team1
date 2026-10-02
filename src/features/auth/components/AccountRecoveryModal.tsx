@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState, type FormEvent } from "react";
 
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import type { UserRole } from "@/common/auth/types";
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
@@ -20,8 +21,7 @@ import {
   verifyPasswordResetCode,
   type AccountLookupResult,
 } from "../auth.api";
-import type { RecoveryMode } from "../auth.types";
-import type { RecoveryQuestion } from "../auth.types";
+import type { RecoveryMode, RecoveryQuestion } from "../auth.types";
 
 interface AccountRecoveryModalProps {
   mode: RecoveryMode;
@@ -44,6 +44,7 @@ function formatExpiryDuration(totalSeconds: number, t: RecoveryTranslator) {
 
 function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: AccountRecoveryModalProps) {
   const t = useTranslations("Recovery");
+  const apiErrorMessage = useApiErrorMessage();
   const auth = useTranslations("Auth");
   const translateValidation = useValidationMessage();
   const { setModalDismissible } = useModal();
@@ -132,7 +133,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
         setResetToken(verification.resetToken);
       }
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : t("requestError"));
+      setError(apiErrorMessage(caught, t("requestError")));
     } finally {
       setIsPending(false);
     }
@@ -143,7 +144,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     setError("");
     setIsPending(true);
     try { await sendCode(); }
-    catch (caught) { setError(caught instanceof ApiError ? caught.message : t("resendError")); }
+    catch (caught) { setError(apiErrorMessage(caught, t("resendError"))); }
     finally { setIsPending(false); }
   }
 
@@ -175,7 +176,8 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
         setRecoveryAnswer("");
         setCode("");
       }
-      setError(recoveryError ? t(recoveryError) : caught instanceof ApiError ? caught.message : t("resetError"));
+      // 복구 답변 오류는 화면 문맥에 맞춘 전용 문구를, 그 외 오류는 locale별 공통 오류 문구를 사용합니다.
+      setError(recoveryError ? t(recoveryError) : apiErrorMessage(caught, t("resetError")));
     } finally {
       setIsPending(false);
     }

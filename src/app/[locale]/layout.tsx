@@ -43,6 +43,7 @@ const OPEN_GRAPH_LOCALE: Record<(typeof routing.locales)[number], string> = {
   ko: "ko_KR",
   en: "en_US",
   zh: "zh_CN",
+  ja: "ja_JP",
 };
 
 interface RootLayoutProps {

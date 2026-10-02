@@ -14,7 +14,7 @@
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Button } from "@/common/components/button";
 import { SortDropdown } from "@/common/components/Dropdown";
 import { SearchInput } from "@/common/components/Input";
@@ -80,6 +80,7 @@ function SendQuoteModalContent({
   onClose,
 }: SendQuoteModalContentProps) {
   const t = useTranslations("MoverRequests");
+  const apiErrorMessage = useApiErrorMessage();
   const mutation = useSendQuoteMutation();
   const { setModalDismissible } = useModal();
 
@@ -120,7 +121,7 @@ function SendQuoteModalContent({
       isSubmitting={mutation.isPending}
       serverError={
         mutation.error
-          ? getApiErrorMessage(
+          ? apiErrorMessage(
               mutation.error,
               t("sendError"),
             )
@@ -145,6 +146,7 @@ function RejectRequestModalContent({
   onClose,
 }: RejectRequestModalContentProps) {
   const t = useTranslations("MoverRequests");
+  const apiErrorMessage = useApiErrorMessage();
   const mutation = useRejectReceivedRequestMutation();
   const { setModalDismissible } = useModal();
 
@@ -181,7 +183,7 @@ function RejectRequestModalContent({
       isSubmitting={mutation.isPending}
       serverError={
         mutation.error
-          ? getApiErrorMessage(
+          ? apiErrorMessage(
               mutation.error,
               t("rejectError"),
             )
@@ -195,6 +197,7 @@ function RejectRequestModalContent({
 
 export function ReceivedRequestsView() {
   const t = useTranslations("MoverRequests");
+  const apiErrorMessage = useApiErrorMessage();
   const options = useTranslations("Options");
   const common = useTranslations("Common");
   const { openModal, closeModal } = useModal();
@@ -286,7 +289,7 @@ export function ReceivedRequestsView() {
     receivedRequestsQuery.isError &&
     !hasLoadedRequests &&
     receivedRequestsQuery.error
-      ? getApiErrorMessage(
+      ? apiErrorMessage(
           receivedRequestsQuery.error,
           t("loadError"),
         )
@@ -299,7 +302,7 @@ export function ReceivedRequestsView() {
    */
   const loadMoreErrorMessage =
     receivedRequestsQuery.isFetchNextPageError && receivedRequestsQuery.error
-      ? getApiErrorMessage(
+      ? apiErrorMessage(
           receivedRequestsQuery.error,
           t("loadMoreError"),
         )

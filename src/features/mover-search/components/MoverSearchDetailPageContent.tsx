@@ -11,6 +11,7 @@ import {
   ErrorState,
   LoadingState,
 } from "@/common/components/page-state";
+import { OriginalTextNotice } from "@/common/components/OriginalTextNotice";
 import { useProfileOptionLabel } from "@/common/components/ProfileSelectionChip/useProfileOptionLabel";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
@@ -251,7 +252,8 @@ export function MoverSearchDetailPageContent({
                       />
                     ))}
                   </div>
-                  <p className="text-2lg-semibold text-[var(--black-300)] min-[744px]:text-2xl-semibold">
+                  {/* 기사님이 작성한 소개글은 번역하지 않고 원문(한국어)으로 표시합니다. */}
+                  <p lang="ko" className="text-2lg-semibold text-[var(--black-300)] min-[744px]:text-2xl-semibold">
                     {mover.introduction}
                   </p>
                 </div>
@@ -278,9 +280,10 @@ export function MoverSearchDetailPageContent({
                   </p>
                 </div>
 
-                <p className="text-md-regular whitespace-pre-line text-[var(--content-muted)] min-[744px]:text-lg-regular">
+                <p lang="ko" className="text-md-regular whitespace-pre-line text-[var(--content-muted)] min-[744px]:text-lg-regular">
                   {mover.detailDescription}
                 </p>
+                <OriginalTextNotice className="-mt-2" />
               </div>
 
               <dl className="flex h-[95px] items-center justify-between gap-2 rounded-xl border border-[var(--line-200)] bg-[var(--gray-50)] px-10 min-[744px]:h-[120px] min-[744px]:rounded-2xl min-[744px]:px-[100px]">

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Pagination } from "@/common/components/Pagination";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
@@ -29,6 +30,7 @@ interface ModalDraft {
  */
 export function WritableReviewPage() {
   const t = useTranslations("Review");
+  const apiErrorMessage = useApiErrorMessage();
   const [currentPage, setCurrentPage] = useState(1);
   const [draft, setDraft] = useState<ModalDraft | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -84,9 +86,7 @@ export function WritableReviewPage() {
         },
         onError: (error) => {
           const message =
-            error instanceof ApiError
-              ? error.message
-              : t("submitError");
+            apiErrorMessage(error, t("submitError"));
           setSubmitError(message);
         },
       },
@@ -105,7 +105,7 @@ export function WritableReviewPage() {
             title={t("writableLoadError")}
             description={
               reviewsQuery.error instanceof ApiError
-                ? reviewsQuery.error.message
+                ? apiErrorMessage(reviewsQuery.error, t("writableLoadError"))
                 : undefined
             }
             onRetry={() => {

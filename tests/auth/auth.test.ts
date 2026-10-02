@@ -379,7 +379,7 @@ test("이메일 회원가입은 잘못된 완료 플래그가 와도 역할별 �
   assert.equal(resolveCredentialsPath("login", { ...customer, role: "MOVER" }), "/mover-mypage");
 });
 
-test("영어 OAuth callback의 목적지와 역할 제한을 보존한다", () => {
+test("다국어 OAuth callback의 목적지와 역할 제한을 보존한다", () => {
   assert.equal(localizedAuthRedirect("/favorite?sort=recent", "en"), "/en/favorite?sort=recent");
   assert.deepEqual(authNavigationTarget("/en/favorite?sort=recent", "ko"), {
     href: "/favorite?sort=recent",
@@ -392,6 +392,14 @@ test("영어 OAuth callback의 목적지와 역할 제한을 보존한다", () =
   assert.equal(localizedAuthRedirect("/favorite", "zh"), "/zh/favorite");
   assert.deepEqual(authNavigationTarget("/zh/requests", "ko"), { href: "/requests", locale: "zh" });
   assert.equal(safeAuthRedirect("/zh/login/mover"), undefined);
+  assert.equal(localizedAuthRedirect("/favorite?sort=recent", "ja"), "/ja/favorite?sort=recent");
+  assert.deepEqual(authNavigationTarget("/ja/favorite?sort=recent", "ko"), {
+    href: "/favorite?sort=recent",
+    locale: "ja",
+  });
+  assert.equal(resolveAuthenticatedPath(customer, "/ja/favorite?sort=recent"), "/ja/favorite?sort=recent");
+  assert.equal(resolveAuthenticatedPath(customer, "/ja/requests"), "/mover-search");
+  assert.equal(safeAuthRedirect("/ja/auth/callback"), undefined);
   assert.equal(localizedAuthRedirect("/favorite", "fr"), "/favorite");
 });
 
