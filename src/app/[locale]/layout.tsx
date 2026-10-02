@@ -24,6 +24,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   return {
     title: common("brand"),
     description: t("description"),
+    icons: {
+      icon: [
+        { url: "/favicon.ico", sizes: "any" },
+        { url: "/favicon.svg", type: "image/svg+xml" },
+      ],
+      apple: "/apple-touch-icon.png",
+    },
     openGraph: {
       title: common("brand"),
       description: t("openGraphDescription"),
