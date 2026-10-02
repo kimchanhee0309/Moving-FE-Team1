@@ -78,6 +78,17 @@
     "phone": "전화번호",
     "password": "비밀번호",
     "confirmPassword": "비밀번호 확인",
+    "recoveryQuestion": "비밀번호 복구 질문",
+    "recoveryQuestionPlaceholder": "질문을 선택해 주세요",
+    "recoveryQuestionRequired": "복구 질문을 선택해 주세요.",
+    "recoveryAnswer": "복구 답변",
+    "recoveryAnswerPlaceholder": "답변을 2~100자로 입력해 주세요",
+    "recoveryAnswerInvalid": "복구 답변은 2~100자로 입력해 주세요.",
+    "recoveryQuestions": {
+      "CHILDHOOD_NICKNAME": "어릴 때 불리던 별명은 무엇인가요?",
+      "MEMORABLE_PLACE": "가장 기억에 남는 장소는 어디인가요?",
+      "PERSONAL_PHRASE": "기억하고 싶은 문구는 무엇인가요?"
+    },
     "namePlaceholder": "성함을 입력해 주세요",
     "emailPlaceholder": "이메일을 입력해 주세요",
     "phonePlaceholder": "숫자만 입력해 주세요",
@@ -393,6 +404,16 @@
     "submit": "탈퇴하기"
   },
   "Recovery": {
+    "recoveryQuestion": "복구 질문: {question}",
+    "recoveryAnswerPlaceholder": "가입할 때 입력한 답변",
+    "recoveryAnswerInvalid": "복구 답변은 2~100자로 입력해 주세요.",
+    "recoveryAnswerWrong": "복구 답변이 올바르지 않습니다.",
+    "recoveryAnswerAttemptsExceeded": "답변 확인 횟수를 초과했습니다. 새 인증코드를 요청해 주세요.",
+    "recoveryQuestions": {
+      "CHILDHOOD_NICKNAME": "어릴 때 불리던 별명은 무엇인가요?",
+      "MEMORABLE_PLACE": "가장 기억에 남는 장소는 어디인가요?",
+      "PERSONAL_PHRASE": "기억하고 싶은 문구는 무엇인가요?"
+    },
     "seconds": "{count}초",
     "minutes": "{count}분",
     "minutesSeconds": "{minutes}분 {seconds}초",

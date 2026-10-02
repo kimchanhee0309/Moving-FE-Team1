@@ -21,6 +21,7 @@ import {
   type AccountLookupResult,
 } from "../auth.api";
 import type { RecoveryMode } from "../auth.types";
+import type { RecoveryQuestion } from "../auth.types";
 
 interface AccountRecoveryModalProps {
   mode: RecoveryMode;
@@ -54,6 +55,8 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
   const [codeExpiresInSeconds, setCodeExpiresInSeconds] = useState(0);
   const [resendSeconds, setResendSeconds] = useState(0);
   const [resetToken, setResetToken] = useState("");
+  const [recoveryQuestion, setRecoveryQuestion] = useState<RecoveryQuestion | null>(null);
+  const [recoveryAnswer, setRecoveryAnswer] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -78,6 +81,8 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     setCodeExpiresInSeconds(0);
     setResendSeconds(0);
     setResetToken("");
+    setRecoveryQuestion(null);
+    setRecoveryAnswer("");
     setNewPassword("");
     setPasswordConfirm("");
     setIsComplete(false);
@@ -121,7 +126,11 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     try {
       if (mode === "find-account") setResult(await findAccount({ name, email, role }));
       else if (!challengeId) await sendCode();
-      else setResetToken(await verifyPasswordResetCode(challengeId, code));
+      else {
+        const verification = await verifyPasswordResetCode(challengeId, code);
+        setRecoveryQuestion(verification.recoveryQuestion);
+        setResetToken(verification.resetToken);
+      }
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : t("requestError"));
     } finally {
@@ -144,13 +153,29 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     const validationError = getNewPasswordError(newPassword)
       ?? (newPassword !== passwordConfirm ? "비밀번호가 일치하지 않습니다." : undefined);
     if (validationError) return setError(translateValidation(validationError) ?? validationError);
+    // 서버 validator와 같은 NFKC·trim 기준으로 길이를 확인합니다.
+    const normalizedAnswerLength = recoveryAnswer.normalize("NFKC").trim().length;
+    if (recoveryQuestion && (normalizedAnswerLength < 2 || normalizedAnswerLength > 100)) return setError(t("recoveryAnswerInvalid"));
 
     setIsPending(true);
     try {
-      await confirmPasswordReset(resetToken, newPassword);
+      await confirmPasswordReset(resetToken, newPassword, recoveryQuestion ? recoveryAnswer : undefined);
       setIsComplete(true);
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : t("resetError"));
+      let recoveryError: "recoveryAnswerWrong" | "recoveryAnswerAttemptsExceeded" | "recoveryAnswerInvalid" | null = null;
+      if (caught instanceof ApiError) {
+        if (caught.code === "RECOVERY_ANSWER_INVALID") recoveryError = "recoveryAnswerWrong";
+        if (caught.code === "RECOVERY_ANSWER_ATTEMPTS_EXCEEDED") recoveryError = "recoveryAnswerAttemptsExceeded";
+        if (caught.code === "RECOVERY_ANSWER_REQUIRED") recoveryError = "recoveryAnswerInvalid";
+      }
+      // 이 challenge의 답변 기회가 끝났으므로 코드 입력 단계로 돌려 같은 계정으로 새 코드를 바로 요청할 수 있게 합니다.
+      if (recoveryError === "recoveryAnswerAttemptsExceeded") {
+        setResetToken("");
+        setRecoveryQuestion(null);
+        setRecoveryAnswer("");
+        setCode("");
+      }
+      setError(recoveryError ? t(recoveryError) : caught instanceof ApiError ? caught.message : t("resetError"));
     } finally {
       setIsPending(false);
     }
@@ -175,7 +200,8 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
       ) : resetToken ? (
         <form className="mt-8 flex flex-col gap-5" noValidate aria-busy={isPending} onSubmit={handlePasswordReset}>
           <p className="text-sm text-[var(--gray-500)]">{t("passwordHint")}</p>
-          <Input data-autofocus name="newPassword" label={t("newPassword")} type="password" autoComplete="new-password" value={newPassword} disabled={isPending} containerClassName={FIELD_CLASS} placeholder={t("newPasswordPlaceholder")} onChange={(event) => { setNewPassword(event.currentTarget.value); setError(""); }} />
+          {recoveryQuestion ? <Input data-autofocus name="recoveryAnswer" label={t("recoveryQuestion", { question: t(`recoveryQuestions.${recoveryQuestion}`) })} type="password" autoComplete="off" value={recoveryAnswer} disabled={isPending} containerClassName={FIELD_CLASS} placeholder={t("recoveryAnswerPlaceholder")} onChange={(event) => { setRecoveryAnswer(event.currentTarget.value); setError(""); }} /> : null}
+          <Input data-autofocus={recoveryQuestion ? undefined : true} name="newPassword" label={t("newPassword")} type="password" autoComplete="new-password" value={newPassword} disabled={isPending} containerClassName={FIELD_CLASS} placeholder={t("newPasswordPlaceholder")} onChange={(event) => { setNewPassword(event.currentTarget.value); setError(""); }} />
           <Input name="passwordConfirm" label={t("confirmPassword")} type="password" autoComplete="new-password" value={passwordConfirm} disabled={isPending} containerClassName={FIELD_CLASS} placeholder={t("confirmPasswordPlaceholder")} onChange={(event) => { setPasswordConfirm(event.currentTarget.value); setError(""); }} />
           {error && <p role="alert" className="text-sm-medium rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">{error}</p>}
           <Button type="submit" size="md" fullWidth disabled={isPending} isLoading={isPending}>{t("resetSubmit")}</Button>
