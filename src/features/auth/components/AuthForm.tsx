@@ -13,9 +13,9 @@ import { useValidationMessage } from "@/common/validation/useValidationMessage";
 import { Link } from "@/i18n/navigation";
 import { useModal } from "@/providers/ModalProvider";
 
-import { RECOVERY_QUESTIONS, type AuthField, type AuthFormErrors, type AuthFormValues, type AuthScreenProps, type RecoveryMode, type SocialProvider } from "../auth.types";
+import { RECOVERY_QUESTIONS, type AuthField, type AuthFormErrors, type AuthFormValues, type AuthScreenProps, type SocialProvider } from "../auth.types";
 import { authHref, clearAuthFieldError, normalizePhone, validateAuthForm } from "../auth.utils";
-import { FindAccountModal, ForgotPasswordModal } from "./AccountRecoveryModal";
+import { ForgotPasswordModal } from "./AccountRecoveryModal";
 
 interface AuthFormProps extends AuthScreenProps {
   /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
@@ -66,19 +66,14 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
   // 복구 질문 select는 공통 Input이 아니므로 Input의 오류 테두리 규칙(primary-400)을 같은 조건으로 맞춥니다.
   const hasQuestionError = Boolean(touched.recoveryQuestion && errors.recoveryQuestion);
 
-  const openRecoveryModal = useCallback((initialMode: RecoveryMode) => {
-    openModal(
-      initialMode === "find-account"
-        ? <FindAccountModal initialRole={role} onClose={closeModal} />
-        : <ForgotPasswordModal initialRole={role} onClose={closeModal} />,
-      { ariaLabel: t(initialMode === "find-account" ? "findAccount" : "forgotPassword") },
-    );
+  const openRecoveryModal = useCallback(() => {
+    openModal(<ForgotPasswordModal initialRole={role} onClose={closeModal} />, { ariaLabel: t("forgotPassword") });
   }, [closeModal, openModal, role, t]);
 
   useEffect(() => {
     if (mode !== "login" || !initialRecoveryMode || initialRecoveryOpened.current) return;
     initialRecoveryOpened.current = true;
-    openRecoveryModal(initialRecoveryMode);
+    openRecoveryModal();
   }, [initialRecoveryMode, mode, openRecoveryModal]);
 
   function handleFieldChange(field: AuthField, value: string) {
@@ -190,10 +185,11 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
         </Link>
       </p>
       {mode === "login" && (
-        <nav className="mt-3 flex justify-center gap-4 text-xs text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm [&_button]:cursor-pointer [&_button]:rounded-sm [&_button]:underline [&_button]:underline-offset-4 [&_button]:focus-visible:outline-3 [&_button]:focus-visible:outline-offset-3 [&_button]:focus-visible:outline-[var(--primary-400)]" aria-label={t("findAccount")}>
-          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("find-account")}>{t("findAccount")}</button>
-          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("forgot-password")}>{t("forgotPassword")}</button>
-        </nav>
+        // 아이디 찾기 제거 후 링크가 하나만 남으므로, 위 회원가입 안내와 같은 "질문 + 행동" 문장 구조로 맞추고 보조 정보 톤(gray)을 유지합니다.
+        <p className="mt-3 text-center text-xs leading-5 text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm min-[744px]:leading-6">
+          {t("forgotPasswordPrompt")}{" "}
+          <button type="button" className="cursor-pointer rounded-sm font-semibold text-[var(--black-200)] underline underline-offset-[3px] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[var(--primary-400)] disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending} onClick={openRecoveryModal}>{t("forgotPasswordLink")}</button>
+        </p>
       )}
       <section className={mode === "login" ? "mt-9 min-[744px]:mt-10" : "mt-12"} aria-label={t("socialLogin")}>
         <p className="text-center text-xs leading-[18px] text-(--black-100) min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200)">{t("socialSignup")}</p>

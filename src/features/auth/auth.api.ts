@@ -72,34 +72,6 @@ export interface AccountRecoveryInput {
   role: UserRole;
 }
 
-export interface AccountLookupResult {
-  found: boolean;
-  loginId: string | null;
-  loginMethod: "EMAIL" | "SOCIAL" | null;
-}
-
-function readAccountLookupResult(value: unknown): AccountLookupResult {
-  if (typeof value !== "object" || value === null || !("found" in value) || typeof value.found !== "boolean") {
-    throw new ApiError(200, "INVALID_RESPONSE", "계정 찾기 응답이 올바르지 않습니다.");
-  }
-  const loginId = "loginId" in value ? value.loginId : null;
-  const loginMethod = "loginMethod" in value ? value.loginMethod : null;
-  if (
-    (loginId !== null && typeof loginId !== "string") ||
-    (loginMethod !== null && loginMethod !== "EMAIL" && loginMethod !== "SOCIAL")
-  ) {
-    throw new ApiError(200, "INVALID_RESPONSE", "계정 찾기 응답이 올바르지 않습니다.");
-  }
-  return { found: value.found, loginId, loginMethod };
-}
-
-export async function findAccount(input: AccountRecoveryInput): Promise<AccountLookupResult> {
-  return readAccountLookupResult(await apiClient<unknown>("/auth/recovery/account", {
-    method: "POST",
-    body: JSON.stringify({ ...input, email: input.email.trim().toLowerCase(), name: input.name.trim() }),
-  }));
-}
-
 export interface PasswordResetCodeRequestResult {
   delivery: "EMAIL" | "SOCIAL" | "NONE";
   challengeId: string | null;

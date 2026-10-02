@@ -13,7 +13,6 @@ export const ROUTES = {
     },
 
     RECOVERY: {
-      FIND_ACCOUNT: "/find-account",
       FORGOT_PASSWORD: "/forgot-password",
     },
   },

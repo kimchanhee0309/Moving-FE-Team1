@@ -16,20 +16,15 @@ import { useModal } from "@/providers/ModalProvider";
 
 import {
   confirmPasswordReset,
-  findAccount,
   requestPasswordResetCode,
   verifyPasswordResetCode,
-  type AccountLookupResult,
 } from "../auth.api";
-import type { RecoveryMode, RecoveryQuestion } from "../auth.types";
+import type { RecoveryQuestion } from "../auth.types";
 
-interface AccountRecoveryModalProps {
-  mode: RecoveryMode;
+interface ForgotPasswordModalProps {
   initialRole?: UserRole;
   onClose: () => void;
 }
-
-type RecoveryModalEntryProps = Omit<AccountRecoveryModalProps, "mode">;
 const FIELD_CLASS = "max-w-none [&>div]:h-[54px]!";
 
 type RecoveryTranslator = ReturnType<typeof useTranslations<"Recovery">>;
@@ -42,7 +37,12 @@ function formatExpiryDuration(totalSeconds: number, t: RecoveryTranslator) {
   return t("minutesSeconds", { minutes, seconds });
 }
 
-function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: AccountRecoveryModalProps) {
+/**
+ * 로그인 화면의 비밀번호 찾기 모달입니다.
+ * 계정 정보 입력 → 이메일 인증코드 확인 → (복구 질문 등록 계정만) 답변 확인과 새 비밀번호 설정 순서로 진행합니다.
+ * 로그인 ID가 이메일이므로 별도 아이디 찾기 단계는 두지 않습니다. SNS 가입 계정은 인증코드 요청 단계에서 안내합니다.
+ */
+export function ForgotPasswordModal({ initialRole = "CUSTOMER", onClose }: ForgotPasswordModalProps) {
   const t = useTranslations("Recovery");
   const apiErrorMessage = useApiErrorMessage();
   const auth = useTranslations("Auth");
@@ -65,7 +65,6 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<AccountLookupResult | null>(null);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
@@ -92,7 +91,6 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     setPasswordConfirm("");
     setIsComplete(false);
     setError("");
-    setResult(null);
   }
 
   async function sendCode() {
@@ -118,7 +116,6 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    setResult(null);
 
     if (!challengeId) {
       const validationError = getNameError(name) ?? getEmailError(email);
@@ -129,8 +126,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
 
     setIsPending(true);
     try {
-      if (mode === "find-account") setResult(await findAccount({ name, email, role }));
-      else if (!challengeId) await sendCode();
+      if (!challengeId) await sendCode();
       else {
         const verification = await verifyPasswordResetCode(challengeId, code);
         setRecoveryQuestion(verification.recoveryQuestion);
@@ -202,7 +198,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
     }
   }
 
-  const title = t(isComplete ? "resetDoneTitle" : resetToken ? "newPasswordTitle" : mode === "find-account" ? "findAccountTitle" : challengeId ? "checkCodeTitle" : "forgotTitle");
+  const title = t(isComplete ? "resetDoneTitle" : resetToken ? "newPasswordTitle" : challengeId ? "checkCodeTitle" : "forgotTitle");
 
   return (
     <section className="relative box-border w-[calc(100vw-48px)] max-w-[560px] px-6 py-8 min-[744px]:px-10 min-[744px]:py-10" aria-labelledby="account-recovery-title">
@@ -210,7 +206,7 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
 
       <header className="px-8 text-center">
         <h2 id="account-recovery-title" className="text-2xl-bold text-[var(--black-400)]">{title}</h2>
-        {!resetToken && !isComplete ? <p className="text-sm-regular mt-3 text-[var(--gray-500)]">{mode === "find-account" ? t("findHint") : challengeId ? t("codeHint", { email, duration: formatExpiryDuration(codeExpiresInSeconds, t) }) : t("resetHint")}</p> : null}
+        {!resetToken && !isComplete ? <p className="text-sm-regular mt-3 text-[var(--gray-500)]">{challengeId ? t("codeHint", { email, duration: formatExpiryDuration(codeExpiresInSeconds, t) }) : t("resetHint")}</p> : null}
       </header>
 
       {isComplete ? (
@@ -235,9 +231,9 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
           </div>
 
           <form className="mt-6 flex flex-col gap-5" noValidate aria-busy={isPending} onSubmit={handleSubmit}>
-            <Input name="name" label={auth("name")} autoComplete="name" value={name} disabled={isPending || Boolean(challengeId)} containerClassName={FIELD_CLASS} placeholder={t("namePlaceholder")} onChange={(event) => { setName(event.currentTarget.value); setError(""); setResult(null); }} />
-            <Input name="email" label={auth("email")} type="email" autoComplete="email" value={email} disabled={isPending || Boolean(challengeId)} containerClassName={FIELD_CLASS} placeholder={t("emailPlaceholder")} onChange={(event) => { setEmail(event.currentTarget.value); setError(""); setResult(null); }} />
-            {mode === "forgot-password" && challengeId ? (
+            <Input name="name" label={auth("name")} autoComplete="name" value={name} disabled={isPending || Boolean(challengeId)} containerClassName={FIELD_CLASS} placeholder={t("namePlaceholder")} onChange={(event) => { setName(event.currentTarget.value); setError(""); }} />
+            <Input name="email" label={auth("email")} type="email" autoComplete="email" value={email} disabled={isPending || Boolean(challengeId)} containerClassName={FIELD_CLASS} placeholder={t("emailPlaceholder")} onChange={(event) => { setEmail(event.currentTarget.value); setError(""); }} />
+            {challengeId ? (
               <div className="rounded-2xl bg-[var(--primary-100)] p-4">
                 <Input data-autofocus name="code" label={t("code")} autoComplete="one-time-code" inputMode="numeric" maxLength={6} value={code} disabled={isPending} containerClassName={FIELD_CLASS} placeholder={t("codePlaceholder")} onChange={(event) => { setCode(event.currentTarget.value.replace(/\D/g, "").slice(0, 6)); setError(""); }} />
                 <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[var(--gray-500)]">
@@ -247,21 +243,10 @@ function AccountRecoveryModal({ mode, initialRole = "CUSTOMER", onClose }: Accou
               </div>
             ) : null}
             {error && <p role="alert" className="text-sm-medium rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">{error}</p>}
-            {result && <p role="status" className="text-sm-medium rounded-xl bg-[var(--primary-100)] px-4 py-3 text-[var(--black-300)]">{result.found ? t("found", { method: t(result.loginMethod === "SOCIAL" ? "socialMethod" : "emailMethod"), id: result.loginId ?? "" }) : t("notFound")}</p>}
-            <Button type="submit" size="md" fullWidth disabled={isPending} isLoading={isPending}>{t(mode === "find-account" ? "checkId" : challengeId ? "checkCode" : "sendCode")}</Button>
+            <Button type="submit" size="md" fullWidth disabled={isPending} isLoading={isPending}>{t(challengeId ? "checkCode" : "sendCode")}</Button>
           </form>
         </>
       )}
     </section>
   );
-}
-
-/** 로그인 화면의 아이디 찾기 버튼이 여는 독립 모달입니다. */
-export function FindAccountModal(props: RecoveryModalEntryProps) {
-  return <AccountRecoveryModal {...props} mode="find-account" />;
-}
-
-/** 로그인 화면의 비밀번호 찾기 버튼이 여는 독립 모달입니다. */
-export function ForgotPasswordModal(props: RecoveryModalEntryProps) {
-  return <AccountRecoveryModal {...props} mode="forgot-password" />;
 }

@@ -19,7 +19,6 @@ let logoutSession: typeof import("../../src/features/auth/auth.api").logoutSessi
 let withdrawAccountSession: typeof import("../../src/features/auth/auth.api").withdrawAccountSession;
 let submitCredentials: typeof import("../../src/features/auth/auth.api").submitCredentials;
 let authenticateCredentials: typeof import("../../src/features/auth/auth.api").authenticateCredentials;
-let findAccount: typeof import("../../src/features/auth/auth.api").findAccount;
 let requestPasswordResetCode: typeof import("../../src/features/auth/auth.api").requestPasswordResetCode;
 let verifyPasswordResetCode: typeof import("../../src/features/auth/auth.api").verifyPasswordResetCode;
 let confirmPasswordReset: typeof import("../../src/features/auth/auth.api").confirmPasswordReset;
@@ -31,7 +30,7 @@ before(async () => {
   // 이 테스트는 실제 서버/개인 환경설정을 사용하지 않고 모든 HTTP 경계를 모의합니다.
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:4000";
   ({ apiClient } = await import("../../src/common/api/client"));
-  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, findAccount, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
+  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
   Object.defineProperty(globalThis, "window", { value: {}, configurable: true });
 });
 beforeEach(async () => { await changeAuthSession(async () => undefined); });
@@ -47,23 +46,15 @@ test("잘못된 자격 증명 및 Auth endpoint 401은 Refresh하지 않는다",
   assert.deepEqual(paths, ["/auth/login", "/auth/signup", "/auth/refresh", "/auth/oauth/google"]);
 });
 
-test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전송한다", async () => {
+test("비밀번호 재설정 API가 정규화된 입력만 전송한다", async () => {
   const requests: Array<{ path: string; body: unknown }> = [];
   mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
     requests.push({ path: pathname(input), body: JSON.parse(String(options.body)) });
-    if (pathname(input) === "/auth/recovery/account") {
-      return success({ found: true, loginId: "test@example.com", loginMethod: "EMAIL" });
-    }
     if (pathname(input) === "/auth/recovery/password/code") return success({ delivery: "EMAIL", challengeId: "11111111-1111-4111-8111-111111111111", expiresInSeconds: 330, resendAfterSeconds: 60 });
     if (pathname(input) === "/auth/recovery/password/code/verify") return success({ resetToken: "reset-token", recoveryQuestion: null });
     return success(null);
   });
 
-  assert.deepEqual(await findAccount({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" }), {
-    found: true,
-    loginId: "test@example.com",
-    loginMethod: "EMAIL",
-  });
   assert.deepEqual(
     await requestPasswordResetCode({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" }),
     {
@@ -77,7 +68,6 @@ test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전�
   await confirmPasswordReset("reset-token", "NextPassword1!");
 
   assert.deepEqual(requests, [
-    { path: "/auth/recovery/account", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
     { path: "/auth/recovery/password/code", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
     { path: "/auth/recovery/password/code/verify", body: { challengeId: "11111111-1111-4111-8111-111111111111", code: "123456" } },
     { path: "/auth/recovery/password/confirm", body: { token: "reset-token", newPassword: "NextPassword1!" } },
