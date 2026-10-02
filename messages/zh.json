@@ -428,7 +428,7 @@
     "newPasswordTitle": "设置新密码",
     "checkCodeTitle": "确认验证码",
     "forgotTitle": "找回密码",
-    "close": "关闭账号找回",
+    "close": "关闭找回密码",
     "codeHint": "请在{duration}内输入发送至{email}的 6 位验证码。",
     "resetHint": "使用注册时的姓名和邮箱接收验证码，并设置新密码。",
     "complete": "密码已修改，请使用新密码登录。",

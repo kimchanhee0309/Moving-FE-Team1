@@ -428,7 +428,7 @@
     "newPasswordTitle": "Set a new password",
     "checkCodeTitle": "Verify code",
     "forgotTitle": "Forgot password",
-    "close": "Close account recovery",
+    "close": "Close password reset",
     "codeHint": "Enter the six digit code sent to {email} within {duration}.",
     "resetHint": "Get a verification code with your name and email to set a new password.",
     "complete": "Your password has changed. Log in with your new password.",
