@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
-type AuthTitleKey = "customerLogin" | "moverLogin" | "customerSignup" | "moverSignup" | "findAccount" | "forgotPassword";
+type AuthTitleKey = "customerLogin" | "moverLogin" | "customerSignup" | "moverSignup" | "forgotPassword";
 
 export async function authPageMetadata(params: Promise<{ locale: string }>, key: AuthTitleKey): Promise<Metadata> {
   const { locale } = await params;
