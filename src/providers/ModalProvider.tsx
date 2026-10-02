@@ -97,6 +97,15 @@ function BareModal({
   const t = useTranslations("Common");
   const dialogRef = useRef<HTMLDivElement>(null);
 
+  // onDismissRequest는 닫기 정책(isModalDismissible)이 바뀔 때마다 새로 만들어집니다.
+  // 아래 포커스 effect가 이를 직접 의존하면 API 요청 전후로 재실행되어
+  // 입력 중이던 포커스가 모달 첫 요소로 이동하므로, 최신 값만 ref로 전달합니다.
+  const onDismissRequestRef = useRef(onDismissRequest);
+
+  useEffect(() => {
+    onDismissRequestRef.current = onDismissRequest;
+  }, [onDismissRequest]);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -122,7 +131,7 @@ function BareModal({
         event.preventDefault();
 
         // 실제 닫기 가능 여부는 Provider의 dismissal 정책이 결정합니다.
-        onDismissRequest();
+        onDismissRequestRef.current();
         return;
       }
 
@@ -159,7 +168,7 @@ function BareModal({
       document.body.style.overflow = previousOverflow;
       previouslyFocusedElement?.focus();
     };
-  }, [isOpen, onDismissRequest]);
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
