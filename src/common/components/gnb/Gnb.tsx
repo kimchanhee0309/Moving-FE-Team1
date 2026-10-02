@@ -228,7 +228,7 @@ export function Gnb(props: GnbProps) {
           </nav>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 min-[1200px]:gap-8">
+        <div className="relative flex shrink-0 items-center gap-3 min-[1200px]:gap-8">
           <LocaleSwitcher />
           {isLoading && (
             <div
@@ -240,7 +240,7 @@ export function Gnb(props: GnbProps) {
 
           {authenticatedUser && (
             <>
-              <div className="relative flex items-center">
+              <div className="flex items-center">
                 <button
                   ref={notificationButtonRef}
                   type="button"
@@ -269,21 +269,26 @@ export function Gnb(props: GnbProps) {
                     />
                   )}
                 </button>
-
-                {isNotificationMenuOpen && (
-                  <GnbNotificationMenu
-                    menuId={notificationMenuId}
-                    items={notificationItems}
-                    hasMore={hasMoreNotifications}
-                    isLoadingMore={isLoadingMoreNotifications}
-                    onLoadMore={() => onLoadMoreNotifications?.()}
-                    closeButtonRef={notificationCloseButtonRef}
-                    triggerRef={notificationButtonRef}
-                    onNavigate={handleCloseNotificationMenu}
-                    onClose={handleDismissNotificationMenu}
-                  />
-                )}
               </div>
+
+              {/*
+                알림 벨 자신의 좁은 wrapper 대신, 이 둘러싼 아이콘 그룹(알림/프로필/햄버거) 전체를 기준으로
+                `right-0` 앵커링한다. 벨이 그룹의 맨 왼쪽이라 벨 자신에 앵커링하면 너비 312px 패널이 375px
+                모바일 화면 왼쪽 밖으로 넘친다(iPhone 14 Pro 393px에서도 15px 넘침 재현됨).
+              */}
+              {isNotificationMenuOpen && (
+                <GnbNotificationMenu
+                  menuId={notificationMenuId}
+                  items={notificationItems}
+                  hasMore={hasMoreNotifications}
+                  isLoadingMore={isLoadingMoreNotifications}
+                  onLoadMore={() => onLoadMoreNotifications?.()}
+                  closeButtonRef={notificationCloseButtonRef}
+                  triggerRef={notificationButtonRef}
+                  onNavigate={handleCloseNotificationMenu}
+                  onClose={handleDismissNotificationMenu}
+                />
+              )}
 
               <div className="relative flex items-center">
                 <button
