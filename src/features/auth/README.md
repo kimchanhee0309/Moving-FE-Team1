@@ -34,7 +34,7 @@ Provider가 `user`, `status`, `credentials`, `logout`, `withdrawal`, `refetchUse
 
 ## 이동 흐름
 
-- 로그인 화면의 아이디 찾기·비밀번호 찾기는 페이지 이동 없이 전역 모달로 열립니다. 기존 `/find-account`, `/forgot-password`, `/reset-password` 주소는 역할별 로그인 화면에서 같은 모달을 자동으로 여는 호환 경로입니다.
+- 로그인 화면의 비밀번호 찾기는 페이지 이동 없이 전역 모달로 열립니다. 로그인 ID가 이메일이라 아이디 찾기는 제공하지 않으며, 기존 `/find-account`, `/forgot-password`, `/reset-password` 주소는 역할별 로그인 화면에서 비밀번호 찾기 모달을 자동으로 여는 호환 경로입니다.
 - 이메일 회원가입 성공 → 응답의 profileCompleted 값과 무관하게 역할별 프로필 등록 화면
 - 미등록 CUSTOMER → `/customer-profile/register`
 - 미등록 MOVER → `/mover-profile/register`

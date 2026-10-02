@@ -8,13 +8,14 @@ import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { useValidationMessage } from "@/common/validation/useValidationMessage";
 import { Link } from "@/i18n/navigation";
 import { useModal } from "@/providers/ModalProvider";
 
-import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, RecoveryMode, SocialProvider } from "../auth.types";
+import { RECOVERY_QUESTIONS, type AuthField, type AuthFormErrors, type AuthFormValues, type AuthScreenProps, type SocialProvider } from "../auth.types";
 import { authHref, clearAuthFieldError, normalizePhone, validateAuthForm } from "../auth.utils";
-import { FindAccountModal, ForgotPasswordModal } from "./AccountRecoveryModal";
+import { ForgotPasswordModal } from "./AccountRecoveryModal";
 
 interface AuthFormProps extends AuthScreenProps {
   /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
@@ -25,9 +26,10 @@ interface AuthFormProps extends AuthScreenProps {
   isPending: boolean;
 }
 
-const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "" };
-const SIGNUP_FIELDS: AuthField[] = ["name", "email", "phone", "password", "passwordConfirm"];
-const LOGIN_FIELDS: AuthField[] = ["email", "password"];
+const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "", recoveryQuestion: "", recoveryAnswer: "" };
+type StandardAuthField = Exclude<AuthField, "recoveryQuestion" | "recoveryAnswer">;
+const SIGNUP_FIELDS: StandardAuthField[] = ["name", "email", "phone", "password", "passwordConfirm"];
+const LOGIN_FIELDS: StandardAuthField[] = ["email", "password"];
 const SOCIAL_PROVIDERS: { provider: SocialProvider; image: string }[] = [
   { provider: "google", image: "google.svg" },
   { provider: "kakao", image: "kakao.svg" },
@@ -46,6 +48,7 @@ const AUTH_FIELD_CLASS = "grid! max-w-none! gap-0! grid-rows-[auto_54px_minmax(2
  */
 export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmitValues, onSocialLogin, isPending }: AuthFormProps) {
   const t = useTranslations("Auth");
+  const apiErrorMessage = useApiErrorMessage();
   const translateValidation = useValidationMessage();
   const common = useTranslations("Common");
   const { openModal, closeModal } = useModal();
@@ -56,23 +59,21 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
   const submitLock = useRef(false);
   const initialRecoveryOpened = useRef(false);
   const fields = mode === "signup" ? SIGNUP_FIELDS : LOGIN_FIELDS;
+  const requiredFields: AuthField[] = mode === "signup" ? [...fields, "recoveryQuestion", "recoveryAnswer"] : fields;
   const errors = { ...validateAuthForm(values, mode), ...serverErrors };
-  const isIncomplete = fields.some((field) => !values[field].trim());
-  const hasValidationError = fields.some((field) => Boolean(errors[field]));
+  const isIncomplete = requiredFields.some((field) => !values[field].trim());
+  const hasValidationError = requiredFields.some((field) => Boolean(errors[field]));
+  // 복구 질문 select는 공통 Input이 아니므로 Input의 오류 테두리 규칙(primary-400)을 같은 조건으로 맞춥니다.
+  const hasQuestionError = Boolean(touched.recoveryQuestion && errors.recoveryQuestion);
 
-  const openRecoveryModal = useCallback((initialMode: RecoveryMode) => {
-    openModal(
-      initialMode === "find-account"
-        ? <FindAccountModal initialRole={role} onClose={closeModal} />
-        : <ForgotPasswordModal initialRole={role} onClose={closeModal} />,
-      { ariaLabel: t(initialMode === "find-account" ? "findAccount" : "forgotPassword") },
-    );
+  const openRecoveryModal = useCallback(() => {
+    openModal(<ForgotPasswordModal initialRole={role} onClose={closeModal} />, { ariaLabel: t("forgotPassword") });
   }, [closeModal, openModal, role, t]);
 
   useEffect(() => {
     if (mode !== "login" || !initialRecoveryMode || initialRecoveryOpened.current) return;
     initialRecoveryOpened.current = true;
-    openRecoveryModal(initialRecoveryMode);
+    openRecoveryModal();
   }, [initialRecoveryMode, mode, openRecoveryModal]);
 
   function handleFieldChange(field: AuthField, value: string) {
@@ -87,11 +88,11 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitLock.current || isPending) return;
-    setTouched(Object.fromEntries(fields.map((field) => [field, true])));
+    setTouched(Object.fromEntries(requiredFields.map((field) => [field, true])));
     const validationErrors = validateAuthForm(values, mode);
-    const firstInvalid = fields.find((field) => validationErrors[field]);
+    const firstInvalid = requiredFields.find((field) => validationErrors[field]);
     if (firstInvalid) {
-      event.currentTarget.querySelector<HTMLInputElement>(`[name="${firstInvalid}"]`)?.focus();
+      event.currentTarget.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus();
       return;
     }
     // React 상태가 갱신되기 전 연속 submit도 ref로 차단합니다. 입력은 완료 전까지 잠급니다.
@@ -105,13 +106,13 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
         const fieldErrors: AuthFormErrors = {};
         // 백엔드 Validator의 details(field/reason)를 현재 폼 필드에만 연결합니다. 임의 서버 필드를 폼에 추가하지 않습니다.
         for (const detail of error.details) {
-          const field = fields.find((candidate) => candidate === detail.field);
+          const field = requiredFields.find((candidate) => candidate === detail.field);
           if (field) fieldErrors[field] = detail.reason;
         }
         if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = t("emailExists");
         if (error.code === "PHONE_ALREADY_EXISTS") fieldErrors.phone = t("phoneExists");
         setServerErrors(fieldErrors);
-        setSubmitError(error.status === 429 ? t("rateLimited") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : error.message);
+        setSubmitError(error.status === 429 ? t("rateLimited") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : apiErrorMessage(error, t("requestFailed")));
       } else {
         setSubmitError(error instanceof TypeError ? t("networkError") : t("requestFailed"));
       }
@@ -158,6 +159,19 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
               />
             );
           })}
+          {mode === "signup" ? (
+            <>
+              <div className="grid min-w-0 grid-rows-[auto_54px_minmax(20px,auto)] min-[744px]:grid-rows-[auto_54px_minmax(32px,auto)]">
+                <label htmlFor="auth-recoveryQuestion" className="mb-2 text-sm leading-6 font-normal min-[744px]:mb-4 min-[744px]:text-xl min-[744px]:leading-8">{t("recoveryQuestion")}</label>
+                <select id="auth-recoveryQuestion" name="recoveryQuestion" required value={values.recoveryQuestion} disabled={isPending} aria-invalid={hasQuestionError} aria-describedby={hasQuestionError ? "auth-recoveryQuestion-error" : undefined} className={`min-w-0 w-full rounded-2xl border ${hasQuestionError ? "border-[var(--primary-400)]" : "border-[var(--line-200)] hover:border-[var(--gray-300)]"} bg-[var(--gray-50)] px-[14px] text-base text-[var(--black-400)] outline-none focus-visible:border-[var(--primary-400)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] min-[744px]:text-lg`} onBlur={() => setTouched((current) => ({ ...current, recoveryQuestion: true }))} onChange={(event) => handleFieldChange("recoveryQuestion", event.currentTarget.value)}>
+                  <option value="">{t("recoveryQuestionPlaceholder")}</option>
+                  {RECOVERY_QUESTIONS.map((question) => <option key={question} value={question}>{t(`recoveryQuestions.${question}`)}</option>)}
+                </select>
+                {hasQuestionError ? <p id="auth-recoveryQuestion-error" className="pt-1 text-xs leading-4 text-[var(--secondary-red-200)]" role="alert">{t("recoveryQuestionRequired")}</p> : null}
+              </div>
+              <Input id="auth-recoveryAnswer" name="recoveryAnswer" label={t("recoveryAnswer")} type="password" autoComplete="off" inputSize="md" containerClassName={AUTH_FIELD_CLASS} className="text-base! min-[744px]:text-lg!" value={values.recoveryAnswer} disabled={isPending} placeholder={t("recoveryAnswerPlaceholder")} error={touched.recoveryAnswer && errors.recoveryAnswer ? t("recoveryAnswerInvalid") : undefined} onBlur={() => setTouched((current) => ({ ...current, recoveryAnswer: true }))} onChange={(event) => handleFieldChange("recoveryAnswer", event.currentTarget.value)} />
+            </>
+          ) : null}
         </div>
         <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete || hasValidationError || isPending} isLoading={isPending}>
           {mode === "login" ? common("login") : t("start")}
@@ -171,10 +185,11 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
         </Link>
       </p>
       {mode === "login" && (
-        <nav className="mt-3 flex justify-center gap-4 text-xs text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm [&_button]:cursor-pointer [&_button]:rounded-sm [&_button]:underline [&_button]:underline-offset-4 [&_button]:focus-visible:outline-3 [&_button]:focus-visible:outline-offset-3 [&_button]:focus-visible:outline-[var(--primary-400)]" aria-label={t("findAccount")}>
-          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("find-account")}>{t("findAccount")}</button>
-          <button type="button" disabled={isPending} onClick={() => openRecoveryModal("forgot-password")}>{t("forgotPassword")}</button>
-        </nav>
+        // 아이디 찾기 제거 후 링크가 하나만 남으므로, 위 회원가입 안내와 같은 "질문 + 행동" 문장 구조로 맞추고 보조 정보 톤(gray)을 유지합니다.
+        <p className="mt-3 text-center text-xs leading-5 text-[var(--gray-500)] min-[744px]:mt-4 min-[744px]:text-sm min-[744px]:leading-6">
+          {t("forgotPasswordPrompt")}{" "}
+          <button type="button" className="cursor-pointer rounded-sm font-semibold text-[var(--black-200)] underline underline-offset-[3px] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[var(--primary-400)] disabled:cursor-not-allowed disabled:opacity-60" disabled={isPending} onClick={openRecoveryModal}>{t("forgotPasswordLink")}</button>
+        </p>
       )}
       <section className={mode === "login" ? "mt-9 min-[744px]:mt-10" : "mt-12"} aria-label={t("socialLogin")}>
         <p className="text-center text-xs leading-[18px] text-(--black-100) min-[744px]:text-xl min-[744px]:leading-8 min-[744px]:text-(--black-200)">{t("socialSignup")}</p>

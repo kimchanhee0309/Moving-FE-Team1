@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
 import {
-  getApiErrorMessage,
   getCurrentPasswordMismatchError,
 } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { patchCachedAuthUser } from "@/features/auth/auth.cache";
@@ -21,6 +21,7 @@ import { CustomerProfileEditForm } from "./CustomerProfileEditForm";
 
 export function CustomerProfileEditContent() {
   const t = useTranslations("Profile");
+  const apiErrorMessage = useApiErrorMessage();
   const common = useTranslations("Common");
   const queryClient = useQueryClient();
   const { refetchUser } = useAuth();
@@ -47,7 +48,7 @@ export function CustomerProfileEditContent() {
     return (
       <ErrorState
         title={t("loadError")}
-        description={getApiErrorMessage(profileQuery.error, common("errorDescription"))}
+        description={apiErrorMessage(profileQuery.error, common("errorDescription"))}
         onRetry={() => { void profileQuery.refetch(); }}
       />
     );
@@ -62,7 +63,7 @@ export function CustomerProfileEditContent() {
       currentPasswordError={currentPasswordError}
       submissionError={
         mutation.error && !currentPasswordError
-          ? getApiErrorMessage(mutation.error, t("updateError"))
+          ? apiErrorMessage(mutation.error, t("updateError"))
           : undefined
       }
       onCurrentPasswordChange={() => mutation.reset()}

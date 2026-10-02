@@ -39,6 +39,11 @@ export function validateAuthForm(values: AuthFormValues, mode: AuthMode): AuthFo
     if (!values.passwordConfirm || values.password !== values.passwordConfirm) {
       errors.passwordConfirm = "비밀번호가 일치하지 않습니다.";
     }
+    if (!values.recoveryQuestion) errors.recoveryQuestion = "복구 질문을 선택해 주세요.";
+    const normalizedAnswer = values.recoveryAnswer.normalize("NFKC").trim();
+    if (normalizedAnswer.length < 2 || normalizedAnswer.length > 100) {
+      errors.recoveryAnswer = "복구 답변은 2~100자로 입력해 주세요.";
+    }
   }
   return errors;
 }

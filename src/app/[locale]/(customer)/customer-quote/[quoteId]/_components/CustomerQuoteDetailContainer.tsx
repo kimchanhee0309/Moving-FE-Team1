@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useRef } from "react";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { EmptyState } from "@/common/components/page-state";
 import { ErrorState } from "@/common/components/page-state";
 import { LoadingState } from "@/common/components/page-state";
@@ -24,6 +24,7 @@ export function CustomerQuoteDetailContainer({
   quoteId,
 }: CustomerQuoteDetailContainerProps) {
   const t = useTranslations("CustomerQuote");
+  const apiErrorMessage = useApiErrorMessage();
   const quote = useTranslations("Quote");
   const router = useRouter();
   const detailQuery = useReceivedQuoteDetailQuery(quoteId);
@@ -86,7 +87,7 @@ export function CustomerQuoteDetailContainer({
       isConfirmPending={confirmMutation.isPending}
       confirmError={
         confirmMutation.error
-          ? getApiErrorMessage(
+          ? apiErrorMessage(
               confirmMutation.error,
               quote("confirmError"),
             )

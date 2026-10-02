@@ -34,14 +34,19 @@ export function AuthController(props: AuthScreenProps) {
     {...props}
     isPending={credentials.isPending || socialMutation.isPending}
     onSubmitValues={async (values) => {
+      const recoveryQuestion = values.recoveryQuestion;
       const input = {
         role: props.role,
         email: values.email,
         password: values.password,
       };
-      const { user } = await credentials.mutateAsync(props.mode === "signup"
-        ? { ...input, mode: "signup", name: values.name, phone: values.phone }
-        : { ...input, mode: "login" });
+      let user;
+      if (props.mode === "signup") {
+        if (!recoveryQuestion) throw new Error("복구 질문을 선택해 주세요.");
+        ({ user } = await credentials.mutateAsync({ ...input, mode: "signup", name: values.name, phone: values.phone, recoveryQuestion, recoveryAnswer: values.recoveryAnswer }));
+      } else {
+        ({ user } = await credentials.mutateAsync({ ...input, mode: "login" }));
+      }
       const target = authNavigationTarget(resolveCredentialsPath(props.mode, user, props.redirectTo), locale);
       router.replace(target.href, { locale: target.locale });
     }}

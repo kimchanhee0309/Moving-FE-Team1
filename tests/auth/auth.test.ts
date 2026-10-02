@@ -10,7 +10,7 @@ import { assertProfileCompleted } from "../../src/features/auth/auth.cache";
 import type { AuthSession, AuthUser } from "../../src/common/auth/types";
 
 const customer: AuthUser = { id: "customer-1", name: "테스트", email: "test@example.com", phone: null, role: "CUSTOMER", profileCompleted: true };
-const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!" };
+const values = { name: " 테스트 ", email: " TEST@example.com ", phone: "01012345678", password: "Pass123!", passwordConfirm: "Pass123!", recoveryQuestion: "CHILDHOOD_NICKNAME" as const, recoveryAnswer: "별명" };
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, "window");
 let apiClient: typeof import("../../src/common/api/client").apiClient;
 let beginSocialLogin: typeof import("../../src/features/auth/auth.api").beginSocialLogin;
@@ -19,7 +19,6 @@ let logoutSession: typeof import("../../src/features/auth/auth.api").logoutSessi
 let withdrawAccountSession: typeof import("../../src/features/auth/auth.api").withdrawAccountSession;
 let submitCredentials: typeof import("../../src/features/auth/auth.api").submitCredentials;
 let authenticateCredentials: typeof import("../../src/features/auth/auth.api").authenticateCredentials;
-let findAccount: typeof import("../../src/features/auth/auth.api").findAccount;
 let requestPasswordResetCode: typeof import("../../src/features/auth/auth.api").requestPasswordResetCode;
 let verifyPasswordResetCode: typeof import("../../src/features/auth/auth.api").verifyPasswordResetCode;
 let confirmPasswordReset: typeof import("../../src/features/auth/auth.api").confirmPasswordReset;
@@ -31,7 +30,7 @@ before(async () => {
   // 이 테스트는 실제 서버/개인 환경설정을 사용하지 않고 모든 HTTP 경계를 모의합니다.
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:4000";
   ({ apiClient } = await import("../../src/common/api/client"));
-  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, findAccount, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
+  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
   Object.defineProperty(globalThis, "window", { value: {}, configurable: true });
 });
 beforeEach(async () => { await changeAuthSession(async () => undefined); });
@@ -47,23 +46,15 @@ test("잘못된 자격 증명 및 Auth endpoint 401은 Refresh하지 않는다",
   assert.deepEqual(paths, ["/auth/login", "/auth/signup", "/auth/refresh", "/auth/oauth/google"]);
 });
 
-test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전송한다", async () => {
+test("비밀번호 재설정 API가 정규화된 입력만 전송한다", async () => {
   const requests: Array<{ path: string; body: unknown }> = [];
   mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
     requests.push({ path: pathname(input), body: JSON.parse(String(options.body)) });
-    if (pathname(input) === "/auth/recovery/account") {
-      return success({ found: true, loginId: "test@example.com", loginMethod: "EMAIL" });
-    }
     if (pathname(input) === "/auth/recovery/password/code") return success({ delivery: "EMAIL", challengeId: "11111111-1111-4111-8111-111111111111", expiresInSeconds: 330, resendAfterSeconds: 60 });
-    if (pathname(input) === "/auth/recovery/password/code/verify") return success({ resetToken: "reset-token" });
+    if (pathname(input) === "/auth/recovery/password/code/verify") return success({ resetToken: "reset-token", recoveryQuestion: null });
     return success(null);
   });
 
-  assert.deepEqual(await findAccount({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" }), {
-    found: true,
-    loginId: "test@example.com",
-    loginMethod: "EMAIL",
-  });
   assert.deepEqual(
     await requestPasswordResetCode({ name: " 테스트 ", email: " TEST@example.com ", role: "CUSTOMER" }),
     {
@@ -73,15 +64,32 @@ test("계정 찾기와 비밀번호 재설정 API가 정규화된 입력만 전�
       resendAfterSeconds: 60,
     },
   );
-  assert.equal(await verifyPasswordResetCode("11111111-1111-4111-8111-111111111111", "123456"), "reset-token");
+  assert.deepEqual(await verifyPasswordResetCode("11111111-1111-4111-8111-111111111111", "123456"), { resetToken: "reset-token", recoveryQuestion: null });
   await confirmPasswordReset("reset-token", "NextPassword1!");
 
   assert.deepEqual(requests, [
-    { path: "/auth/recovery/account", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
     { path: "/auth/recovery/password/code", body: { name: "테스트", email: "test@example.com", role: "CUSTOMER" } },
     { path: "/auth/recovery/password/code/verify", body: { challengeId: "11111111-1111-4111-8111-111111111111", code: "123456" } },
     { path: "/auth/recovery/password/confirm", body: { token: "reset-token", newPassword: "NextPassword1!" } },
   ]);
+});
+
+test("이메일 코드 검증 뒤 복구 질문을 받아 답변을 재설정 요청에만 보낸다", async () => {
+  const requests: Array<{ path: string; body: unknown }> = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    requests.push({ path: pathname(input), body: JSON.parse(String(options.body)) });
+    return pathname(input).endsWith("/verify")
+      ? success({ resetToken: "reset-token", recoveryQuestion: "MEMORABLE_PLACE" })
+      : success(null);
+  });
+  assert.deepEqual(await verifyPasswordResetCode("11111111-1111-4111-8111-111111111111", "123456"), { resetToken: "reset-token", recoveryQuestion: "MEMORABLE_PLACE" });
+  await confirmPasswordReset("reset-token", "NextPassword1!", "기억 장소");
+  assert.deepEqual(requests[1], { path: "/auth/recovery/password/confirm", body: { token: "reset-token", newPassword: "NextPassword1!", recoveryAnswer: "기억 장소" } });
+});
+
+test("복구 질문 이전 백엔드의 코드 검증 응답은 질문 없음으로 처리한다", async () => {
+  mock.method(globalThis, "fetch", async () => success({ resetToken: "reset-token" }));
+  assert.deepEqual(await verifyPasswordResetCode("11111111-1111-4111-8111-111111111111", "123456"), { resetToken: "reset-token", recoveryQuestion: null });
 });
 
 for (const code of ["ACCESS_TOKEN_EXPIRED", "ACCESS_TOKEN_MISSING"]) {
@@ -306,7 +314,7 @@ test("두 역할 이메일 가입/로그인의 DTO와 data.user를 사용한다"
         assert.equal(pathname(input), "/auth/" + mode);
         assert.equal(options.method, "POST");
         const payload: unknown = JSON.parse(String(options.body));
-        assert.deepEqual(payload, { email: "test@example.com", password: values.password, role, ...(mode === "signup" ? { name: "테스트", phone: values.phone } : {}) });
+        assert.deepEqual(payload, { email: "test@example.com", password: values.password, role, ...(mode === "signup" ? { name: "테스트", phone: values.phone, recoveryQuestion: values.recoveryQuestion, recoveryAnswer: values.recoveryAnswer } : {}) });
         return success({ user: { ...customer, role } });
       });
       assert.equal((await submitCredentials(mode, role, values)).user.role, role); mock.restoreAll();
@@ -361,7 +369,7 @@ test("이메일 회원가입은 잘못된 완료 플래그가 와도 역할별 �
   assert.equal(resolveCredentialsPath("login", { ...customer, role: "MOVER" }), "/mover-mypage");
 });
 
-test("영어 OAuth callback의 목적지와 역할 제한을 보존한다", () => {
+test("다국어 OAuth callback의 목적지와 역할 제한을 보존한다", () => {
   assert.equal(localizedAuthRedirect("/favorite?sort=recent", "en"), "/en/favorite?sort=recent");
   assert.deepEqual(authNavigationTarget("/en/favorite?sort=recent", "ko"), {
     href: "/favorite?sort=recent",
@@ -374,6 +382,14 @@ test("영어 OAuth callback의 목적지와 역할 제한을 보존한다", () =
   assert.equal(localizedAuthRedirect("/favorite", "zh"), "/zh/favorite");
   assert.deepEqual(authNavigationTarget("/zh/requests", "ko"), { href: "/requests", locale: "zh" });
   assert.equal(safeAuthRedirect("/zh/login/mover"), undefined);
+  assert.equal(localizedAuthRedirect("/favorite?sort=recent", "ja"), "/ja/favorite?sort=recent");
+  assert.deepEqual(authNavigationTarget("/ja/favorite?sort=recent", "ko"), {
+    href: "/favorite?sort=recent",
+    locale: "ja",
+  });
+  assert.equal(resolveAuthenticatedPath(customer, "/ja/favorite?sort=recent"), "/ja/favorite?sort=recent");
+  assert.equal(resolveAuthenticatedPath(customer, "/ja/requests"), "/mover-search");
+  assert.equal(safeAuthRedirect("/ja/auth/callback"), undefined);
   assert.equal(localizedAuthRedirect("/favorite", "fr"), "/favorite");
 });
 
@@ -382,6 +398,8 @@ test("백엔드 휴대전화·이름·비밀번호 바이트 제한에 맞춰 �
   assert.ok(validateAuthForm({ ...values, phone: "0212345678" }, "signup").phone);
   assert.ok(validateAuthForm({ ...values, name: "a".repeat(51) }, "signup").name);
   assert.ok(validateAuthForm({ ...values, password: "가".repeat(24) + "A1!" }, "signup").password);
+  assert.ok(validateAuthForm({ ...values, recoveryQuestion: "" }, "signup").recoveryQuestion);
+  assert.ok(validateAuthForm({ ...values, recoveryAnswer: "x" }, "signup").recoveryAnswer);
   assert.deepEqual(validateAuthForm({ ...values, password: "old" }, "login"), {});
 });
 
@@ -392,6 +410,8 @@ test("회원가입의 임의 입력은 이메일·전화번호·비밀번호·�
     phone: "feafafaff",
     password: "1234567",
     passwordConfirm: "7654321",
+    recoveryQuestion: "",
+    recoveryAnswer: "",
   }, "signup");
 
   assert.equal(errors.name, undefined);
@@ -432,7 +452,7 @@ test("가입 응답이 성공해도 쿠키 세션이 없으면 로그인 완료�
     if (path === "/auth/signup") return success({ user: customer });
     return failure(path === "/auth/refresh" ? "REFRESH_TOKEN_MISSING" : "ACCESS_TOKEN_MISSING");
   });
-  await assert.rejects(authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone }),
+  await assert.rejects(authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone, recoveryQuestion: values.recoveryQuestion, recoveryAnswer: values.recoveryAnswer }),
     (error: unknown) => error instanceof ApiError && error.code === "AUTH_SESSION_UNAVAILABLE");
 });
 

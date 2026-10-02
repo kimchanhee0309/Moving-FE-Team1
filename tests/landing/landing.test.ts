@@ -32,7 +32,7 @@ test("랜딩 CTA는 이미지 핫스팟이 아니라 제목을 가진 실제 링
   assert.match(source, /<Link/);
   assert.match(source, /<div className=\{className\} aria-busy="true"/);
   assert.doesNotMatch(source, /preventPendingNavigation|onClick=\{preventPendingNavigation\}/);
-  assert.match(source, /<h3>/);
+  assert.match(source, /<h3[\s>]/);
   assert.doesNotMatch(source, /Hotspot|motion\.button|request-desktop|landing-compare/);
 });
 

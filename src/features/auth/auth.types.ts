@@ -1,8 +1,12 @@
 import type { UserRole } from "@/common/auth/types";
 
 export type AuthMode = "login" | "signup";
-export type RecoveryMode = "find-account" | "forgot-password";
+/** 로그인 화면에서 바로 열 수 있는 복구 모달입니다. 로그인 ID가 이메일이라 비밀번호 찾기만 제공합니다. */
+export type RecoveryMode = "forgot-password";
 export type SocialProvider = "google" | "kakao" | "naver";
+/** 백엔드 PasswordRecoveryQuestion enum과 일치하는 고정 질문 목록입니다. */
+export const RECOVERY_QUESTIONS = ["CHILDHOOD_NICKNAME", "MEMORABLE_PLACE", "PERSONAL_PHRASE"] as const;
+export type RecoveryQuestion = (typeof RECOVERY_QUESTIONS)[number];
 
 /** 백엔드 publicUser DTO. 토큰은 HttpOnly 쿠키에만 있고 이 모델에는 포함되지 않습니다. */
 export type { AuthUser } from "@/common/auth/types";
@@ -14,6 +18,8 @@ export interface AuthFormValues {
   phone: string;
   password: string;
   passwordConfirm: string;
+  recoveryQuestion: RecoveryQuestion | "";
+  recoveryAnswer: string;
 }
 export type AuthField = keyof AuthFormValues;
 export type AuthFormErrors = Partial<Record<AuthField, string>>;

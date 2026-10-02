@@ -12,7 +12,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Button } from "@/common/components/button";
 import {
   EmptyState,
@@ -26,6 +26,7 @@ import { RejectedRequestCard } from "./RejectedRequestCard";
 
 export function RejectedRequestListView() {
   const t = useTranslations("MoverQuote");
+  const apiErrorMessage = useApiErrorMessage();
   const common = useTranslations("Common");
   const rejectedRequestsQuery = useRejectedRequests();
 
@@ -42,7 +43,7 @@ export function RejectedRequestListView() {
     rejectedRequestsQuery.isError &&
     !hasLoadedRequests &&
     rejectedRequestsQuery.error
-      ? getApiErrorMessage(
+      ? apiErrorMessage(
           rejectedRequestsQuery.error,
           t("rejectedLoadError"),
         )
@@ -54,7 +55,7 @@ export function RejectedRequestListView() {
    */
   const loadMoreErrorMessage =
     rejectedRequestsQuery.isFetchNextPageError && rejectedRequestsQuery.error
-      ? getApiErrorMessage(
+      ? apiErrorMessage(
           rejectedRequestsQuery.error,
           t("rejectedLoadMoreError"),
         )

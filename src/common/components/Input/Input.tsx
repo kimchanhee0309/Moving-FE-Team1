@@ -118,9 +118,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     >
       <FieldLabel htmlFor={inputId} label={label} required={required} />
 
+      {/* Grid 안에서도 비밀번호 버튼의 고유 너비가 입력 박스를 화면 밖으로 밀지 않도록 합니다. */}
       <div
         aria-busy={isLoading || undefined}
-        className={`flex w-full items-center gap-2 rounded-2xl border bg-[var(--gray-50)] transition-colors ${FIELD_SIZE_CLASS[inputSize]} ${fieldStateClass} ${
+        className={`flex min-w-0 w-full items-center gap-2 rounded-2xl border bg-[var(--gray-50)] transition-colors ${FIELD_SIZE_CLASS[inputSize]} ${fieldStateClass} ${
           isDisabled ? "cursor-not-allowed bg-[var(--gray-100)]" : ""
         }`}
       >
