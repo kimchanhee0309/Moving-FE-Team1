@@ -32,13 +32,31 @@ async function readAppMessages(locale: string): Promise<Messages> {
   return JSON.parse(await readFile(`messages/${locale}.json`, "utf8"));
 }
 
-const LOCALES = ["ko", "en", "zh"] as const;
+const LOCALES = ["ko", "en", "zh", "ja"] as const;
 
 test("모든 locale 메시지는 ko와 같은 키 구조를 가진다", async () => {
   const koKeys = collectKeys(await readMessages("ko")).sort();
 
   for (const locale of LOCALES) {
     assert.deepEqual(collectKeys(await readMessages(locale)).sort(), koKeys, locale);
+  }
+});
+
+test("일본어 메시지는 한국어와 같은 보간 변수 이름을 사용한다", async () => {
+  const ko = await readMessages("ko");
+  const ja = await readMessages("ja");
+  const placeholders = (value: string) =>
+    [...value.matchAll(/\{([a-zA-Z][a-zA-Z0-9]*)(?:,|\})/g)]
+      .map((match) => match[1])
+      .sort();
+
+  for (const key of collectKeys(ko)) {
+    const parts = key.split(".");
+    const source = parts.reduce<string | MessageTree>((node, part) => (node as MessageTree)[part], ko);
+    const translated = parts.reduce<string | MessageTree>((node, part) => (node as MessageTree)[part], ja);
+    assert.equal(typeof source, "string", key);
+    assert.equal(typeof translated, "string", key);
+    assert.deepEqual(placeholders(source as string), placeholders(translated as string), key);
   }
 });
 
@@ -90,8 +108,17 @@ test("zh 날짜·상대 시간은 중국어 표기를 사용한다", () => {
   assert.equal(formatLongAgo("zh"), "很久以前");
 });
 
+test("ja 날짜·상대 시간은 일본어 표기를 사용한다", () => {
+  const iso = "2026-10-01T00:30:00.000Z";
+
+  assert.equal(formatLongDate(iso, "ja", SERVICE_TIME_ZONE), "2026年10月1日");
+  assert.equal(formatTimeAgo(3, "hour", "ja"), "3 時間前");
+  assert.equal(formatJustNow("ja"), "たった今");
+  assert.equal(formatLongAgo("ja"), "しばらく前");
+});
+
 test("999를 넘는 확정 건수도 locale별 단위를 유지한다", async () => {
-  const expected = { ko: "999+건", en: "999+", zh: "999+次" } as const;
+  const expected = { ko: "999+건", en: "999+", zh: "999+次", ja: "999+件" } as const;
 
   for (const locale of LOCALES) {
     const t = createTranslator({ locale, messages: await readAppMessages(locale), namespace: "Quote" });
@@ -120,4 +147,6 @@ test("받은 요청 시각은 locale별 상대 시간으로 표시한다", () =>
   assert.equal(formatRequestedAt("2026-10-01T09:00:00.000Z", "en", now), "3 hours ago");
   assert.equal(formatRequestedAt("2026-10-01T12:05:00.000Z", "en", now), "just now");
   assert.equal(formatRequestedAt("2026-09-01T12:00:00.000Z", "ko", now), "26. 09. 01.");
+  assert.equal(formatRequestedAt("2026-10-01T11:30:00.000Z", "ja", now), "30 分前");
+  assert.equal(formatRequestedAt("2026-09-01T12:00:00.000Z", "ja", now), "26/09/01");
 });

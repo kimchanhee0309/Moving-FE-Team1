@@ -41,6 +41,13 @@ const GLOBAL_ERROR_COPY: Record<AppLocale, { title: string; pageTitle: string; d
     retry: "重试",
     code: "错误代码",
   },
+  ja: {
+    pageTitle: "エラー | ムービング",
+    title: "サービスを読み込めませんでした。",
+    description: "一時的な問題が発生しました。しばらくしてからもう一度お試しください。",
+    retry: "再試行",
+    code: "エラーコード",
+  },
 };
 
 function getPathLocale(): AppLocale {

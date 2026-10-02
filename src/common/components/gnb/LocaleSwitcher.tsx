@@ -12,6 +12,7 @@ const LOCALE_LABELS: Record<(typeof routing.locales)[number], string> = {
   ko: "한국어",
   en: "English",
   zh: "中文",
+  ja: "日本語",
 };
 
 const LOCALE_OPTIONS = routing.locales.map((locale) => ({ value: locale, label: LOCALE_LABELS[locale] }));
