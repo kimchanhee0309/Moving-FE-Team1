@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { MoverSearchCard } from "@/common/components/MoverSearch";
 import { ROUTES } from "@/common/constants/routes";
 import { Link } from "@/i18n/navigation";
@@ -156,6 +157,7 @@ function FavoriteCardSelectControl({
  */
 export function FavoritePage() {
   const t = useTranslations("Favorite");
+  const apiErrorMessage = useApiErrorMessage();
   const quote = useTranslations("Quote");
   const common = useTranslations("Common");
   const favoritesQuery = useFavoriteMovers();
@@ -246,7 +248,7 @@ export function FavoritePage() {
         const message =
           mutationError instanceof ApiError &&
           mutationError.code !== "FAVORITE_REMOVE_FAILED"
-            ? mutationError.message
+            ? apiErrorMessage(mutationError, t("removeError"))
             : t("removeError");
         setActionError(message);
       },
@@ -255,7 +257,7 @@ export function FavoritePage() {
 
   const listErrorMessage =
     error instanceof ApiError
-      ? error.message
+      ? apiErrorMessage(error, t("loadError"))
       : t("loadError");
 
   return (

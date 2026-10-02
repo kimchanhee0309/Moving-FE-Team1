@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { assertProfileCompleted, isProfileCompletionError } from "@/features/auth/auth.cache";
 
@@ -12,6 +12,7 @@ import { CustomerProfileForm } from "./CustomerProfileForm";
 
 export function CustomerProfileRegisterContent() {
   const t = useTranslations("Profile");
+  const apiErrorMessage = useApiErrorMessage();
   const queryClient = useQueryClient();
   const { refetchUser } = useAuth();
   const mutation = useMutation({
@@ -31,7 +32,7 @@ export function CustomerProfileRegisterContent() {
         mutation.error
           ? isProfileCompletionError(mutation.error)
             ? t("profileConfirmError")
-            : getApiErrorMessage(mutation.error, t("registerError"))
+            : apiErrorMessage(mutation.error, t("registerError"))
           : undefined
       }
       onSubmit={async (values) => { await mutation.mutateAsync(values); }}

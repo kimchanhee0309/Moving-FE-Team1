@@ -8,7 +8,7 @@
  */
 import { useTranslations } from "next-intl";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
 import { useMoverQuoteDetail } from "../mover-quote.hooks";
@@ -20,6 +20,7 @@ interface MoverQuoteDetailViewProps {
 
 export function MoverQuoteDetailView({ quoteId }: MoverQuoteDetailViewProps) {
   const t = useTranslations("MoverQuote");
+  const apiErrorMessage = useApiErrorMessage();
   const quoteQuery = useMoverQuoteDetail(quoteId);
 
   if (quoteQuery.isPending) {
@@ -30,7 +31,7 @@ export function MoverQuoteDetailView({ quoteId }: MoverQuoteDetailViewProps) {
     return (
       <ErrorState
         title={t("detailLoadErrorTitle")}
-        description={getApiErrorMessage(
+        description={apiErrorMessage(
           quoteQuery.error,
           t("detailLoadError"),
         )}

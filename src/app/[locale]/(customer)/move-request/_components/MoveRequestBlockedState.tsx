@@ -7,6 +7,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Button } from "@/common/components/button";
 import { Modal } from "@/common/components/MoverModal/Modal";
 import { ROUTES } from "@/common/constants/routes";
@@ -47,6 +48,7 @@ export function MoveRequestBlockedState({
   onEditRequest,
 }: MoveRequestBlockedStateProps) {
   const t = useTranslations("MoveRequest");
+  const apiErrorMessage = useApiErrorMessage();
   const moveType = useTranslations("MoveType");
   const profile = useTranslations("Profile");
   const locale = useLocale();
@@ -79,7 +81,7 @@ export function MoveRequestBlockedState({
       // 이 컴포넌트 자체가 unmount되므로 모달을 별도로 닫을 필요가 없다.
     } catch (error) {
       if (error instanceof ApiError) {
-        setDeleteError(error.message || t("deleteError"));
+        setDeleteError(apiErrorMessage(error, t("deleteError")));
         return;
       }
       setDeleteError(t("deleteError"));

@@ -8,6 +8,7 @@ import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
 import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { useValidationMessage } from "@/common/validation/useValidationMessage";
 import { Link } from "@/i18n/navigation";
 import { useModal } from "@/providers/ModalProvider";
@@ -46,6 +47,7 @@ const AUTH_FIELD_CLASS = "grid! max-w-none! gap-0! grid-rows-[auto_54px_minmax(2
  */
 export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmitValues, onSocialLogin, isPending }: AuthFormProps) {
   const t = useTranslations("Auth");
+  const apiErrorMessage = useApiErrorMessage();
   const translateValidation = useValidationMessage();
   const common = useTranslations("Common");
   const { openModal, closeModal } = useModal();
@@ -111,7 +113,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
         if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = t("emailExists");
         if (error.code === "PHONE_ALREADY_EXISTS") fieldErrors.phone = t("phoneExists");
         setServerErrors(fieldErrors);
-        setSubmitError(error.status === 429 ? t("rateLimited") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : error.message);
+        setSubmitError(error.status === 429 ? t("rateLimited") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : apiErrorMessage(error, t("requestFailed")));
       } else {
         setSubmitError(error instanceof TypeError ? t("networkError") : t("requestFailed"));
       }

@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { EmptyState } from "@/common/components/page-state";
 import { ErrorState } from "@/common/components/page-state";
 import { LoadingState } from "@/common/components/page-state";
@@ -22,6 +22,7 @@ import { useRouter } from "@/i18n/navigation";
 
 export function CustomerQuoteListView() {
   const t = useTranslations("CustomerQuote");
+  const apiErrorMessage = useApiErrorMessage();
   const quote = useTranslations("Quote");
   const common = useTranslations("Common");
   const locale = useLocale();
@@ -63,7 +64,7 @@ export function CustomerQuoteListView() {
         },
         onError: (error) => {
           setConfirmError(
-            getApiErrorMessage(
+            apiErrorMessage(
               error,
               quote("confirmError"),
             ),
@@ -74,7 +75,7 @@ export function CustomerQuoteListView() {
         },
       });
     },
-    [confirmMutation, quote, router],
+    [apiErrorMessage, confirmMutation, quote, router],
   );
 
   return (

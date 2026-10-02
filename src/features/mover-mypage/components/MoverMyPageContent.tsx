@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-import { getApiErrorMessage } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 
 import { getMoverMyPage, getMoverReviews, moverMyPageKeys } from "../mover-mypage.api";
@@ -14,6 +14,7 @@ const REVIEWS_PER_PAGE = 5;
 
 export function MoverMyPageContent() {
   const t = useTranslations("Profile");
+  const apiErrorMessage = useApiErrorMessage();
   const common = useTranslations("Common");
   const [currentPage, setCurrentPage] = useState(1);
   const myPageQuery = useQuery({
@@ -31,7 +32,7 @@ export function MoverMyPageContent() {
     return (
       <ErrorState
         title={t("myPageLoadError")}
-        description={getApiErrorMessage(myPageQuery.error, common("errorDescription"))}
+        description={apiErrorMessage(myPageQuery.error, common("errorDescription"))}
         onRetry={() => { void myPageQuery.refetch(); }}
       />
     );
@@ -43,7 +44,7 @@ export function MoverMyPageContent() {
       reviews={reviewsQuery.data}
       currentPage={currentPage}
       isReviewsLoading={reviewsQuery.isPending || reviewsQuery.isFetching}
-      reviewError={reviewsQuery.error ? getApiErrorMessage(reviewsQuery.error, t("reviewLoadFailed")) : undefined}
+      reviewError={reviewsQuery.error ? apiErrorMessage(reviewsQuery.error, t("reviewLoadFailed")) : undefined}
       onPageChange={setCurrentPage}
       onRetryReviews={() => { void reviewsQuery.refetch(); }}
     />

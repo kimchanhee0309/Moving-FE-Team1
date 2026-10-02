@@ -6,9 +6,9 @@ import { createPortal } from "react-dom";
 
 import { ApiError } from "@/common/api/error";
 import {
-  getApiErrorMessage,
   getCurrentPasswordMismatchError,
 } from "@/common/api/get-error-message";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { Modal } from "@/common/components/MoverModal/Modal";
@@ -32,6 +32,7 @@ export function AccountWithdrawalButton({
   buttonClassName = "",
 }: AccountWithdrawalButtonProps) {
   const t = useTranslations("Withdrawal");
+  const apiErrorMessage = useApiErrorMessage();
   const translateValidation = useValidationMessage();
   const { withdrawal } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -58,11 +59,11 @@ export function AccountWithdrawalButton({
   const currentPasswordError =
     translateValidation(getCurrentPasswordMismatchError(withdrawal.error)) ??
     (withdrawal.error instanceof ApiError && withdrawal.error.code === "CURRENT_PASSWORD_REQUIRED"
-      ? withdrawal.error.message
+      ? apiErrorMessage(withdrawal.error, t("error"))
       : undefined);
   const submissionError =
     withdrawal.error && !currentPasswordError
-      ? getApiErrorMessage(withdrawal.error, t("error"))
+      ? apiErrorMessage(withdrawal.error, t("error"))
       : undefined;
 
   return (
