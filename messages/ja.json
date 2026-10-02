@@ -78,6 +78,17 @@
     "phone": "電話番号",
     "password": "パスワード",
     "confirmPassword": "パスワードの確認",
+    "recoveryQuestion": "パスワード復旧用の質問",
+    "recoveryQuestionPlaceholder": "質問を選択してください",
+    "recoveryQuestionRequired": "復旧用の質問を選択してください。",
+    "recoveryAnswer": "復旧用の回答",
+    "recoveryAnswerPlaceholder": "回答を2〜100文字で入力してください",
+    "recoveryAnswerInvalid": "復旧用の回答は2〜100文字で入力してください。",
+    "recoveryQuestions": {
+      "CHILDHOOD_NICKNAME": "子どもの頃に呼ばれていたあだ名は何ですか？",
+      "MEMORABLE_PLACE": "いちばん思い出に残っている場所はどこですか？",
+      "PERSONAL_PHRASE": "覚えておきたい言葉は何ですか？"
+    },
     "namePlaceholder": "お名前を入力してください",
     "emailPlaceholder": "メールアドレスを入力してください",
     "phonePlaceholder": "数字のみ入力してください",
@@ -393,6 +404,16 @@
     "submit": "退会する"
   },
   "Recovery": {
+    "recoveryQuestion": "復旧用の質問：{question}",
+    "recoveryAnswerPlaceholder": "登録時に入力した回答",
+    "recoveryAnswerInvalid": "復旧用の回答は2〜100文字で入力してください。",
+    "recoveryAnswerWrong": "復旧用の回答が正しくありません。",
+    "recoveryAnswerAttemptsExceeded": "回答の確認回数を超えました。新しい認証コードをリクエストしてください。",
+    "recoveryQuestions": {
+      "CHILDHOOD_NICKNAME": "子どもの頃に呼ばれていたあだ名は何ですか？",
+      "MEMORABLE_PLACE": "いちばん思い出に残っている場所はどこですか？",
+      "PERSONAL_PHRASE": "覚えておきたい言葉は何ですか？"
+    },
     "seconds": "{count}秒",
     "minutes": "{count}分",
     "minutesSeconds": "{minutes}分{seconds}秒",

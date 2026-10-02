@@ -13,7 +13,7 @@ import { useValidationMessage } from "@/common/validation/useValidationMessage";
 import { Link } from "@/i18n/navigation";
 import { useModal } from "@/providers/ModalProvider";
 
-import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, RecoveryMode, SocialProvider } from "../auth.types";
+import { RECOVERY_QUESTIONS, type AuthField, type AuthFormErrors, type AuthFormValues, type AuthScreenProps, type RecoveryMode, type SocialProvider } from "../auth.types";
 import { authHref, clearAuthFieldError, normalizePhone, validateAuthForm } from "../auth.utils";
 import { FindAccountModal, ForgotPasswordModal } from "./AccountRecoveryModal";
 
@@ -26,9 +26,10 @@ interface AuthFormProps extends AuthScreenProps {
   isPending: boolean;
 }
 
-const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "" };
-const SIGNUP_FIELDS: AuthField[] = ["name", "email", "phone", "password", "passwordConfirm"];
-const LOGIN_FIELDS: AuthField[] = ["email", "password"];
+const INITIAL_VALUES: AuthFormValues = { name: "", email: "", phone: "", password: "", passwordConfirm: "", recoveryQuestion: "", recoveryAnswer: "" };
+type StandardAuthField = Exclude<AuthField, "recoveryQuestion" | "recoveryAnswer">;
+const SIGNUP_FIELDS: StandardAuthField[] = ["name", "email", "phone", "password", "passwordConfirm"];
+const LOGIN_FIELDS: StandardAuthField[] = ["email", "password"];
 const SOCIAL_PROVIDERS: { provider: SocialProvider; image: string }[] = [
   { provider: "google", image: "google.svg" },
   { provider: "kakao", image: "kakao.svg" },
@@ -58,9 +59,12 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
   const submitLock = useRef(false);
   const initialRecoveryOpened = useRef(false);
   const fields = mode === "signup" ? SIGNUP_FIELDS : LOGIN_FIELDS;
+  const requiredFields: AuthField[] = mode === "signup" ? [...fields, "recoveryQuestion", "recoveryAnswer"] : fields;
   const errors = { ...validateAuthForm(values, mode), ...serverErrors };
-  const isIncomplete = fields.some((field) => !values[field].trim());
-  const hasValidationError = fields.some((field) => Boolean(errors[field]));
+  const isIncomplete = requiredFields.some((field) => !values[field].trim());
+  const hasValidationError = requiredFields.some((field) => Boolean(errors[field]));
+  // 복구 질문 select는 공통 Input이 아니므로 Input의 오류 테두리 규칙(primary-400)을 같은 조건으로 맞춥니다.
+  const hasQuestionError = Boolean(touched.recoveryQuestion && errors.recoveryQuestion);
 
   const openRecoveryModal = useCallback((initialMode: RecoveryMode) => {
     openModal(
@@ -89,11 +93,11 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitLock.current || isPending) return;
-    setTouched(Object.fromEntries(fields.map((field) => [field, true])));
+    setTouched(Object.fromEntries(requiredFields.map((field) => [field, true])));
     const validationErrors = validateAuthForm(values, mode);
-    const firstInvalid = fields.find((field) => validationErrors[field]);
+    const firstInvalid = requiredFields.find((field) => validationErrors[field]);
     if (firstInvalid) {
-      event.currentTarget.querySelector<HTMLInputElement>(`[name="${firstInvalid}"]`)?.focus();
+      event.currentTarget.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus();
       return;
     }
     // React 상태가 갱신되기 전 연속 submit도 ref로 차단합니다. 입력은 완료 전까지 잠급니다.
@@ -107,7 +111,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
         const fieldErrors: AuthFormErrors = {};
         // 백엔드 Validator의 details(field/reason)를 현재 폼 필드에만 연결합니다. 임의 서버 필드를 폼에 추가하지 않습니다.
         for (const detail of error.details) {
-          const field = fields.find((candidate) => candidate === detail.field);
+          const field = requiredFields.find((candidate) => candidate === detail.field);
           if (field) fieldErrors[field] = detail.reason;
         }
         if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = t("emailExists");
@@ -160,6 +164,19 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
               />
             );
           })}
+          {mode === "signup" ? (
+            <>
+              <div className="grid min-w-0 grid-rows-[auto_54px_minmax(20px,auto)] min-[744px]:grid-rows-[auto_54px_minmax(32px,auto)]">
+                <label htmlFor="auth-recoveryQuestion" className="mb-2 text-sm leading-6 font-normal min-[744px]:mb-4 min-[744px]:text-xl min-[744px]:leading-8">{t("recoveryQuestion")}</label>
+                <select id="auth-recoveryQuestion" name="recoveryQuestion" required value={values.recoveryQuestion} disabled={isPending} aria-invalid={hasQuestionError} aria-describedby={hasQuestionError ? "auth-recoveryQuestion-error" : undefined} className={`min-w-0 w-full rounded-2xl border ${hasQuestionError ? "border-[var(--primary-400)]" : "border-[var(--line-200)] hover:border-[var(--gray-300)]"} bg-[var(--gray-50)] px-[14px] text-base text-[var(--black-400)] outline-none focus-visible:border-[var(--primary-400)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-400)] min-[744px]:text-lg`} onBlur={() => setTouched((current) => ({ ...current, recoveryQuestion: true }))} onChange={(event) => handleFieldChange("recoveryQuestion", event.currentTarget.value)}>
+                  <option value="">{t("recoveryQuestionPlaceholder")}</option>
+                  {RECOVERY_QUESTIONS.map((question) => <option key={question} value={question}>{t(`recoveryQuestions.${question}`)}</option>)}
+                </select>
+                {hasQuestionError ? <p id="auth-recoveryQuestion-error" className="pt-1 text-xs leading-4 text-[var(--secondary-red-200)]" role="alert">{t("recoveryQuestionRequired")}</p> : null}
+              </div>
+              <Input id="auth-recoveryAnswer" name="recoveryAnswer" label={t("recoveryAnswer")} type="password" autoComplete="off" inputSize="md" containerClassName={AUTH_FIELD_CLASS} className="text-base! min-[744px]:text-lg!" value={values.recoveryAnswer} disabled={isPending} placeholder={t("recoveryAnswerPlaceholder")} error={touched.recoveryAnswer && errors.recoveryAnswer ? t("recoveryAnswerInvalid") : undefined} onBlur={() => setTouched((current) => ({ ...current, recoveryAnswer: true }))} onChange={(event) => handleFieldChange("recoveryAnswer", event.currentTarget.value)} />
+            </>
+          ) : null}
         </div>
         <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete || hasValidationError || isPending} isLoading={isPending}>
           {mode === "login" ? common("login") : t("start")}
