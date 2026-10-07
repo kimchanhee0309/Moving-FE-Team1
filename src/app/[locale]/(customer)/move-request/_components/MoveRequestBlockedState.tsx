@@ -105,13 +105,13 @@ export function MoveRequestBlockedState({
       */}
       <header className="w-full shrink-0 bg-(--gray-50) shadow-[0px_2px_10px_rgba(248,248,248,0.1)] min-[744px]:shadow-none min-[1200px]:shadow-[0px_2px_10px_rgba(248,248,248,0.1)]">
         <div className="mx-auto flex w-full max-w-[1920px] items-center p-6 min-[744px]:h-[54px] min-[744px]:px-18 min-[744px]:py-0 min-[1200px]:h-auto min-[1200px]:px-40 min-[1200px]:py-8">
-          <p className="m-0 text-2lg-semibold text-(--content-strong) min-[744px]:text-(--black-500) min-[1200px]:text-2xl-semibold">
+          <h1 className="m-0 text-2lg-semibold text-(--content-strong) min-[744px]:text-(--black-500) min-[1200px]:text-2xl-semibold">
             {t("activeTitle")}
-          </p>
+          </h1>
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-12 px-6 py-16 min-[1200px]:gap-8">
+      <main className="flex flex-1 flex-col items-center justify-center gap-12 px-6 py-16 min-[1200px]:gap-8">
         <div className="flex flex-col items-center">
           <div
             aria-hidden="true"
@@ -206,7 +206,7 @@ export function MoveRequestBlockedState({
         >
           {t("viewQuotes")}
         </Link>
-      </div>
+      </main>
 
       {isDeleteModalOpen && typeof document !== "undefined"
         ? createPortal(
