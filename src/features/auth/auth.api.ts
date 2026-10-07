@@ -3,10 +3,10 @@ import { apiClient } from "@/common/api/client";
 import { changeAuthSession, isGuestFailure } from "@/common/api/auth-session";
 import { ApiError } from "@/common/api/error";
 import type { AuthCredentialsRequest, AuthSession, AuthUser, UserRole } from "@/common/auth/types";
-import { RECOVERY_QUESTIONS, type AuthFormValues, type AuthMode, type RecoveryQuestion, type SocialProvider } from "./auth.types";
+import type { AuthFormValues, AuthMode, SocialProvider } from "./auth.types";
 
 /**
- * POST /auth/signup 또는 /auth/login 연동. 가입만 name/phone/복구 질문·답변을 전송하고 role은 진입 화면에서 받습니다.
+ * POST /auth/signup 또는 /auth/login 연동. 가입만 name/phone을 전송하고 role은 진입 화면에서 받습니다.
  * 확인 비밀번호는 화면 검증용이며, 토큰은 서버의 HttpOnly 쿠키로만 전달됩니다.
  * 쿠키 변경 중의 이전 요청 무효화는 changeAuthSession, 성공 캐시 반영은 AuthProvider가 담당합니다.
  */
@@ -15,8 +15,6 @@ export async function submitCredentials(mode: AuthMode, role: UserRole, values: 
     ...(mode === "signup" ? {
       name: values.name.trim(),
       phone: values.phone,
-      recoveryQuestion: values.recoveryQuestion,
-      recoveryAnswer: values.recoveryAnswer,
     } : {}) };
   return changeAuthSession(async () => ({ user: readUser(await apiClient<unknown>(`/auth/${mode}`, { method: "POST", body: JSON.stringify(payload) })) }));
 }
@@ -94,23 +92,21 @@ export async function requestPasswordResetCode(input: AccountRecoveryInput): Pro
   return result;
 }
 
-export async function verifyPasswordResetCode(challengeId: string, code: string): Promise<{ resetToken: string; recoveryQuestion: RecoveryQuestion | null }> {
-  const result = await apiClient<{ resetToken: string; recoveryQuestion?: RecoveryQuestion | null }>("/auth/recovery/password/code/verify", {
+export async function verifyPasswordResetCode(challengeId: string, code: string): Promise<{ resetToken: string }> {
+  const result = await apiClient<{ resetToken: string }>("/auth/recovery/password/code/verify", {
     method: "POST",
     body: JSON.stringify({ challengeId, code }),
   });
-  // 복구 질문 이전 백엔드는 recoveryQuestion을 보내지 않으므로, 배포 순서와 무관하게 필드 없음은 "질문 없음"으로 처리합니다.
-  const recoveryQuestion = result?.recoveryQuestion ?? null;
-  if (!result || typeof result.resetToken !== "string" || (recoveryQuestion !== null && !RECOVERY_QUESTIONS.some((question) => question === recoveryQuestion))) {
+  if (!result || typeof result.resetToken !== "string") {
     throw new ApiError(200, "INVALID_RESPONSE", "비밀번호 재설정 응답이 올바르지 않습니다.");
   }
-  return { resetToken: result.resetToken, recoveryQuestion };
+  return { resetToken: result.resetToken };
 }
 
-export async function confirmPasswordReset(token: string, newPassword: string, recoveryAnswer?: string): Promise<void> {
+export async function confirmPasswordReset(token: string, newPassword: string): Promise<void> {
   await apiClient<null>("/auth/recovery/password/confirm", {
     method: "POST",
-    body: JSON.stringify({ token, newPassword, ...(recoveryAnswer ? { recoveryAnswer } : {}) }),
+    body: JSON.stringify({ token, newPassword }),
   });
 }
 
@@ -122,8 +118,6 @@ export async function authenticateCredentials(input: AuthCredentialsRequest): Pr
     name: input.mode === "signup" ? input.name : "",
     phone: input.mode === "signup" ? input.phone : "",
     passwordConfirm: "",
-    recoveryQuestion: input.mode === "signup" ? input.recoveryQuestion : "",
-    recoveryAnswer: input.mode === "signup" ? input.recoveryAnswer : "",
   });
   const session = await fetchAuthenticatedSession();
   if (session.failure) throw session.failure;
