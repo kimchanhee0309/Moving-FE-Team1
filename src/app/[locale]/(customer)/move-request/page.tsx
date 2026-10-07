@@ -146,7 +146,6 @@ interface MobileMoveRequestWizardProps {
   fromAddress: AddressResult | null;
   toAddress: AddressResult | null;
   onOpenAddressModal: (slot: AddressSlot) => void;
-  onSubmit: () => void;
   /** `POST`/`PATCH /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
   isSubmitting: boolean;
   /** 제출 버튼 문구("견적 요청하기"/"수정하기"). `mode`에 따라 호출부(`MoveRequestForm`)가 결정한다. */
@@ -174,7 +173,6 @@ function MobileMoveRequestWizard({
   fromAddress,
   toAddress,
   onOpenAddressModal,
-  onSubmit,
   isSubmitting,
   submitLabel,
   submittingLabel,
@@ -191,17 +189,21 @@ function MobileMoveRequestWizard({
 
   return (
     <div className="min-[744px]:hidden">
-      <div className="flex flex-col items-center gap-2 px-10 pt-9 pb-6 text-center">
+      <header className="flex flex-col items-center gap-2 px-10 pt-9 pb-6 text-center">
         <MobileStepIndicator currentStep={step} />
         <div>
           <h1 className="text-xl-bold text-(--black-500)">{title}</h1>
           <p className="text-md-regular text-(--input-placeholder)">{subtitle}</p>
         </div>
-      </div>
+      </header>
 
       <div className="px-5 pb-28">
         {step === 1 ? (
-          <div className="flex flex-col gap-4">
+          // 라디오 3개가 한 질문의 선택지임을 fieldset/legend로 묶는다. 질문 문구는 위 h1에 이미 보이므로
+          // legend는 화면에서 숨긴다. min-w-0은 fieldset 기본값(min-inline-size: min-content)이
+          // 좁은 화면에서 카드를 밀어내지 않게 하기 위함이다.
+          <fieldset className="flex min-w-0 flex-col gap-4">
+            <legend className="sr-only">{title}</legend>
             {SERVICE_TYPES.map((type) => (
               <MoveTypeCard
                 key={type}
@@ -211,7 +213,7 @@ function MobileMoveRequestWizard({
                 onChange={onServiceTypeChange}
               />
             ))}
-          </div>
+          </fieldset>
         ) : null}
 
         {step === 2 ? (
@@ -228,7 +230,7 @@ function MobileMoveRequestWizard({
         ) : null}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t border-(--line-100) bg-(--gray-50) px-6 py-4">
+      <footer className="fixed inset-x-0 bottom-0 z-20 flex gap-2 border-t border-(--line-100) bg-(--gray-50) px-6 py-4">
         {step === 1 ? (
           <button
             type="button"
@@ -247,8 +249,14 @@ function MobileMoveRequestWizard({
             >
               {t("previous")}
             </button>
+            {/*
+              두 버튼에 서로 다른 key를 줘서 단계가 바뀔 때 DOM 버튼을 새로 만들게 한다. key가 없으면
+              React가 같은 버튼을 재사용해서, "다음" 클릭 처리 중에 type이 submit으로 바뀌고 브라우저가
+              그 클릭으로 폼을 제출해 3단계를 건너뛴다.
+            */}
             {step === 2 ? (
               <button
+                key="next"
                 type="button"
                 disabled={!canGoNextFromStep2}
                 onClick={() => onStepChange(3)}
@@ -258,9 +266,9 @@ function MobileMoveRequestWizard({
               </button>
             ) : (
               <button
-                type="button"
+                key="submit"
+                type="submit"
                 disabled={!canSubmitStep3 || isSubmitting}
-                onClick={onSubmit}
                 className="flex h-[54px] flex-1 items-center justify-center rounded-xl bg-(--primary-400) text-lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
               >
                 {isSubmitting ? submittingLabel : submitLabel}
@@ -268,7 +276,7 @@ function MobileMoveRequestWizard({
             )}
           </>
         )}
-      </div>
+      </footer>
     </div>
   );
 }
@@ -284,7 +292,6 @@ interface DesktopMoveRequestFormProps {
   toAddress: AddressResult | null;
   onOpenAddressModal: (slot: AddressSlot) => void;
   canSubmit: boolean;
-  onSubmit: () => void;
   /** `POST`/`PATCH /customers/me/move-requests` 요청이 진행 중인 동안 true. 중복 제출을 막는다. */
   isSubmitting: boolean;
   /** 제출 버튼 문구("견적 요청하기"/"수정하기"). `mode`에 따라 호출부(`MoveRequestForm`)가 결정한다. */
@@ -317,7 +324,6 @@ function DesktopMoveRequestForm({
   toAddress,
   onOpenAddressModal,
   canSubmit,
-  onSubmit,
   isSubmitting,
   submitLabel,
   submittingLabel,
@@ -328,17 +334,19 @@ function DesktopMoveRequestForm({
     <div className="hidden min-[744px]:block">
       <div className="mx-auto w-full max-w-[700px] px-6 py-10 min-[1200px]:max-w-[894px] min-[1200px]:px-0 min-[1200px]:py-16">
         <div className="w-full rounded-[40px] bg-(--gray-50) px-6 py-10 min-[1200px]:px-12 min-[1200px]:py-[70px]">
-          <div className="flex flex-col items-center gap-2 text-center">
+          <header className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-2xl-bold text-(--black-500)">{t("allSteps")}</h1>
             <p className="text-lg-regular text-(--input-placeholder)">
               {t("subtitle")}
             </p>
-          </div>
+          </header>
 
           <div className="mt-14 flex flex-col gap-12 min-[1200px]:gap-16">
             <section className="flex flex-col gap-4">
               <h2 className="text-2lg-bold text-(--black-300)">{t("type")}</h2>
-              <div className="flex gap-3 min-[1200px]:gap-4">
+              {/* 모바일과 같은 이유로 라디오 묶음을 fieldset/legend로 감싼다. 보이는 제목은 위 h2가 맡는다. */}
+              <fieldset className="flex min-w-0 gap-3 min-[1200px]:gap-4">
+                <legend className="sr-only">{t("type")}</legend>
                 {SERVICE_TYPES.map((type) => (
                   <MoveTypeCard
                     key={type}
@@ -349,11 +357,11 @@ function DesktopMoveRequestForm({
                     className="flex-1"
                   />
                 ))}
-              </div>
+              </fieldset>
             </section>
 
             <div className="flex flex-col gap-8">
-              <div className="flex w-full items-start justify-between gap-4">
+              <section className="flex w-full items-start justify-between gap-4">
                 <h2 className="text-2lg-bold shrink-0 text-(--black-300)">{t("date")}</h2>
                 <div className="w-[400px] shrink-0">
                   <DateDropdown
@@ -375,11 +383,11 @@ function DesktopMoveRequestForm({
                     }
                   />
                 </div>
-              </div>
+              </section>
 
               <div className="h-px w-full bg-(--line-100)" aria-hidden="true" />
 
-              <div className="flex w-full items-start justify-between gap-4">
+              <section className="flex w-full items-start justify-between gap-4">
                 <h2 className="text-2lg-bold shrink-0 text-(--black-300)">{t("region")}</h2>
                 <div className="flex w-[400px] flex-col gap-4 min-[1200px]:w-[520px] min-[1200px]:flex-row">
                   <AddressField
@@ -395,15 +403,14 @@ function DesktopMoveRequestForm({
                     className="min-[1200px]:w-[252px]"
                   />
                 </div>
-              </div>
+              </section>
             </div>
           </div>
 
           <div className="mt-14 flex justify-end">
             <button
-              type="button"
+              type="submit"
               disabled={!canSubmit || isSubmitting}
-              onClick={onSubmit}
               className="flex h-16 w-[200px] items-center justify-center rounded-2xl bg-(--primary-400) text-2lg-semibold text-(--gray-50) disabled:cursor-not-allowed disabled:bg-(--gray-300)"
             >
               {isSubmitting ? submittingLabel : submitLabel}
@@ -672,38 +679,56 @@ function MoveRequestForm({
         </p>
       ) : null}
 
-      <MobileMoveRequestWizard
-        step={step}
-        onStepChange={setStep}
-        serviceType={serviceType}
-        onServiceTypeChange={setServiceType}
-        moveDate={moveDate}
-        onMoveDateChange={setMoveDate}
-        fromAddress={fromAddress}
-        toAddress={toAddress}
-        onOpenAddressModal={openAddressModal}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        submitLabel={t(isEditMode ? "edit" : "submit")}
-        submittingLabel={t(isEditMode ? "editing" : "submitting")}
-      />
+      {/*
+        입력(라디오·날짜·주소)과 제출 버튼을 하나의 form으로 묶는다. 제출은 각 레이아웃의
+        type="submit" 버튼 클릭으로만 일어난다. 라디오에서 Enter를 누르면 브라우저가 form을 암묵적으로
+        제출하는데, 모바일 wizard에서는 그게 남은 단계를 건너뛰는 동작이 되므로 막는다.
+        주소 검색 모달은 자체 검색 form을 가지므로(form 중첩 불가) 이 form 밖에 둔다.
+      */}
+      <form
+        aria-label={t("allSteps")}
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void handleSubmit();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" && event.target instanceof HTMLInputElement) {
+            event.preventDefault();
+          }
+        }}
+      >
+        <MobileMoveRequestWizard
+          step={step}
+          onStepChange={setStep}
+          serviceType={serviceType}
+          onServiceTypeChange={setServiceType}
+          moveDate={moveDate}
+          onMoveDateChange={setMoveDate}
+          fromAddress={fromAddress}
+          toAddress={toAddress}
+          onOpenAddressModal={openAddressModal}
+          isSubmitting={isSubmitting}
+          submitLabel={t(isEditMode ? "edit" : "submit")}
+          submittingLabel={t(isEditMode ? "editing" : "submitting")}
+        />
 
-      <DesktopMoveRequestForm
-        serviceType={serviceType}
-        onServiceTypeChange={setServiceType}
-        moveDate={moveDate}
-        onMoveDateChange={setMoveDate}
-        isDateDropdownOpen={isDateDropdownOpen}
-        onDateDropdownOpenChange={setIsDateDropdownOpen}
-        fromAddress={fromAddress}
-        toAddress={toAddress}
-        onOpenAddressModal={openAddressModal}
-        canSubmit={canSubmit}
-        onSubmit={handleSubmit}
-        isSubmitting={isSubmitting}
-        submitLabel={t(isEditMode ? "edit" : "submit")}
-        submittingLabel={t(isEditMode ? "editing" : "submitting")}
-      />
+        <DesktopMoveRequestForm
+          serviceType={serviceType}
+          onServiceTypeChange={setServiceType}
+          moveDate={moveDate}
+          onMoveDateChange={setMoveDate}
+          isDateDropdownOpen={isDateDropdownOpen}
+          onDateDropdownOpenChange={setIsDateDropdownOpen}
+          fromAddress={fromAddress}
+          toAddress={toAddress}
+          onOpenAddressModal={openAddressModal}
+          canSubmit={canSubmit}
+          isSubmitting={isSubmitting}
+          submitLabel={t(isEditMode ? "edit" : "submit")}
+          submittingLabel={t(isEditMode ? "editing" : "submitting")}
+        />
+      </form>
 
       <AddressSearchModal
         isOpen={addressModalSlot !== null}

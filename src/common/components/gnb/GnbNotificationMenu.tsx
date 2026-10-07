@@ -101,8 +101,8 @@ export function GnbNotificationMenu({
 }: GnbNotificationMenuProps) {
   const t = useTranslations("Common");
   const panelRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const sentinelRef = useRef<HTMLLIElement>(null);
 
   // 알림 목록은 패널 안의 내부 스크롤 영역이라(페이지 전체 스크롤이 아니라) root를 뷰포트가
   // 아닌 이 스크롤 컨테이너로 지정해야 바닥에 닿았을 때만 정확히 트리거된다.
@@ -190,7 +190,7 @@ export function GnbNotificationMenu({
         role="none"
         className={`flex w-full items-center justify-between border-b border-(--line-200) ${NOTIFICATION_MENU_SIZE.headerPadding}`}
       >
-        <p className={`m-0 ${NOTIFICATION_MENU_SIZE.titleText}`}>{t("notifications")}</p>
+        <h2 className={`m-0 ${NOTIFICATION_MENU_SIZE.titleText}`}>{t("notifications")}</h2>
         <button
           ref={closeButtonRef}
           type="button"
@@ -211,9 +211,12 @@ export function GnbNotificationMenu({
           {t("noNotifications")}
         </p>
       ) : (
-        <div
+        // 알림은 목록이므로 ul/li로 묶는다. 패널이 role="menu"라 직계 구조에는 menuitem만 노출돼야 해서
+        // (WAI-ARIA menu 패턴) ul/li 자체에는 role="none"을 주고 실제 항목(Link)이 menuitem을 맡는다.
+        <ul
           ref={listRef}
-          className={`w-full overflow-y-auto overscroll-contain ${styles.notificationList} ${NOTIFICATION_MENU_SIZE.listMaxHeight}`}
+          role="none"
+          className={`m-0 w-full list-none overflow-y-auto overscroll-contain p-0 ${styles.notificationList} ${NOTIFICATION_MENU_SIZE.listMaxHeight}`}
         >
           {items.map((item, index) => {
             const isLastItem = index === items.length - 1;
@@ -221,36 +224,39 @@ export function GnbNotificationMenu({
               isLastItem ? "" : "border-b border-(--line-200)"
             } ${NOTIFICATION_MENU_SIZE.itemPadding}`;
 
-            return item.href ? (
-              <Link
-                key={item.id}
-                href={item.href}
-                role="menuitem"
-                onClick={onNavigate}
-                className={`no-underline hover:bg-(--background-200) ${rowClassName} ${FOCUS_RING}`}
-              >
-                <NotificationItemContent item={item} />
-              </Link>
-            ) : (
-              <div key={item.id} role="none" className={rowClassName}>
-                <NotificationItemContent item={item} />
-              </div>
+            return (
+              <li key={item.id} role="none">
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    role="menuitem"
+                    onClick={onNavigate}
+                    className={`no-underline hover:bg-(--background-200) ${rowClassName} ${FOCUS_RING}`}
+                  >
+                    <NotificationItemContent item={item} />
+                  </Link>
+                ) : (
+                  <div className={rowClassName}>
+                    <NotificationItemContent item={item} />
+                  </div>
+                )}
+              </li>
             );
           })}
 
           {/* 뷰포트가 아닌 이 스크롤 영역을 기준으로 바닥 근접을 감지하는 빈 sentinel. hasMore가
               아니면 관찰 자체를 하지 않으므로(위 effect) 평소엔 아무 영향이 없다. */}
-          {hasMore && <div ref={sentinelRef} aria-hidden="true" className="h-px w-full shrink-0" />}
+          {hasMore && <li ref={sentinelRef} aria-hidden="true" className="h-px w-full shrink-0" />}
 
           {isLoadingMore && (
-            <p
+            <li
               role="none"
               className={`m-0 w-full text-center ${NOTIFICATION_MENU_SIZE.timeText} ${NOTIFICATION_MENU_SIZE.itemPadding}`}
             >
               {t("loadingMore")}
-            </p>
+            </li>
           )}
-        </div>
+        </ul>
       )}
     </div>
   );
