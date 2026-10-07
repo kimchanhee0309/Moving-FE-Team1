@@ -37,7 +37,7 @@ function formatExpiryDuration(totalSeconds: number, t: RecoveryTranslator) {
 
 /**
  * 로그인 화면의 비밀번호 찾기 모달입니다.
- * 계정 정보 입력 → 이메일 인증코드 확인 → (복구 질문 등록 계정만) 답변 확인과 새 비밀번호 설정 순서로 진행합니다.
+ * 계정 정보 입력 → 이메일 인증코드 확인 → 새 비밀번호 설정 순서로 진행합니다.
  * 로그인 ID가 이메일이므로 별도 아이디 찾기 단계는 두지 않습니다. SNS 가입 계정은 인증코드 요청 단계에서 안내합니다.
  */
 export function ForgotPasswordModal({ initialRole = "CUSTOMER", onClose }: ForgotPasswordModalProps) {
