@@ -660,7 +660,8 @@
   "Account": {
     "currentPassword": "当前密码",
     "currentPasswordPlaceholder": "请输入当前密码",
-    "currentPasswordHint": "修改邮箱或密码时需要验证当前密码。",
+    "currentPasswordHint": "修改密码时需要验证当前密码。",
+    "emailReadOnly": "注册时使用的邮箱无法修改。",
     "currentPasswordRequired": "请输入当前密码。",
     "newPassword": "新密码",
     "newPasswordPlaceholder": "请输入新密码",
@@ -691,6 +692,7 @@
     "DESIGNATED_REQUEST_ALREADY_EXISTS": "已向该师傅发送过指定请求。",
     "DESIGNATED_REQUEST_LIMIT_EXCEEDED": "指定报价最多只能发送给 3 位师傅。",
     "EMAIL_ALREADY_EXISTS": "该邮箱已被使用。",
+    "EMAIL_CHANGE_NOT_ALLOWED": "注册时使用的邮箱无法修改。",
     "FAVORITE_ALREADY_EXISTS": "已收藏该师傅。",
     "FAVORITE_NOT_FOUND": "找不到收藏的师傅。",
     "INTERNAL_SERVER_ERROR": "服务器内部发生错误。",
