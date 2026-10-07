@@ -660,7 +660,8 @@
   "Account": {
     "currentPassword": "Current password",
     "currentPasswordPlaceholder": "Enter your current password",
-    "currentPasswordHint": "We verify your current password when you change your email or password.",
+    "currentPasswordHint": "We verify your current password when you change your password.",
+    "emailReadOnly": "The email you signed up with can’t be changed.",
     "currentPasswordRequired": "Please enter your current password.",
     "newPassword": "New password",
     "newPasswordPlaceholder": "Enter a new password",
@@ -691,6 +692,7 @@
     "DESIGNATED_REQUEST_ALREADY_EXISTS": "You already sent a designated request to this mover.",
     "DESIGNATED_REQUEST_LIMIT_EXCEEDED": "You can send designated requests to up to 3 movers.",
     "EMAIL_ALREADY_EXISTS": "This email is already in use.",
+    "EMAIL_CHANGE_NOT_ALLOWED": "The email you signed up with can’t be changed.",
     "FAVORITE_ALREADY_EXISTS": "This mover is already in your favorites.",
     "FAVORITE_NOT_FOUND": "Favorite mover not found.",
     "INTERNAL_SERVER_ERROR": "An internal server error occurred.",

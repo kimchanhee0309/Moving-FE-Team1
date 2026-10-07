@@ -38,7 +38,6 @@ export interface CustomerProfileEditFormValues extends CustomerProfileFormValues
   newPasswordConfirm: string;
   changedFields?: {
     name: boolean;
-    email: boolean;
     phone: boolean;
     serviceTypeIds: boolean;
     region: boolean;

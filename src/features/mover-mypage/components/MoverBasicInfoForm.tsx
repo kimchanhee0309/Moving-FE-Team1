@@ -6,8 +6,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/common/components/button";
 import { Input } from "@/common/components/Input";
 import { ROUTES } from "@/common/constants/routes";
-import { getPhoneError, normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
-import { getEmailError } from "@/common/validation/email";
+import { getPhoneError, normalizePhoneDigits } from "@/common/validation/contact";
 import { getNameError } from "@/common/validation/name";
 import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
 import { useValidationMessage } from "@/common/validation/useValidationMessage";
@@ -66,16 +65,14 @@ export function MoverBasicInfoForm({
   const normalizedPhone = normalizePhoneDigits(values.phone);
   const changedFields = {
     name: values.name.trim() !== initialValues.name.trim(),
-    email: normalizeEmail(values.email) !== normalizeEmail(initialValues.email),
     phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
   };
-  // 이름·전화번호는 세션으로 수정하고, 이메일·비밀번호 변경만 재인증합니다.
+  // 이름·전화번호는 세션으로 수정하고, 비밀번호 변경만 재인증합니다. 가입 이메일은 수정할 수 없습니다.
   const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
-  const requiresCurrentPassword = changedFields.email || isChangingPassword;
+  const requiresCurrentPassword = isChangingPassword;
 
   const errors: Partial<Record<BasicInfoField, string>> = {
     name: translateValidation(getNameError(values.name)),
-    email: translateValidation(getEmailError(values.email)),
     phone: translateValidation(getPhoneError(values.phone)),
     currentPassword:
       requiresCurrentPassword && !values.currentPassword
@@ -98,7 +95,6 @@ export function MoverBasicInfoForm({
   };
   const hasError = Boolean(
     (changedFields.name && errors.name) ||
-      (changedFields.email && errors.email) ||
       (changedFields.phone && errors.phone) ||
       errors.currentPassword ||
       errors.newPassword ||
@@ -106,7 +102,6 @@ export function MoverBasicInfoForm({
   );
   const hasChanges =
     changedFields.name ||
-    changedFields.email ||
     changedFields.phone ||
     isChangingPassword;
   const responsiveInputClass = "max-w-none min-[1200px]:[&>div]:h-16";
@@ -180,18 +175,19 @@ export function MoverBasicInfoForm({
               />
             </div>
             <div className={rowClass}>
+              {/* 가입 이메일은 로그인 ID라 수정할 수 없습니다. disabled 대신 readOnly로 두어 키보드 focus와 보조 기술 읽기를 유지하고 사유를 도움말로 안내합니다. 입력 가능한 칸과 구분되도록 배경을 회색으로 두고 focus 테두리는 강조색 대신 회색을 씁니다. */}
               <Input
                 name="email"
                 label={auth("email")}
                 type="email"
                 autoComplete="email"
                 inputSize="sm"
-                containerClassName={responsiveInputClass}
+                containerClassName={`${responsiveInputClass} [&>div]:bg-[var(--gray-100)]! [&>div]:hover:border-[var(--line-200)]! [&>div]:focus-within:border-[var(--gray-300)]!`}
+                className="cursor-default text-[var(--gray-400)]!"
                 value={values.email}
-                error={changedFields.email ? errors.email : undefined}
-                disabled={isBusy}
-                onBlur={() => setTouched((current) => ({ ...current, email: true }))}
-                onChange={(event) => updateValue("email", event.currentTarget.value)}
+                readOnly
+                aria-readonly="true"
+                helperText={account("emailReadOnly")}
               />
             </div>
             <div className={`${rowClass} min-[1200px]:border-b-0`}>

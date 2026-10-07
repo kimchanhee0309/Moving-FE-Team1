@@ -50,7 +50,6 @@ export interface MoverBasicInfoFormValues {
   newPasswordConfirm: string;
   changedFields?: {
     name: boolean;
-    email: boolean;
     phone: boolean;
   };
 }
