@@ -210,7 +210,7 @@ export function MoverSearchDetailPageContent({
         }}
       />
 
-      {/* Figma 배너 높이: 모바일 1:8197 122, 태블릿 1:7983 157, 데스크톱 1:8301 225. 데스크톱 에셋은 quote-detail-banner.svg(180)를 225에 사용합니다. */}
+      {/* Figma 배너 높이: 모바일 1:8197 122, 태블릿 1:7983 157, 데스크톱 1:8301 225. */}
       <div
         aria-hidden="true"
         className="h-[122px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-mobile.png')] min-[744px]:hidden"
@@ -219,9 +219,15 @@ export function MoverSearchDetailPageContent({
         aria-hidden="true"
         className="hidden h-[157px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-tablet.png')] min-[744px]:block min-[1200px]:hidden"
       />
+      {/*
+        데스크톱 배너(1:8301)는 1920×225 고정 프레임 안에 좌측 작은 M(x 210~380, 프로필 왼쪽과
+        겹치는 위치)·우측 큰 M(x 1112~1437)이 절대 좌표로 박혀 있다. 뷰포트가 1920보다 넓어지면
+        bg-cover로 늘리는 대신 에셋을 1920×225 그대로 중앙 고정해 두 M 위치를 그대로 유지하고,
+        남는 좌우 영역은 같은 배너색(--primary-400)으로 채운다.
+      */}
       <div
         aria-hidden="true"
-        className="hidden h-[225px] w-full bg-cover bg-center bg-[url('/images/mover-quote/quote-detail-banner.svg')] min-[1200px]:block"
+        className="hidden h-[225px] w-full bg-[var(--primary-400)] bg-[length:1920px_225px] bg-center bg-no-repeat bg-[url('/images/mover-search/banner-desktop.png')] min-[1200px]:block"
       />
 
       <div className="mx-auto w-full max-w-[1200px] px-5 min-[744px]:px-[72px] min-[1200px]:px-0">
