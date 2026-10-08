@@ -34,7 +34,6 @@ export function AuthController(props: AuthScreenProps) {
     {...props}
     isPending={credentials.isPending || socialMutation.isPending}
     onSubmitValues={async (values) => {
-      const recoveryQuestion = values.recoveryQuestion;
       const input = {
         role: props.role,
         email: values.email,
@@ -42,8 +41,7 @@ export function AuthController(props: AuthScreenProps) {
       };
       let user;
       if (props.mode === "signup") {
-        if (!recoveryQuestion) throw new Error("복구 질문을 선택해 주세요.");
-        ({ user } = await credentials.mutateAsync({ ...input, mode: "signup", name: values.name, phone: values.phone, recoveryQuestion, recoveryAnswer: values.recoveryAnswer }));
+        ({ user } = await credentials.mutateAsync({ ...input, mode: "signup", name: values.name, phone: values.phone }));
       } else {
         ({ user } = await credentials.mutateAsync({ ...input, mode: "login" }));
       }

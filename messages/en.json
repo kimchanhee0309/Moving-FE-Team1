@@ -78,17 +78,6 @@
     "phone": "Phone number",
     "password": "Password",
     "confirmPassword": "Confirm password",
-    "recoveryQuestion": "Password recovery question",
-    "recoveryQuestionPlaceholder": "Select a question",
-    "recoveryQuestionRequired": "Select a recovery question.",
-    "recoveryAnswer": "Recovery answer",
-    "recoveryAnswerPlaceholder": "Enter an answer (2–100 characters)",
-    "recoveryAnswerInvalid": "Enter an answer between 2 and 100 characters.",
-    "recoveryQuestions": {
-      "CHILDHOOD_NICKNAME": "What was your childhood nickname?",
-      "MEMORABLE_PLACE": "What place do you remember most?",
-      "PERSONAL_PHRASE": "What phrase would you like to remember?"
-    },
     "namePlaceholder": "Enter your name",
     "emailPlaceholder": "Enter your email",
     "phonePlaceholder": "Numbers only",
@@ -406,16 +395,6 @@
     "submit": "Delete account"
   },
   "Recovery": {
-    "recoveryQuestion": "Recovery question: {question}",
-    "recoveryAnswerPlaceholder": "Answer entered at sign-up",
-    "recoveryAnswerInvalid": "Enter an answer between 2 and 100 characters.",
-    "recoveryAnswerWrong": "The recovery answer is incorrect.",
-    "recoveryAnswerAttemptsExceeded": "Too many attempts. Request a new email code.",
-    "recoveryQuestions": {
-      "CHILDHOOD_NICKNAME": "What was your childhood nickname?",
-      "MEMORABLE_PLACE": "What place do you remember most?",
-      "PERSONAL_PHRASE": "What phrase would you like to remember?"
-    },
     "seconds": "{count}s",
     "minutes": "{count}m",
     "minutesSeconds": "{minutes}m {seconds}s",

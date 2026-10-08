@@ -78,17 +78,6 @@
     "phone": "电话号码",
     "password": "密码",
     "confirmPassword": "确认密码",
-    "recoveryQuestion": "密码找回问题",
-    "recoveryQuestionPlaceholder": "请选择问题",
-    "recoveryQuestionRequired": "请选择找回问题。",
-    "recoveryAnswer": "找回答案",
-    "recoveryAnswerPlaceholder": "请输入答案（2–100 个字符）",
-    "recoveryAnswerInvalid": "答案长度应为 2–100 个字符。",
-    "recoveryQuestions": {
-      "CHILDHOOD_NICKNAME": "您小时候的昵称是什么？",
-      "MEMORABLE_PLACE": "您印象最深刻的地方是哪里？",
-      "PERSONAL_PHRASE": "您想记住的一句话是什么？"
-    },
     "namePlaceholder": "请输入姓名",
     "emailPlaceholder": "请输入邮箱",
     "phonePlaceholder": "请只输入数字",
@@ -406,16 +395,6 @@
     "submit": "注销账户"
   },
   "Recovery": {
-    "recoveryQuestion": "找回问题：{question}",
-    "recoveryAnswerPlaceholder": "请输入注册时填写的答案",
-    "recoveryAnswerInvalid": "答案长度应为 2–100 个字符。",
-    "recoveryAnswerWrong": "找回答案不正确。",
-    "recoveryAnswerAttemptsExceeded": "尝试次数过多，请重新获取邮件验证码。",
-    "recoveryQuestions": {
-      "CHILDHOOD_NICKNAME": "您小时候的昵称是什么？",
-      "MEMORABLE_PLACE": "您印象最深刻的地方是哪里？",
-      "PERSONAL_PHRASE": "您想记住的一句话是什么？"
-    },
     "seconds": "{count}秒",
     "minutes": "{count}分钟",
     "minutesSeconds": "{minutes}分{seconds}秒",
