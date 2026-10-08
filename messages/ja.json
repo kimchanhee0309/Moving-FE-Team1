@@ -303,6 +303,7 @@
     "favorite": "お気に入りの業者",
     "noRecommended": "おすすめの業者はいません。",
     "noFavorites": "お気に入りの業者はいません。",
+    "favoritePagination": "お気に入り業者のページ移動",
     "detail": "{name}の詳細を見る",
     "loading": "業者一覧を読み込み中です。",
     "loadError": "業者一覧を読み込めませんでした。",
@@ -651,7 +652,9 @@
     "guideTitle": "業者を指定して見積もりを依頼",
     "guideDescription": "先に通常の見積もり依頼を行ってください。",
     "guideAction": "通常の見積もりを依頼",
-    "kakaoTitle": "{name}さん"
+    "kakaoTitle": "{name}さん",
+    "favoriteAdded": "お気に入りに追加しました",
+    "favoriteRemoved": "お気に入りを解除しました"
   },
   "Address": {
     "searchPlaceholder": "キーワードを入力してください。",
