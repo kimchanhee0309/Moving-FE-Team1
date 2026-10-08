@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
+import { CopyLinkToast } from "@/common/components/CopyLinkToast";
 import {
   EmptyState,
   ErrorState,
@@ -29,10 +30,9 @@ import {
   createMoverDetailShareUrl,
   KAKAO_JS_SDK_INTEGRITY,
   KAKAO_JS_SDK_SRC,
-  REGION_FILTER_OPTIONS,
 } from "../mover-search.constants";
-import { getMoverSearchViewer } from "../mover-search.utils";
-import { CopyLinkToast } from "./CopyLinkToast";
+import type { MoverDetail } from "../mover-search.types";
+import { getMoverSearchViewer, getRegionLabel } from "../mover-search.utils";
 import { DesignatedRequestGuideModal } from "./DesignatedRequestGuideModal";
 import { MoverSearchDetailReviews } from "./MoverSearchDetailReviews";
 import {
@@ -44,11 +44,14 @@ import {
 interface MoverSearchDetailPageContentProps {
   moverId: string;
   mockHasGeneralQuote?: boolean;
+  /** page.tsx(Server Component)가 JSON-LD용으로 이미 조회해 둔 결과입니다. 있으면 첫 렌더에 바로 써서 로딩 상태를 건너뜁니다. */
+  initialMover?: MoverDetail | null;
 }
 
 export function MoverSearchDetailPageContent({
   moverId,
   mockHasGeneralQuote = false,
+  initialMover,
 }: MoverSearchDetailPageContentProps) {
   const t = useTranslations("MoverDetail");
   const quote = useTranslations("Quote");
@@ -63,7 +66,9 @@ export function MoverSearchDetailPageContent({
 
   const [reviewPaging, setReviewPaging] = useState({ moverId, page: 1 });
   const reviewPage = reviewPaging.moverId === moverId ? reviewPaging.page : 1;
-  const [isToastVisible, setIsToastVisible] = useState(false);
+  const [toast, setToast] = useState<{ isVisible: boolean; message?: string }>({
+    isVisible: false,
+  });
   const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   const {
@@ -73,8 +78,16 @@ export function MoverSearchDetailPageContent({
     refetchDetail,
     reviewSummary,
     isReviewPending,
-  } = useMoverSearchDetail(moverId, reviewPage);
-  const favoritesQuery = useMoverSearchFavorites(user?.id, isCustomer);
+  } = useMoverSearchDetail(moverId, reviewPage, initialMover);
+  const favoritesQuery = useMoverSearchFavorites(
+    user?.id,
+    isCustomer,
+    (isFavoriteNow) =>
+      setToast({
+        isVisible: true,
+        message: isFavoriteNow ? t("favoriteAdded") : t("favoriteRemoved"),
+      }),
+  );
   const designatedQuery = useMoverSearchDesignatedRequest(
     user?.id,
     isCustomer,
@@ -86,7 +99,7 @@ export function MoverSearchDetailPageContent({
   const isDesignatedComplete = designatedQuery.designatedIdSet.has(moverId);
 
   const handleFavoriteClick = () => {
-    if (viewer === "pending") {
+    if (viewer === "pending" || !mover) {
       return;
     }
     if (viewer === "guest") {
@@ -96,7 +109,7 @@ export function MoverSearchDetailPageContent({
     if (viewer !== "customer") {
       return;
     }
-    favoritesQuery.toggleFavorite(moverId);
+    favoritesQuery.toggleFavorite(mover);
   };
 
   const handleDesignatedClick = () => {
@@ -121,14 +134,17 @@ export function MoverSearchDetailPageContent({
   };
 
   const getShareUrl = () =>
-    createMoverDetailShareUrl(window.location.origin, getPathname({ href: detailHref, locale }));
+    createMoverDetailShareUrl(
+      window.location.origin,
+      getPathname({ href: detailHref, locale }),
+    );
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(getShareUrl());
-      setIsToastVisible(true);
+      setToast({ isVisible: true, message: undefined });
     } catch {
-      setIsToastVisible(false);
+      setToast((current) => ({ ...current, isVisible: false }));
     }
   };
 
@@ -142,7 +158,10 @@ export function MoverSearchDetailPageContent({
       url,
       title: t("kakaoTitle", { name: mover.moverName }),
       introduction: mover.introduction,
-      imageUrl: getKakaoShareImageUrl(mover.profileImageUrl, window.location.origin),
+      imageUrl: getKakaoShareImageUrl(
+        mover.profileImageUrl,
+        window.location.origin,
+      ),
     });
 
     if (!didShare) {
@@ -164,10 +183,7 @@ export function MoverSearchDetailPageContent({
 
   if (isDetailError) {
     return (
-      <ErrorState
-        title={t("loadError")}
-        onRetry={() => void refetchDetail()}
-      />
+      <ErrorState title={t("loadError")} onRetry={() => void refetchDetail()} />
     );
   }
 
@@ -198,8 +214,11 @@ export function MoverSearchDetailPageContent({
         strategy="afterInteractive"
       />
       <CopyLinkToast
-        isVisible={isToastVisible}
-        onClose={() => setIsToastVisible(false)}
+        isVisible={toast.isVisible}
+        message={toast.message}
+        onClose={() =>
+          setToast((current) => ({ ...current, isVisible: false }))
+        }
       />
       <DesignatedRequestGuideModal
         isOpen={isGuideOpen}
@@ -210,7 +229,7 @@ export function MoverSearchDetailPageContent({
         }}
       />
 
-      {/* Figma 배너 높이: 모바일 1:8197 122, 태블릿 1:7983 157, 데스크톱 1:8301 225. 데스크톱 에셋은 quote-detail-banner.svg(180)를 225에 사용합니다. */}
+      {/* Figma 배너 높이: 모바일 1:8197 122, 태블릿 1:7983 157, 데스크톱 1:8301 225. */}
       <div
         aria-hidden="true"
         className="h-[122px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-mobile.png')] min-[744px]:hidden"
@@ -219,9 +238,15 @@ export function MoverSearchDetailPageContent({
         aria-hidden="true"
         className="hidden h-[157px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-tablet.png')] min-[744px]:block min-[1200px]:hidden"
       />
+      {/*
+        데스크톱 배너(1:8301)는 1920×225 고정 프레임 안에 좌측 작은 M(x 210~380, 프로필 왼쪽과
+        겹치는 위치)·우측 큰 M(x 1112~1437)이 절대 좌표로 박혀 있다. 뷰포트가 1920보다 넓어지면
+        bg-cover로 늘리는 대신 에셋을 1920×225 그대로 중앙 고정해 두 M 위치를 그대로 유지하고,
+        남는 좌우 영역은 같은 배너색(--primary-400)으로 채운다.
+      */}
       <div
         aria-hidden="true"
-        className="hidden h-[225px] w-full bg-cover bg-center bg-[url('/images/mover-quote/quote-detail-banner.svg')] min-[1200px]:block"
+        className="hidden h-[225px] w-full bg-[var(--primary-400)] bg-[length:1920px_225px] bg-center bg-no-repeat bg-[url('/images/mover-search/banner-desktop.png')] min-[1200px]:block"
       />
 
       <div className="mx-auto w-full max-w-[1200px] px-5 min-[744px]:px-[72px] min-[1200px]:px-0">
@@ -229,7 +254,10 @@ export function MoverSearchDetailPageContent({
         <div className="-mt-[42px] flex flex-col min-[744px]:-mt-[77px] min-[1200px]:-mt-[103px]">
           <div className="relative z-10 mb-[13px] flex size-16 items-center justify-center overflow-hidden rounded-xl bg-[var(--black-300)] p-0.5 min-[744px]:mb-[23px] min-[744px]:size-[100px] min-[744px]:p-1 min-[1200px]:mb-5 min-[1200px]:size-[134px] min-[1200px]:rounded-[12px] min-[1200px]:p-1.5">
             <Image
-              src={mover.profileImageUrl ?? "/images/mover-search/profile-placeholder.png"}
+              src={
+                mover.profileImageUrl ??
+                "/images/mover-search/profile-placeholder.png"
+              }
               alt={quote("moverProfile", { name: mover.moverName })}
               width={134}
               height={134}
@@ -241,123 +269,146 @@ export function MoverSearchDetailPageContent({
 
           <div className="flex flex-col gap-10 min-[1200px]:flex-row min-[1200px]:items-start min-[1200px]:gap-[53px]">
             <div className="flex min-w-0 flex-1 flex-col gap-8 min-[1200px]:gap-10">
-              <div className="flex flex-col gap-8">
-              <div className="flex flex-col gap-4 min-[744px]:gap-5">
-                <div className="flex flex-col gap-2 min-[744px]:gap-3">
-                  <div className="flex flex-wrap items-center gap-1 min-[744px]:gap-2">
-                    {serviceTypes.map((serviceType) => (
-                      <ServiceTypeChip
-                        key={serviceType}
-                        serviceType={serviceType}
-                      />
-                    ))}
-                  </div>
-                  {/* 기사님이 작성한 소개글은 번역하지 않고 원문(한국어)으로 표시합니다. */}
-                  <p lang="ko" className="text-2lg-semibold text-[var(--black-300)] min-[744px]:text-2xl-semibold">
-                    {mover.introduction}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <MovingBadge />
-                    <p className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-2lg-semibold">
-                      {quote("moverName", { name: mover.moverName })}
+              <section
+                aria-labelledby="mover-profile-heading"
+                className="flex flex-col gap-8"
+              >
+                <div className="flex flex-col gap-4 min-[744px]:gap-5">
+                  <div className="flex flex-col gap-2 min-[744px]:gap-3">
+                    <div className="flex flex-wrap items-center gap-1 min-[744px]:gap-2">
+                      {serviceTypes.map((serviceType) => (
+                        <ServiceTypeChip
+                          key={serviceType}
+                          serviceType={serviceType}
+                        />
+                      ))}
+                    </div>
+                    {/* 기사님이 작성한 소개글은 번역하지 않고 원문(한국어)으로 표시합니다. */}
+                    <p
+                      lang="ko"
+                      className="text-2lg-semibold text-[var(--black-300)] min-[744px]:text-2xl-semibold"
+                    >
+                      {mover.introduction}
                     </p>
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <MovingBadge />
+                      {/* 이 페이지가 다루는 기사님을 식별하는 유일한 h1입니다. */}
+                      <h1
+                        id="mover-profile-heading"
+                        className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-2lg-semibold"
+                      >
+                        {quote("moverName", { name: mover.moverName })}
+                      </h1>
+                    </div>
+                    <p
+                      className="text-md-medium flex items-center gap-1 text-[var(--content-muted)] min-[744px]:text-2lg-medium"
+                      aria-label={t("favoriteCount", {
+                        count: displayedFavoriteCount,
+                      })}
+                    >
+                      {displayedFavoriteCount}
+                      <Image
+                        src="/icons/button/like-sm.svg"
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="size-6"
+                      />
+                    </p>
+                  </div>
+
                   <p
-                    className="text-md-medium flex items-center gap-1 text-[var(--content-muted)] min-[744px]:text-2lg-medium"
-                    aria-label={t("favoriteCount", { count: displayedFavoriteCount })}
+                    lang="ko"
+                    className="text-md-regular whitespace-pre-line text-[var(--content-muted)] min-[744px]:text-lg-regular"
                   >
-                    {displayedFavoriteCount}
-                    <Image
-                      src="/icons/button/like-sm.svg"
-                      alt=""
-                      width={24}
-                      height={24}
-                      className="size-6"
-                    />
+                    {mover.detailDescription}
                   </p>
+                  <OriginalTextNotice className="-mt-2" />
                 </div>
 
-                <p lang="ko" className="text-md-regular whitespace-pre-line text-[var(--content-muted)] min-[744px]:text-lg-regular">
-                  {mover.detailDescription}
-                </p>
-                <OriginalTextNotice className="-mt-2" />
+                <dl className="flex h-[95px] items-center justify-between gap-2 rounded-xl border border-[var(--line-200)] bg-[var(--gray-50)] px-10 min-[744px]:h-[120px] min-[744px]:rounded-2xl min-[744px]:px-[100px]">
+                  <div className="flex flex-col items-center text-center">
+                    <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">
+                      {t("progress")}
+                    </dt>
+                    <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
+                      {t("confirmedCount", { count: mover.confirmedCount })}
+                    </dd>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">
+                      {t("reviews")}
+                    </dt>
+                    <dd className="flex items-center gap-0.5 min-[744px]:gap-1.5">
+                      <Image
+                        src="/icons/ic-star.svg"
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="size-5 min-[744px]:size-6"
+                      />
+                      <span className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
+                        {mover.rating.toFixed(1)}
+                      </span>
+                      <span className="text-md-medium text-[var(--content-placeholder)] min-[744px]:text-lg-medium">
+                        ({mover.reviewCount})
+                      </span>
+                    </dd>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">
+                      {t("totalCareer")}
+                    </dt>
+                    <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
+                      {t("careerYears", { count: mover.careerYears })}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+
+              <ChipGroup
+                title={t("services")}
+                labels={mover.serviceTypes.map((type) => moveType(type))}
+                variant="service"
+              />
+              <ChipGroup
+                title={t("regions")}
+                labels={mover.regionValues.map((value) => {
+                  // 지역 label은 API 값(한국어)이므로 표시 직전에만 Options 번역으로 바꿉니다.
+                  const label = getRegionLabel(value);
+                  return optionLabel(label, label);
+                })}
+                variant="region"
+              />
+
+              <hr className="w-full border-0 border-t border-[var(--line-200)] min-[1200px]:hidden" />
+
+              <div className="min-[1200px]:hidden">
+                <MoverSearchDetailCompactShare
+                  onCopyLink={() => void handleCopyLink()}
+                  onShareKakao={() => void handleShareKakao()}
+                  onShareFacebook={handleShareFacebook}
+                />
               </div>
 
-              <dl className="flex h-[95px] items-center justify-between gap-2 rounded-xl border border-[var(--line-200)] bg-[var(--gray-50)] px-10 min-[744px]:h-[120px] min-[744px]:rounded-2xl min-[744px]:px-[100px]">
-                <div className="flex flex-col items-center text-center">
-                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">{t("progress")}</dt>
-                  <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
-                    {t("confirmedCount", { count: mover.confirmedCount })}
-                  </dd>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">{t("reviews")}</dt>
-                  <dd className="flex items-center gap-0.5 min-[744px]:gap-1.5">
-                    <Image
-                      src="/icons/ic-star.svg"
-                      alt=""
-                      width={24}
-                      height={24}
-                      className="size-5 min-[744px]:size-6"
-                    />
-                    <span className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
-                      {mover.rating.toFixed(1)}
-                    </span>
-                    <span className="text-md-medium text-[var(--content-placeholder)] min-[744px]:text-lg-medium">
-                      ({mover.reviewCount})
-                    </span>
-                  </dd>
-                </div>
-                <div className="flex flex-col items-center text-center">
-                  <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">{t("totalCareer")}</dt>
-                  <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
-                    {t("careerYears", { count: mover.careerYears })}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+              <hr className="w-full border-0 border-t border-[var(--line-200)]" />
 
-            <ChipGroup
-              title={t("services")}
-              labels={mover.serviceTypes.map((type) => moveType(type))}
-              variant="service"
-            />
-            <ChipGroup
-              title={t("regions")}
-              labels={mover.regionValues.map((value) => {
-                // 지역 label은 API 값(한국어)이므로 표시 직전에만 Options 번역으로 바꿉니다.
-                const label = getRegionLabel(value);
-                return optionLabel(label, label);
-              })}
-              variant="region"
-            />
-
-            <hr className="w-full border-0 border-t border-[var(--line-200)] min-[1200px]:hidden" />
-
-            <div className="min-[1200px]:hidden">
-              <MoverSearchDetailCompactShare
-                onCopyLink={() => void handleCopyLink()}
-                onShareKakao={() => void handleShareKakao()}
-                onShareFacebook={handleShareFacebook}
+              <MoverSearchDetailReviews
+                rating={reviewRating}
+                reviewCount={
+                  reviewTotalCount > 0 ? reviewTotalCount : mover.reviewCount
+                }
+                ratingCounts={ratingCounts}
+                reviews={reviews}
+                totalCount={reviewTotalCount}
+                totalPages={reviewTotalPages}
+                currentPage={reviewPage}
+                onPageChange={(page) => setReviewPaging({ moverId, page })}
+                isLoading={isReviewPending}
               />
-            </div>
-
-            <hr className="w-full border-0 border-t border-[var(--line-200)]" />
-
-            <MoverSearchDetailReviews
-              rating={reviewRating}
-              reviewCount={reviewTotalCount > 0 ? reviewTotalCount : mover.reviewCount}
-              ratingCounts={ratingCounts}
-              reviews={reviews}
-              totalCount={reviewTotalCount}
-              totalPages={reviewTotalPages}
-              currentPage={reviewPage}
-              onPageChange={(page) => setReviewPaging({ moverId, page })}
-              isLoading={isReviewPending}
-            />
             </div>
 
             <div className="hidden min-[1200px]:block">
@@ -385,13 +436,6 @@ export function MoverSearchDetailPageContent({
         onFavoriteClick={handleFavoriteClick}
       />
     </div>
-  );
-}
-
-function getRegionLabel(value: string) {
-  return (
-    REGION_FILTER_OPTIONS.find((option) => option.value === value)?.label ??
-    value
   );
 }
 
@@ -460,9 +504,19 @@ function ChipGroup({
   labels: string[];
   variant: "service" | "region";
 }) {
+  const headingId = `mover-${variant}-heading`;
+
   return (
-    <div className="flex flex-col gap-2 min-[744px]:gap-4">
-      <h2 className="text-lg-semibold text-[var(--content-strong)] min-[744px]:text-xl-semibold">{title}</h2>
+    <section
+      aria-labelledby={headingId}
+      className="flex flex-col gap-2 min-[744px]:gap-4"
+    >
+      <h2
+        id={headingId}
+        className="text-lg-semibold text-[var(--content-strong)] min-[744px]:text-xl-semibold"
+      >
+        {title}
+      </h2>
       <ul className="m-0 flex list-none flex-wrap gap-2 p-0 min-[744px]:gap-3">
         {labels.map((label) => (
           <li
@@ -477,6 +531,6 @@ function ChipGroup({
           </li>
         ))}
       </ul>
-    </div>
+    </section>
   );
 }

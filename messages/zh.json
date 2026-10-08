@@ -292,6 +292,7 @@
     "favorite": "收藏的师傅",
     "noRecommended": "暂无推荐师傅。",
     "noFavorites": "暂无收藏的师傅。",
+    "favoritePagination": "收藏师傅分页",
     "detail": "查看{name}师傅详情",
     "loading": "正在加载师傅列表。",
     "loadError": "无法加载师傅列表。",
@@ -630,7 +631,9 @@
     "guideTitle": "申请指定报价",
     "guideDescription": "请先完成普通报价申请。",
     "guideAction": "申请普通报价",
-    "kakaoTitle": "{name}师傅"
+    "kakaoTitle": "{name}师傅",
+    "favoriteAdded": "已收藏该师傅",
+    "favoriteRemoved": "已取消收藏"
   },
   "Address": {
     "searchPlaceholder": "请输入文字。",

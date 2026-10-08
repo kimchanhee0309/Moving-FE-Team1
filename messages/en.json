@@ -292,6 +292,7 @@
     "favorite": "Favorite movers",
     "noRecommended": "No recommended movers.",
     "noFavorites": "No favorite movers.",
+    "favoritePagination": "Navigate favorite movers",
     "detail": "View {name}'s details",
     "loading": "Loading movers...",
     "loadError": "Could not load movers.",
@@ -630,7 +631,9 @@
     "guideTitle": "Request a designated quote",
     "guideDescription": "Please submit a general quote request first.",
     "guideAction": "Request a general quote",
-    "kakaoTitle": "{name}"
+    "kakaoTitle": "{name}",
+    "favoriteAdded": "Added to favorites",
+    "favoriteRemoved": "Removed from favorites"
   },
   "Address": {
     "searchPlaceholder": "Enter an address.",
