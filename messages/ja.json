@@ -267,7 +267,7 @@
     "reviewLoadFailed": "レビューを読み込めませんでした。",
     "nicknameRequired": "ニックネームを入力してください。",
     "nicknameTooLong": "ニックネームは50文字以内で入力してください。",
-    "experienceInvalid": "経験年数は0～50の整数で入力してください。",
+    "experienceInvalid": "経験年数は1～40の整数で入力してください。",
     "shortIntroductionRequired": "ひとこと紹介を入力してください。",
     "shortIntroductionTooLong": "ひとこと紹介は255文字以内で入力してください。",
     "descriptionRequired": "詳細説明を入力してください。",
@@ -384,7 +384,7 @@
   },
   "Withdrawal": {
     "title": "退会",
-    "description": "退会すると、アカウントと関連するサービスデータが削除されます。",
+    "description": "退会するとアカウントは復元できず、個人情報はすぐに削除されます。投稿したレビューと完了した引っ越しの履歴は退会した会員として残り、確定前の依頼と見積もりはキャンセルされます。",
     "hint": "メールアカウントは現在のパスワードを入力してください。SNSアカウントはパスワードなしで退会できます。",
     "password": "現在のパスワード",
     "passwordPlaceholder": "現在のパスワードを入力してください",
@@ -743,7 +743,8 @@
     "REVIEW_ALREADY_EXISTS": "この引越しにはすでにレビューを書いています。",
     "ROLE_MISMATCH": "現在のアカウントでは利用できない機能です。",
     "SERVICE_UNAVAILABLE": "現在サービスをご利用いただけません。",
-    "USER_NOT_FOUND": "ユーザー情報を確認できません。"
+    "USER_NOT_FOUND": "ユーザー情報を確認できません。",
+    "WITHDRAWAL_BLOCKED_BY_CONFIRMED_MOVE": "確定した引っ越しがあるため退会できません。引っ越しが終わってからもう一度お試しください。"
   },
   "UserContent": {
     "originalNotice": "ドライバーが韓国語で作成した原文です。"

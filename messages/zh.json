@@ -267,7 +267,7 @@
     "reviewLoadFailed": "无法加载评价。",
     "nicknameRequired": "请输入昵称。",
     "nicknameTooLong": "昵称不能超过 50 个字符。",
-    "experienceInvalid": "经验请输入 0~50 之间的整数。",
+    "experienceInvalid": "经验请输入 1~40 之间的整数。",
     "shortIntroductionRequired": "请输入一句话介绍。",
     "shortIntroductionTooLong": "一句话介绍不能超过 255 个字符。",
     "descriptionRequired": "请输入详细说明。",
@@ -384,7 +384,7 @@
   },
   "Withdrawal": {
     "title": "注销账户",
-    "description": "注销后，与账户关联的服务数据将被删除。",
+    "description": "注销后账户无法恢复，个人信息将立即删除。已写的评价和已完成的搬家记录会以已注销会员的名义保留，尚未确定的请求和报价将被取消。",
     "hint": "邮箱账户请输入当前密码。社交账号无需密码即可注销。",
     "password": "当前密码",
     "passwordPlaceholder": "请输入当前密码",
@@ -743,7 +743,8 @@
     "REVIEW_ALREADY_EXISTS": "已为该次搬家撰写过评价。",
     "ROLE_MISMATCH": "当前账户无法使用该功能。",
     "SERVICE_UNAVAILABLE": "当前无法使用服务。",
-    "USER_NOT_FOUND": "无法确认用户信息。"
+    "USER_NOT_FOUND": "无法确认用户信息。",
+    "WITHDRAWAL_BLOCKED_BY_CONFIRMED_MOVE": "存在已确定的搬家，无法注销。请在搬家结束后重试。"
   },
   "UserContent": {
     "originalNotice": "以下为师傅撰写的韩文原文。"

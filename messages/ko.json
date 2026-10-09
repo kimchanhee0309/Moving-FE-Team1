@@ -267,7 +267,7 @@
     "reviewLoadFailed": "리뷰를 불러오지 못했습니다.",
     "nicknameRequired": "별명을 입력해 주세요.",
     "nicknameTooLong": "별명은 50자 이하여야 합니다.",
-    "experienceInvalid": "경력은 0~50 사이의 정수로 입력해 주세요.",
+    "experienceInvalid": "경력은 1~40 사이의 정수로 입력해 주세요.",
     "shortIntroductionRequired": "한 줄 소개를 입력해 주세요.",
     "shortIntroductionTooLong": "한 줄 소개는 255자 이하여야 합니다.",
     "descriptionRequired": "상세 설명을 입력해 주세요.",
@@ -384,7 +384,7 @@
   },
   "Withdrawal": {
     "title": "회원 탈퇴",
-    "description": "탈퇴하면 계정과 연결된 서비스 데이터가 삭제됩니다.",
+    "description": "탈퇴하면 계정을 복구할 수 없고 개인정보는 즉시 삭제됩니다. 작성한 리뷰와 완료된 이사 내역은 '탈퇴한 회원'으로 남으며, 확정 전인 요청과 견적은 취소됩니다.",
     "hint": "이메일 계정은 현재 비밀번호를 입력해 주세요. SNS 계정은 비밀번호 없이 탈퇴할 수 있습니다.",
     "password": "현재 비밀번호",
     "passwordPlaceholder": "현재 비밀번호를 입력해 주세요",
@@ -743,7 +743,8 @@
     "REVIEW_ALREADY_EXISTS": "이미 리뷰를 작성한 이사입니다.",
     "ROLE_MISMATCH": "현재 계정으로 이용할 수 없는 기능입니다.",
     "SERVICE_UNAVAILABLE": "현재 서비스를 이용할 수 없습니다.",
-    "USER_NOT_FOUND": "사용자 정보를 확인할 수 없습니다."
+    "USER_NOT_FOUND": "사용자 정보를 확인할 수 없습니다.",
+    "WITHDRAWAL_BLOCKED_BY_CONFIRMED_MOVE": "확정된 이사가 있어 탈퇴할 수 없습니다. 이사가 끝난 뒤 다시 시도해 주세요."
   },
   "UserContent": {
     "originalNotice": "기사님이 작성한 한국어 원문입니다."

@@ -105,6 +105,24 @@ test("MOVE_REQUEST_CANCELED는 기사님의 보낸 견적 상세로 이동한다
   ]);
 });
 
+test("QUOTE_CANCELED_BY_MOVER_WITHDRAWAL는 삭제된 견적 대신 고객의 받은 견적 목록으로 이동한다", () => {
+  const item = buildItem({
+    type: "QUOTE_CANCELED_BY_MOVER_WITHDRAWAL",
+    content: "김코드 기사님이 계정을 탈퇴하여 보내드린 견적이 취소되었습니다.",
+    // 기사님 탈퇴로 견적이 삭제되면 BE가 quoteId를 null로 비웁니다.
+    quoteId: null,
+  });
+
+  const result = toGnbNotificationItem(item, "CUSTOMER");
+
+  assert.equal(result.href, "/customer-quote");
+  assert.deepEqual(result.segments, [
+    { text: "김코드 기사님이 계정을 탈퇴하여 보내드린 " },
+    { text: "견적이 취소", emphasis: true },
+    { text: "되었습니다." },
+  ]);
+});
+
 test("CONFIRMED_MOVE_CANCELED는 기사님의 보낸 견적 상세로 이동한다", () => {
   const item = buildItem({
     type: "CONFIRMED_MOVE_CANCELED",
