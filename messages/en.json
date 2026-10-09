@@ -267,7 +267,7 @@
     "reviewLoadFailed": "We couldn't load reviews.",
     "nicknameRequired": "Please enter a nickname.",
     "nicknameTooLong": "Nicknames must be 50 characters or fewer.",
-    "experienceInvalid": "Enter a whole number of years between 0 and 50.",
+    "experienceInvalid": "Enter a whole number of years between 1 and 40.",
     "shortIntroductionRequired": "Please enter a one-line introduction.",
     "shortIntroductionTooLong": "The one-line introduction must be 255 characters or fewer.",
     "descriptionRequired": "Please enter a detailed description.",
@@ -384,7 +384,7 @@
   },
   "Withdrawal": {
     "title": "Delete account",
-    "description": "Deleting your account removes its service data.",
+    "description": "Deleting your account can't be undone and your personal information is removed right away. Your reviews and completed moves stay under a withdrawn-member label, and requests and quotes that aren't confirmed yet are canceled.",
     "hint": "Email accounts require the current password. Social accounts can be deleted without one.",
     "password": "Current password",
     "passwordPlaceholder": "Enter your current password",
@@ -743,7 +743,8 @@
     "REVIEW_ALREADY_EXISTS": "You've already written a review for this move.",
     "ROLE_MISMATCH": "This feature isn't available for your account type.",
     "SERVICE_UNAVAILABLE": "The service is currently unavailable.",
-    "USER_NOT_FOUND": "We couldn't find your account information."
+    "USER_NOT_FOUND": "We couldn't find your account information.",
+    "WITHDRAWAL_BLOCKED_BY_CONFIRMED_MOVE": "You can't delete your account while a confirmed move is pending. Please try again after the move is done."
   },
   "UserContent": {
     "originalNotice": "Written by the mover in Korean (original text)."

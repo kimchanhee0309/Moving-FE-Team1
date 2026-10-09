@@ -45,6 +45,8 @@ const EMPHASIS_RESOLVER_BY_TYPE: Record<NotificationType, EmphasisResolver> = {
   MOVE_REQUEST_CANCELED: pattern(/보내주신\s(.+?취소)/),
   // "{고객명} 고객님이 계정을 탈퇴하여 확정된 이사 일정이 취소되었습니다." (withdrawAccount 경로로만 도달)
   CONFIRMED_MOVE_CANCELED: pattern(/탈퇴하여\s(.+?취소)/),
+  // "{모버닉네임} 기사님이 계정을 탈퇴하여 보내드린 견적이 취소되었습니다." (BE auth.repository.ts createMoverWithdrawalNotifications)
+  QUOTE_CANCELED_BY_MOVER_WITHDRAWAL: pattern(/보내드린\s(.+?취소)/),
 };
 
 function buildSegments(content: string, type: NotificationType): GnbNotificationSegment[] {
@@ -97,6 +99,12 @@ function resolveHref(item: NotificationApiItem, role: UserRole): string | undefi
     // (move-request.repository.ts의 recipients가 quote 단위로 구성됨). 자신이 보낸 견적
     // 상세로 보낸다.
     return ROUTES.MOVER.QUOTE.DETAIL(item.quoteId);
+  }
+
+  if (item.type === "QUOTE_CANCELED_BY_MOVER_WITHDRAWAL") {
+    // 고객만 받는 알림입니다. 기사님 탈퇴로 견적이 삭제돼 quoteId가 비어 있으므로(BE FK SetNull)
+    // 견적 상세 대신 남은 견적을 확인할 수 있는 받은 견적 목록으로 보냅니다.
+    return ROUTES.CUSTOMER.QUOTE.PENDING;
   }
 
   return undefined;
