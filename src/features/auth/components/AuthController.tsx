@@ -33,7 +33,7 @@ export function AuthController(props: AuthScreenProps) {
   return <AuthForm
     {...props}
     isPending={credentials.isPending || socialMutation.isPending}
-    onSubmitValues={async (values) => {
+    onSubmitValues={async (values, emailVerificationToken) => {
       const input = {
         role: props.role,
         email: values.email,
@@ -41,7 +41,7 @@ export function AuthController(props: AuthScreenProps) {
       };
       let user;
       if (props.mode === "signup") {
-        ({ user } = await credentials.mutateAsync({ ...input, mode: "signup", name: values.name, phone: values.phone }));
+        ({ user } = await credentials.mutateAsync({ ...input, mode: "signup", name: values.name, phone: values.phone, emailVerificationToken }));
       } else {
         ({ user } = await credentials.mutateAsync({ ...input, mode: "login" }));
       }

@@ -22,6 +22,8 @@ let authenticateCredentials: typeof import("../../src/features/auth/auth.api").a
 let requestPasswordResetCode: typeof import("../../src/features/auth/auth.api").requestPasswordResetCode;
 let verifyPasswordResetCode: typeof import("../../src/features/auth/auth.api").verifyPasswordResetCode;
 let confirmPasswordReset: typeof import("../../src/features/auth/auth.api").confirmPasswordReset;
+let requestSignupEmailCode: typeof import("../../src/features/auth/auth.api").requestSignupEmailCode;
+let verifySignupEmailCode: typeof import("../../src/features/auth/auth.api").verifySignupEmailCode;
 const success = (data: unknown) => Response.json({ success: true, data });
 const failure = (code: string, status = 401) => Response.json({ success: false, error: { code, message: code } }, { status });
 const pathname = (input: RequestInfo | URL) => new URL(input instanceof Request ? input.url : String(input)).pathname;
@@ -30,7 +32,7 @@ before(async () => {
   // 이 테스트는 실제 서버/개인 환경설정을 사용하지 않고 모든 HTTP 경계를 모의합니다.
   process.env.NEXT_PUBLIC_API_URL = "http://localhost:4000";
   ({ apiClient } = await import("../../src/common/api/client"));
-  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset } = await import("../../src/features/auth/auth.api"));
+  ({ beginSocialLogin, fetchSession, logoutSession, withdrawAccountSession, submitCredentials, authenticateCredentials, requestPasswordResetCode, verifyPasswordResetCode, confirmPasswordReset, requestSignupEmailCode, verifySignupEmailCode } = await import("../../src/features/auth/auth.api"));
   Object.defineProperty(globalThis, "window", { value: {}, configurable: true });
 });
 beforeEach(async () => { await changeAuthSession(async () => undefined); });
@@ -320,6 +322,65 @@ test("두 역할 이메일 가입/로그인의 DTO와 data.user를 사용한다"
       assert.equal((await submitCredentials(mode, role, values)).user.role, role); mock.restoreAll();
     }
   }
+});
+
+test("회원가입 이메일 인증 API가 정규화된 이메일과 코드만 전송한다", async () => {
+  const requests: Array<{ path: string; method: string | undefined; body: unknown }> = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    requests.push({ path: pathname(input), method: options.method, body: JSON.parse(String(options.body)) });
+    if (pathname(input) === "/auth/signup/email-code") return success({ expiresInSeconds: 300, resendAfterSeconds: 60 });
+    return success({ emailVerificationToken: "verification-token", expiresInSeconds: 900 });
+  });
+
+  assert.deepEqual(await requestSignupEmailCode(" TEST@example.com "), { expiresInSeconds: 300, resendAfterSeconds: 60 });
+  // 화면은 토큰만 사용하므로 서버가 함께 보내는 만료 시간은 반환값에 포함하지 않습니다.
+  assert.deepEqual(await verifySignupEmailCode(" TEST@example.com ", "012345"), { emailVerificationToken: "verification-token" });
+  assert.deepEqual(requests, [
+    { path: "/auth/signup/email-code", method: "POST", body: { email: "test@example.com" } },
+    { path: "/auth/signup/email-code/verify", method: "POST", body: { email: "test@example.com", code: "012345" } },
+  ]);
+});
+
+test("회원가입 이메일 인증의 서버 오류 코드를 그대로 전달하고 Refresh를 시도하지 않는다", async () => {
+  const paths: string[] = [];
+  const responses = [failure("EMAIL_ALREADY_EXISTS", 409), failure("EMAIL_VERIFICATION_CODE_RESEND_TOO_SOON", 429), failure("EMAIL_VERIFICATION_CODE_INVALID", 401)];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL) => { paths.push(pathname(input)); return responses.shift() ?? success(null); });
+
+  await assert.rejects(requestSignupEmailCode("test@example.com"), (error: unknown) => error instanceof ApiError && error.code === "EMAIL_ALREADY_EXISTS" && error.status === 409);
+  await assert.rejects(requestSignupEmailCode("test@example.com"), (error: unknown) => error instanceof ApiError && error.code === "EMAIL_VERIFICATION_CODE_RESEND_TOO_SOON" && error.status === 429);
+  // 코드 불일치는 401이지만 로그인 세션 문제가 아니므로 토큰 갱신 없이 한 번의 요청으로 끝나야 합니다.
+  await assert.rejects(verifySignupEmailCode("test@example.com", "000000"), (error: unknown) => error instanceof ApiError && error.code === "EMAIL_VERIFICATION_CODE_INVALID");
+  assert.deepEqual(paths, ["/auth/signup/email-code", "/auth/signup/email-code", "/auth/signup/email-code/verify"]);
+});
+
+test("회원가입 이메일 인증의 잘못된 응답 모양을 거절한다", async () => {
+  const responses = [success({ expiresInSeconds: "300" }), success({ emailVerificationToken: "" }), success(null)];
+  mock.method(globalThis, "fetch", async () => responses.shift() ?? success(null));
+
+  const isInvalidResponse = (error: unknown) => error instanceof ApiError && error.code === "INVALID_RESPONSE";
+  await assert.rejects(requestSignupEmailCode("test@example.com"), isInvalidResponse);
+  await assert.rejects(verifySignupEmailCode("test@example.com", "123456"), isInvalidResponse);
+  await assert.rejects(verifySignupEmailCode("test@example.com", "123456"), isInvalidResponse);
+});
+
+test("가입 요청에만 이메일 인증 토큰을 포함하고 로그인 DTO에는 넣지 않는다", async () => {
+  const bodies: unknown[] = [];
+  mock.method(globalThis, "fetch", async (input: RequestInfo | URL, options: RequestInit) => {
+    if (options.body) bodies.push({ path: pathname(input), body: JSON.parse(String(options.body)) });
+    return success({ user: customer });
+  });
+
+  await submitCredentials("signup", "CUSTOMER", values, "verification-token");
+  await submitCredentials("login", "CUSTOMER", values, "verification-token");
+  // Provider 명령도 가입 화면이 넘긴 토큰을 그대로 전달해야 합니다.
+  await authenticateCredentials({ mode: "signup", role: "CUSTOMER", email: values.email, password: values.password, name: values.name, phone: values.phone, emailVerificationToken: "verification-token" });
+
+  const signupBody = { email: "test@example.com", password: values.password, role: "CUSTOMER", name: "테스트", phone: values.phone, emailVerificationToken: "verification-token" };
+  assert.deepEqual(bodies, [
+    { path: "/auth/signup", body: signupBody },
+    { path: "/auth/login", body: { email: "test@example.com", password: values.password, role: "CUSTOMER" } },
+    { path: "/auth/signup", body: signupBody },
+  ]);
 });
 
 test("Google/Kakao/Naver 시작에 역할 및 안전한 redirect를 전송한다", async () => {
