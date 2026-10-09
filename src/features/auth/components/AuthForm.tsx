@@ -15,11 +15,13 @@ import { useModal } from "@/providers/ModalProvider";
 
 import type { AuthField, AuthFormErrors, AuthFormValues, AuthScreenProps, SocialProvider } from "../auth.types";
 import { authHref, clearAuthFieldError, normalizePhone, validateAuthForm } from "../auth.utils";
+import { useSignupEmailVerification } from "../hooks/useSignupEmailVerification";
 import { ForgotPasswordModal } from "./AccountRecoveryModal";
+import { SignupEmailField } from "./SignupEmailField";
 
 interface AuthFormProps extends AuthScreenProps {
-  /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. */
-  onSubmitValues: (values: AuthFormValues) => Promise<void>;
+  /** AuthController에서 API mutation을 주입합니다. 성공 라우팅도 해당 컨테이너 책임입니다. 가입에서는 이메일 인증 토큰을 함께 전달합니다. */
+  onSubmitValues: (values: AuthFormValues, emailVerificationToken?: string) => Promise<void>;
   /** 공급자 인증 시작만 요청합니다. 공급자 페이지로 이동하는 동작은 AuthController에 위임합니다. */
   onSocialLogin: (provider: SocialProvider) => Promise<void>;
   /** Provider 이메일 mutation과 화면 OAuth mutation의 isPending을 합친 값으로 제출·입력을 잠급니다. */
@@ -39,10 +41,14 @@ const FIELD_PLACEHOLDER_KEYS = { name: "namePlaceholder", email: "emailPlacehold
 
 // 오류 행을 항상 예약해 blur 후 다음 입력/버튼이 이동하지 않게 합니다.
 // !는 공통 Input의 크기 클래스와 전역 typography보다 Auth 인스턴스 값을 우선하며 공통 구현은 바꾸지 않습니다.
+// 서버가 가입 요청의 이메일 인증을 거절한 경우입니다. 15분 만료, 다른 탭에서 새 코드를 받아 무효가 된 토큰, 인증 뒤 이메일 불일치가 해당합니다.
+const EMAIL_VERIFICATION_REJECTED_CODES = new Set(["EMAIL_VERIFICATION_REQUIRED", "EMAIL_VERIFICATION_TOKEN_INVALID", "EMAIL_VERIFICATION_EMAIL_MISMATCH"]);
+const AUTH_INPUT_CLASS = "text-base! min-[744px]:text-lg! placeholder:text-(--input-placeholder)!";
 const AUTH_FIELD_CLASS = "grid! max-w-none! gap-0! grid-rows-[auto_54px_minmax(20px,auto)] min-[744px]:grid-rows-[auto_54px_minmax(32px,auto)] after:content-[''] after:[grid-area:3/1] [&>p]:[grid-area:3/1] [&>p]:pt-1 [&>p]:text-xs! [&>p]:leading-4! min-[744px]:[&>p]:leading-5! [&>label]:mb-2 [&>label]:text-sm! [&>label]:leading-6! [&>label]:font-normal! min-[744px]:[&>label]:mb-4 min-[744px]:[&>label]:text-xl! min-[744px]:[&>label]:leading-8! [&>div]:h-[54px]!";
 
 /**
  * 공통 Input을 이용한 화면 검증/오류 focus/중복 제출 방지를 담당합니다.
+ * 회원가입은 이메일 인증을 마쳐야 제출할 수 있으며, 인증 UI는 SignupEmailField에 위임하고 여기서는 토큰 전달과 버튼 활성화만 결정합니다.
  * API 요청과 전역 인증 상태는 Provider/컨테이너에 위임합니다.
  */
 export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmitValues, onSocialLogin, isPending }: AuthFormProps) {
@@ -55,12 +61,15 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
   const [touched, setTouched] = useState<Partial<Record<AuthField, boolean>>>({});
   const [serverErrors, setServerErrors] = useState<AuthFormErrors>({});
   const [submitError, setSubmitError] = useState("");
+  const emailVerification = useSignupEmailVerification();
   const submitLock = useRef(false);
   const initialRecoveryOpened = useRef(false);
   const fields = mode === "signup" ? SIGNUP_FIELDS : LOGIN_FIELDS;
   const errors = { ...validateAuthForm(values, mode), ...serverErrors };
   const isIncomplete = fields.some((field) => !values[field].trim());
   const hasValidationError = fields.some((field) => Boolean(errors[field]));
+  // 로그인에는 이메일 인증이 없으므로 가입에서만 인증 완료를 제출 조건에 넣습니다.
+  const needsEmailVerification = mode === "signup" && emailVerification.status !== "verified";
 
   const openRecoveryModal = useCallback(() => {
     openModal(<ForgotPasswordModal initialRole={role} onClose={closeModal} />, { ariaLabel: t("forgotPassword") });
@@ -91,14 +100,27 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
       event.currentTarget.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)?.focus();
       return;
     }
+    // 버튼이 비활성화돼 있어도 Enter 제출은 들어올 수 있으므로 인증 전 가입 요청을 한 번 더 막습니다.
+    if (needsEmailVerification) {
+      event.currentTarget.querySelector<HTMLElement>('[name="email"]')?.focus();
+      return;
+    }
     // React 상태가 갱신되기 전 연속 submit도 ref로 차단합니다. 입력은 완료 전까지 잠급니다.
     submitLock.current = true;
     setServerErrors({});
     setSubmitError("");
     try {
-      await onSubmitValues({ ...values, name: values.name.trim(), email: values.email.trim(), phone: normalizePhone(values.phone) });
+      await onSubmitValues(
+        { ...values, name: values.name.trim(), email: values.email.trim(), phone: normalizePhone(values.phone) },
+        mode === "signup" ? emailVerification.token ?? undefined : undefined,
+      );
     } catch (error) {
-      if (error instanceof ApiError) {
+      if (error instanceof ApiError && EMAIL_VERIFICATION_REJECTED_CODES.has(error.code)) {
+        // 인증을 처음 상태로 되돌려 이메일 잠금을 풀고 다시 인증하도록 안내합니다. 다른 입력값은 유지합니다.
+        emailVerification.reset();
+        setServerErrors({});
+        setSubmitError(t("emailVerificationExpired"));
+      } else if (error instanceof ApiError) {
         const fieldErrors: AuthFormErrors = {};
         // 백엔드 Validator의 details(field/reason)를 현재 폼 필드에만 연결합니다. 임의 서버 필드를 폼에 추가하지 않습니다.
         for (const detail of error.details) {
@@ -108,7 +130,8 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
         if (error.code === "EMAIL_ALREADY_EXISTS") fieldErrors.email = t("emailExists");
         if (error.code === "PHONE_ALREADY_EXISTS") fieldErrors.phone = t("phoneExists");
         setServerErrors(fieldErrors);
-        setSubmitError(error.status === 429 ? t("rateLimited") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : apiErrorMessage(error, t("requestFailed")));
+        // 429 문구 우선순위: 로그인은 5회 실패 잠금 안내, 가입은 로그인 실패와 무관한 요청 제한이므로 일반 요청 제한 안내를 씁니다.
+        setSubmitError(error.status === 429 ? t(mode === "login" ? "rateLimited" : "authRateLimitExceeded") : error.code === "INVALID_CREDENTIALS" ? t("invalidCredentials") : error.code === "AUTH_SESSION_UNAVAILABLE" ? t(mode === "signup" ? "cookieMissingSignup" : "cookieMissingLogin") : apiErrorMessage(error, t("requestFailed")));
       } else {
         setSubmitError(error instanceof TypeError ? t("networkError") : t("requestFailed"));
       }
@@ -133,6 +156,22 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
           {fields.map((field) => {
             const isPassword = field === "password" || field === "passwordConfirm";
             const shouldShowError = Boolean(touched[field] || values[field]);
+            if (field === "email" && mode === "signup") {
+              return (
+                <SignupEmailField
+                  key={field}
+                  value={values.email}
+                  error={shouldShowError ? translateValidation(errors.email) : undefined}
+                  canRequestCode={!errors.email}
+                  disabled={isPending}
+                  verification={emailVerification}
+                  fieldClassName={AUTH_FIELD_CLASS}
+                  inputClassName={AUTH_INPUT_CLASS}
+                  onBlur={() => setTouched((current) => ({ ...current, email: true }))}
+                  onChange={(value) => handleFieldChange("email", value)}
+                />
+              );
+            }
             return (
               <Input
                 key={field}
@@ -145,7 +184,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
                 inputMode={field === "phone" ? "tel" : field === "email" ? "email" : undefined}
                 inputSize="md"
                 containerClassName={AUTH_FIELD_CLASS}
-                className="text-base! min-[744px]:text-lg! placeholder:text-(--input-placeholder)!"
+                className={AUTH_INPUT_CLASS}
                 value={values[field]}
                 disabled={isPending}
                 placeholder={t(FIELD_PLACEHOLDER_KEYS[field])}
@@ -156,7 +195,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
             );
           })}
         </div>
-        <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete || hasValidationError || isPending} isLoading={isPending}>
+        <Button type="submit" size="md" fullWidth className="max-[744px]:min-h-[54px]! max-[744px]:rounded-xl! max-[744px]:px-4! max-[744px]:py-3! max-[744px]:text-base!" disabled={isIncomplete || hasValidationError || needsEmailVerification || isPending} isLoading={isPending}>
           {mode === "login" ? common("login") : t("start")}
         </Button>
       </form>

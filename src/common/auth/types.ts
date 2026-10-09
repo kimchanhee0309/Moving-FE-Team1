@@ -33,6 +33,8 @@ export type AuthCredentialsRequest =
       mode: "signup";
       name: string;
       phone: string;
+      /** 가입 화면의 이메일 인증코드 확인으로 받은 토큰입니다. 서버가 필수로 전환하기 전의 호환을 위해 선택 필드입니다. */
+      emailVerificationToken?: string;
     });
 
 export interface AuthContextValue {
