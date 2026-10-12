@@ -52,7 +52,9 @@
     "selectedMore": "{first} 외 {count}개",
     "dialog": "알림",
     "logoutError": "로그아웃하지 못했습니다. 다시 시도해 주세요.",
-    "language": "언어 선택"
+    "language": "언어 선택",
+    "withdrawnCustomer": "탈퇴한 회원",
+    "withdrawnMover": "탈퇴한 기사님"
   },
   "Auth": {
     "google": "Google",
@@ -389,6 +391,7 @@
     "rejectSubmit": "반려하기",
     "requestInfo": "이사 요청 정보",
     "customerRequest": "{name} 고객님의 이사 요청",
+    "withdrawnCustomerRequest": "탈퇴한 회원의 이사 요청",
     "closeModal": "{title} 닫기",
     "priceLabel": "견적가를 입력해주세요",
     "pricePlaceholder": "견적가 입력",
@@ -466,6 +469,7 @@
     "pending": "견적대기",
     "moverName": "{name} 기사님",
     "moverProfile": "{name} 기사님 프로필",
+    "withdrawnMoverProfile": "탈퇴한 기사님 프로필",
     "favorite": "찜하기",
     "career": "경력",
     "careerYears": "{count}년",
@@ -495,6 +499,7 @@
     "shareKakao": "카카오톡으로 공유",
     "shareFacebook": "페이스북으로 공유",
     "kakaoTitle": "{name} 기사님 견적서",
+    "withdrawnMoverKakaoTitle": "탈퇴한 기사님 견적서",
     "kakaoDescription": "무빙에서 견적서를 확인해 보세요.",
     "kakaoButton": "견적서 보기",
     "kakaoError": "카카오톡 공유를 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
@@ -527,6 +532,7 @@
     "all": "전체",
     "noFilteredQuotes": "조건에 맞는 견적서가 없습니다.",
     "detailLink": "{name} 기사님 견적 상세 보기",
+    "withdrawnMoverDetailLink": "탈퇴한 기사님 견적 상세 보기",
     "detailLoading": "견적 상세를 불러오는 중...",
     "detailLoadError": "견적 상세를 불러오지 못했습니다",
     "detailLoadErrorDescription": "견적이 없거나 접근 권한이 없을 수 있습니다.",

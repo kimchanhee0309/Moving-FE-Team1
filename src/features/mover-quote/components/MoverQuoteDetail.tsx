@@ -14,6 +14,7 @@ import {
 } from "@/common/components/MoveTypeChip";
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import type { MoverQuoteDetailData } from "../mover-quote.types";
 import { QuoteShareButtons } from "./QuoteShareButtons";
@@ -25,6 +26,7 @@ interface MoverQuoteDetailProps {
 export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
   const t = useTranslations("MoverQuote");
   const quoteText = useTranslations("Quote");
+  const { formatCustomerName } = useWithdrawnAccountName();
   const moveType = useTranslations("MoveType");
   const locale = useLocale();
   const isConfirmed = quote.quoteStatus === QUOTE_STATUS.CONFIRMED;
@@ -92,7 +94,7 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
           </div>
 
           <h2 className="mt-6 border-b border-[var(--line-100)] pb-5 text-[20px] font-semibold leading-8 text-[var(--black-400)]">
-            {quoteText("customerName", { name: quote.customerName })}
+            {formatCustomerName(quote.customerName)}
           </h2>
 
           <div className="flex items-center justify-between gap-4 border-b border-[var(--line-100)] py-5">

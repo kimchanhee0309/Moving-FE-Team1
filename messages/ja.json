@@ -52,7 +52,9 @@
     "selectedMore": "{first}ほか{count}件",
     "dialog": "お知らせ",
     "logoutError": "ログアウトできませんでした。もう一度お試しください。",
-    "language": "言語を選択"
+    "language": "言語を選択",
+    "withdrawnCustomer": "退会した会員",
+    "withdrawnMover": "退会した業者"
   },
   "Auth": {
     "google": "Google",
@@ -389,6 +391,7 @@
     "rejectSubmit": "辞退する",
     "requestInfo": "引越し依頼情報",
     "customerRequest": "{name}様の引越し依頼",
+    "withdrawnCustomerRequest": "退会した会員の引越し依頼",
     "closeModal": "{title}を閉じる",
     "priceLabel": "見積もり金額を入力してください",
     "pricePlaceholder": "見積もり金額を入力",
@@ -466,6 +469,7 @@
     "pending": "見積もり待ち",
     "moverName": "{name}さん",
     "moverProfile": "{name}さんのプロフィール",
+    "withdrawnMoverProfile": "退会した業者のプロフィール",
     "favorite": "お気に入りに追加",
     "career": "経験年数",
     "careerYears": "{count}年",
@@ -495,6 +499,7 @@
     "shareKakao": "カカオトークで共有",
     "shareFacebook": "Facebookで共有",
     "kakaoTitle": "{name}さんの見積書",
+    "withdrawnMoverKakaoTitle": "退会した業者の見積書",
     "kakaoDescription": "ムービングで見積書を確認してください。",
     "kakaoButton": "見積書を見る",
     "kakaoError": "カカオトークでの共有を開始できませんでした。しばらくしてからもう一度お試しください。",
@@ -527,6 +532,7 @@
     "all": "すべて",
     "noFilteredQuotes": "条件に合う見積書はありません。",
     "detailLink": "{name}さんの見積もり詳細を見る",
+    "withdrawnMoverDetailLink": "退会した業者の見積もり詳細を見る",
     "detailLoading": "見積もり詳細を読み込み中...",
     "detailLoadError": "見積もり詳細を読み込めませんでした",
     "detailLoadErrorDescription": "見積もりが存在しないか、アクセス権限がない可能性があります。",

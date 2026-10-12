@@ -13,6 +13,7 @@ import {
   MoveTypeChip,
 } from "@/common/components/MoveTypeChip";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import type { RejectedRequestCardData } from "../mover-quote.types";
 
@@ -23,6 +24,7 @@ interface RejectedRequestCardProps {
 export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
   const t = useTranslations("MoverQuote");
   const quoteText = useTranslations("Quote");
+  const { formatCustomerName } = useWithdrawnAccountName();
   const locale = useLocale();
 
   return (
@@ -36,7 +38,7 @@ export function RejectedRequestCard({ request }: RejectedRequestCardProps) {
       </div>
 
       <h2 className="mt-6 border-b border-[var(--line-100)] pb-3 text-[20px] font-semibold leading-8 text-[var(--black-400)]">
-        {quoteText("customerName", { name: request.customerName })}
+        {formatCustomerName(request.customerName)}
       </h2>
 
       <div className="mt-6 flex items-start justify-between gap-6 max-[743px]:flex-col max-[743px]:gap-3">

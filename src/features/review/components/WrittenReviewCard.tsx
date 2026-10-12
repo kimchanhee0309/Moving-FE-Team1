@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -147,7 +148,7 @@ function MoverProfile({
   moverName: string;
   size: 50 | 80;
 }) {
-  const t = useTranslations("Quote");
+  const { formatMoverProfileAlt } = useWithdrawnAccountName();
   const isDefaultImage = !src;
   const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
   const isLarge = size === 80;
@@ -171,7 +172,7 @@ function MoverProfile({
         >
           <Image
             src={profileSrc}
-            alt={t("moverProfile", { name: moverName })}
+            alt={formatMoverProfileAlt(moverName)}
             fill
             sizes={`${croppedImageSize}px`}
             quality={100}
@@ -181,7 +182,7 @@ function MoverProfile({
       ) : (
         <Image
           src={profileSrc}
-          alt={t("moverProfile", { name: moverName })}
+          alt={formatMoverProfileAlt(moverName)}
           fill
           sizes={`${size}px`}
           className="object-cover"
@@ -298,6 +299,7 @@ export function WrittenReviewCard({
   const t = useTranslations("Quote");
   const review = useTranslations("Review");
   const locale = useLocale();
+  const { formatMoverName } = useWithdrawnAccountName();
   const moveDateLabel = formatMoveDate(movedAt, locale);
   const writtenAtLabel = writtenAt ? formatWrittenAt(writtenAt) : "";
 
@@ -325,7 +327,7 @@ export function WrittenReviewCard({
           <div className="flex flex-col items-start gap-1">
             <MovingBadge />
             <p className="text-lg-semibold whitespace-nowrap text-[var(--black-300)]">
-              {t("moverName", { name: moverName })}
+              {formatMoverName(moverName)}
             </p>
           </div>
 
@@ -341,7 +343,7 @@ export function WrittenReviewCard({
             <div className="flex items-center gap-1.5">
               <MovingBadge />
               <p className="text-2lg-bold whitespace-nowrap text-[var(--black-300)]">
-                {t("moverName", { name: moverName })}
+                {formatMoverName(moverName)}
               </p>
             </div>
 

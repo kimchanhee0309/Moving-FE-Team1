@@ -52,7 +52,9 @@
     "selectedMore": "{first}等{count}项",
     "dialog": "提示",
     "logoutError": "退出登录失败，请重试。",
-    "language": "选择语言"
+    "language": "选择语言",
+    "withdrawnCustomer": "已注销会员",
+    "withdrawnMover": "已注销师傅"
   },
   "Auth": {
     "google": "Google",
@@ -389,6 +391,7 @@
     "rejectSubmit": "拒绝",
     "requestInfo": "搬家请求信息",
     "customerRequest": "{name}的搬家请求",
+    "withdrawnCustomerRequest": "已注销会员的搬家请求",
     "closeModal": "关闭{title}",
     "priceLabel": "请输入报价金额",
     "pricePlaceholder": "输入报价金额",
@@ -466,6 +469,7 @@
     "pending": "等待报价",
     "moverName": "{name}师傅",
     "moverProfile": "{name}师傅的头像",
+    "withdrawnMoverProfile": "已注销师傅的头像",
     "favorite": "收藏",
     "career": "经验",
     "careerYears": "{count}年",
@@ -495,6 +499,7 @@
     "shareKakao": "分享到 KakaoTalk",
     "shareFacebook": "分享到 Facebook",
     "kakaoTitle": "{name}师傅的报价单",
+    "withdrawnMoverKakaoTitle": "已注销师傅的报价单",
     "kakaoDescription": "在 Moving 查看报价单吧。",
     "kakaoButton": "查看报价单",
     "kakaoError": "无法开始 KakaoTalk 分享，请稍后重试。",
@@ -527,6 +532,7 @@
     "all": "全部",
     "noFilteredQuotes": "没有符合条件的报价单。",
     "detailLink": "查看{name}师傅的报价详情",
+    "withdrawnMoverDetailLink": "查看已注销师傅的报价详情",
     "detailLoading": "正在加载报价详情...",
     "detailLoadError": "无法加载报价详情",
     "detailLoadErrorDescription": "报价可能不存在，或您没有访问权限。",

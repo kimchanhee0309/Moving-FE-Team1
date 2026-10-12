@@ -7,6 +7,7 @@ import type { ButtonHTMLAttributes } from "react";
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -76,7 +77,7 @@ interface AvatarProps {
 }
 
 function Avatar({ src, moverName, className }: AvatarProps) {
-  const t = useTranslations("Quote");
+  const { formatMoverProfileAlt } = useWithdrawnAccountName();
   const isDefaultImage = !src;
   const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
 
@@ -89,7 +90,7 @@ function Avatar({ src, moverName, className }: AvatarProps) {
     >
       <Image
         src={profileSrc}
-        alt={t("moverProfile", { name: moverName })}
+        alt={formatMoverProfileAlt(moverName)}
         fill
         sizes="(min-width: 1280px) 150px, (min-width: 768px) 120px, 96px"
         quality={isDefaultImage ? 100 : 75}
@@ -250,6 +251,7 @@ export function ReviewableCard({
   const t = useTranslations("Quote");
   const moveType = useTranslations("MoveType");
   const locale = useLocale();
+  const { formatMoverName } = useWithdrawnAccountName();
   const chipGroup = (
     <>
       <Chip variant="service">{moveType(serviceType)}</Chip>
@@ -278,7 +280,7 @@ export function ReviewableCard({
                   <MovingBadge />
 
                   <p className="max-w-full truncate text-[16px]/[26px] font-semibold text-(--black-300) min-[744px]:text-[18px]/[26px] min-[744px]:font-bold">
-                    {t("moverName", { name: moverName })}
+                    {formatMoverName(moverName)}
                   </p>
                 </div>
 

@@ -17,6 +17,7 @@ import {
 } from "@/common/components/MoveTypeChip";
 import { MOVE_REQUEST_STATUS, QUOTE_STATUS } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import type { MoverQuoteCardData } from "../mover-quote.types";
 
@@ -28,6 +29,7 @@ interface MoverQuoteCardProps {
 export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
   const t = useTranslations("MoverQuote");
   const quoteText = useTranslations("Quote");
+  const { formatCustomerName } = useWithdrawnAccountName();
   const locale = useLocale();
   const isConfirmed = quote.quoteStatus === QUOTE_STATUS.CONFIRMED;
 
@@ -68,7 +70,7 @@ export function MoverQuoteCard({ quote, onDetailClick }: MoverQuoteCardProps) {
       </div>
 
       <h2 className="mt-6 border-b border-[var(--line-100)] pb-3 text-[20px] font-semibold leading-8 text-[var(--black-400)]">
-        {quoteText("customerName", { name: quote.customerName })}
+        {formatCustomerName(quote.customerName)}
       </h2>
 
       <div className="mt-6 flex items-start justify-between gap-6 max-[743px]:flex-col max-[743px]:gap-3">

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 const SERVICE_TYPE_ICON: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "/icons/ic-solid-box.svg",
@@ -108,6 +109,7 @@ export function QuoteHistoryCard({
 }: QuoteHistoryCardProps) {
   const t = useTranslations("Quote");
   const moveType = useTranslations("MoveType");
+  const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
   const serviceTypeLabel = moveType(serviceType);
   const serviceTypeIcon = SERVICE_TYPE_ICON[serviceType];
   const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
@@ -223,7 +225,7 @@ export function QuoteHistoryCard({
                 <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
                   <Image
                     src={profileSrc}
-                    alt={t("moverProfile", { name: moverName })}
+                    alt={formatMoverProfileAlt(moverName)}
                     width={50}
                     height={50}
                     className="size-full object-cover"
@@ -237,10 +239,10 @@ export function QuoteHistoryCard({
                       <MovingBadge />
                       <p className="text-[var(--black-300)]">
                         <span className="text-md-semibold min-[660px]:hidden">
-                          {t("moverName", { name: moverName })}
+                          {formatMoverName(moverName)}
                         </span>
                         <span className="hidden text-lg-semibold min-[660px]:inline">
-                          {t("moverName", { name: moverName })}
+                          {formatMoverName(moverName)}
                         </span>
                       </p>
                     </div>

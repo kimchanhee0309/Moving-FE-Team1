@@ -18,6 +18,7 @@ import { QuoteHistoryCard } from "@/features/customer-quote/components";
 import { useCustomerQuoteLoadMoreSentinel } from "@/features/customer-quote/hooks/useCustomerQuoteLoadMoreSentinel";
 import { useReceivedQuoteHistoryQuery } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
 import { Link } from "@/i18n/navigation";
+import { isWithdrawnMoverName } from "@/common/hooks/useWithdrawnAccountName";
 
 type QuoteFilterValue = "all" | QuoteStatus;
 
@@ -145,7 +146,11 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
               {visibleQuotes.map((item) => (
                 <li key={item.id}>
                   <Link
-                    aria-label={t("detailLink", { name: item.moverName })}
+                    aria-label={
+                      isWithdrawnMoverName(item.moverName)
+                        ? t("withdrawnMoverDetailLink")
+                        : t("detailLink", { name: item.moverName })
+                    }
                     className={[
                       "block w-full rounded-xl text-left",
                       "hover:bg-[var(--background-200)]",
