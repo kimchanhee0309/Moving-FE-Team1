@@ -52,7 +52,9 @@
     "selectedMore": "{first} 외 {count}개",
     "dialog": "알림",
     "logoutError": "로그아웃하지 못했습니다. 다시 시도해 주세요.",
-    "language": "언어 선택"
+    "language": "언어 선택",
+    "withdrawnCustomer": "탈퇴한 회원",
+    "withdrawnMover": "탈퇴한 기사님"
   },
   "Auth": {
     "google": "Google",

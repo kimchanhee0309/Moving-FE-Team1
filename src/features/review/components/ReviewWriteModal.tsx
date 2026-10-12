@@ -8,6 +8,7 @@ import type { MouseEvent, ReactNode } from "react";
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -333,6 +334,7 @@ export function ReviewWriteModal({
   const moveType = useTranslations("MoveType");
   const common = useTranslations("Common");
   const locale = useLocale();
+  const { toDisplayName, formatMoverName } = useWithdrawnAccountName();
   const titleId = useId();
   const contentId = useId();
   const dialogRef = useModalAccessibility(isOpen, onClose);
@@ -428,12 +430,12 @@ export function ReviewWriteModal({
               <div className="flex flex-col items-start gap-1">
                 <MovingBadge />
                 <p className="text-lg-semibold whitespace-nowrap text-[#373737] min-[1200px]:text-2lg-semibold">
-                  {quote("moverName", { name: moverName })}
+                  {formatMoverName(moverName)}
                 </p>
               </div>
               <ProfileAvatar
                 src={profileSrc}
-                alt={quote("moverProfile", { name: moverName })}
+                alt={quote("moverProfile", { name: toDisplayName(moverName) })}
                 isDefault={isDefaultProfile}
               />
             </div>

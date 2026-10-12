@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS } from "@/common/constants/domain";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
@@ -108,6 +109,7 @@ export function QuoteCard({
 }: QuoteCardProps) {
   const t = useTranslations("Quote");
   const moveType = useTranslations("MoveType");
+  const { toDisplayName, formatMoverName } = useWithdrawnAccountName();
   const serviceTypeLabel = moveType(serviceType);
   const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
   const priceLabel = t("priceValue", { price });
@@ -198,7 +200,7 @@ export function QuoteCard({
               <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
                 <Image
                   src={profileSrc}
-                  alt={t("moverProfile", { name: moverName })}
+                  alt={t("moverProfile", { name: toDisplayName(moverName) })}
                   width={50}
                   height={50}
                   className="size-full object-cover"
@@ -211,7 +213,7 @@ export function QuoteCard({
                   <div className="flex items-center gap-1">
                     <MovingBadge />
                     <p className="text-md-semibold whitespace-nowrap text-[var(--black-300)]">
-                      {t("moverName", { name: moverName })}
+                      {formatMoverName(moverName)}
                     </p>
                   </div>
 

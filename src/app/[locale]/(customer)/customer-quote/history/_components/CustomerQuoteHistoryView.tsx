@@ -18,6 +18,7 @@ import { QuoteHistoryCard } from "@/features/customer-quote/components";
 import { useCustomerQuoteLoadMoreSentinel } from "@/features/customer-quote/hooks/useCustomerQuoteLoadMoreSentinel";
 import { useReceivedQuoteHistoryQuery } from "@/features/customer-quote/hooks/useCustomerQuoteQueries";
 import { Link } from "@/i18n/navigation";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 type QuoteFilterValue = "all" | QuoteStatus;
 
@@ -45,6 +46,7 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
   const quote = useTranslations("Quote");
   const moveType = useTranslations("MoveType");
   const locale = useLocale();
+  const { toDisplayName } = useWithdrawnAccountName();
   const filterOptions = QUOTE_FILTER_VALUES.map((value) => ({
     value,
     label: quote(QUOTE_FILTER_LABEL_KEYS[value]),
@@ -145,7 +147,7 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
               {visibleQuotes.map((item) => (
                 <li key={item.id}>
                   <Link
-                    aria-label={t("detailLink", { name: item.moverName })}
+                    aria-label={t("detailLink", { name: toDisplayName(item.moverName) })}
                     className={[
                       "block w-full rounded-xl text-left",
                       "hover:bg-[var(--background-200)]",

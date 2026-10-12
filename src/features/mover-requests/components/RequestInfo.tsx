@@ -7,6 +7,7 @@ import {
 } from "@/common/components/MoveTypeChip";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import type { ReceivedRequestViewModel } from "../mover-requests.types";
 
@@ -158,7 +159,7 @@ export function RequestInfo({
   hideMobileDivider = false,
 }: RequestInfoProps) {
   const t = useTranslations("MoverRequests");
-  const quoteText = useTranslations("Quote");
+  const { toDisplayName, formatCustomerName } = useWithdrawnAccountName();
   const mobileDividerClassName = hideMobileDivider
     ? "max-[743px]:border-b-0 max-[743px]:pb-0"
     : "";
@@ -173,7 +174,7 @@ export function RequestInfo({
       ]
         .filter(Boolean)
         .join(" ")}
-      aria-label={t("customerRequest", { name: request.customerName })}
+      aria-label={t("customerRequest", { name: toDisplayName(request.customerName) })}
     >
       <RequestBadges
         serviceType={request.serviceType}
@@ -181,7 +182,7 @@ export function RequestInfo({
       />
 
       <h3 className="text-[20px] font-semibold leading-8 text-[var(--black-300)]">
-        {quoteText("customerName", { name: request.customerName })}
+        {formatCustomerName(request.customerName)}
       </h3>
 
       <RequestSummary request={request} variant="modal" />

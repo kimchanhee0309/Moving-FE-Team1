@@ -52,7 +52,9 @@
     "selectedMore": "{first}ほか{count}件",
     "dialog": "お知らせ",
     "logoutError": "ログアウトできませんでした。もう一度お試しください。",
-    "language": "言語を選択"
+    "language": "言語を選択",
+    "withdrawnCustomer": "退会した会員",
+    "withdrawnMover": "退会した業者"
   },
   "Auth": {
     "google": "Google",

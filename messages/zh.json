@@ -52,7 +52,9 @@
     "selectedMore": "{first}等{count}项",
     "dialog": "提示",
     "logoutError": "退出登录失败，请重试。",
-    "language": "选择语言"
+    "language": "选择语言",
+    "withdrawnCustomer": "已注销会员",
+    "withdrawnMover": "已注销师傅"
   },
   "Auth": {
     "google": "Google",

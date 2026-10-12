@@ -1,6 +1,7 @@
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/common/components/button";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 import type { ReceivedRequestViewModel } from "../mover-requests.types";
 import { formatRequestedAt } from "../mover-requests.utils";
@@ -20,7 +21,7 @@ export function ReceivedRequestCard({
   isDisabled = false,
 }: ReceivedRequestCardProps) {
   const t = useTranslations("MoverRequests");
-  const quoteText = useTranslations("Quote");
+  const { formatCustomerName } = useWithdrawnAccountName();
   const locale = useLocale();
 
   return (
@@ -42,7 +43,7 @@ export function ReceivedRequestCard({
 
         <div className="border-b border-[var(--line-100)] pb-3">
           <h2 className="text-[20px] font-semibold leading-8 text-[var(--black-300)]">
-            {quoteText("customerName", { name: request.customerName })}
+            {formatCustomerName(request.customerName)}
           </h2>
         </div>
 

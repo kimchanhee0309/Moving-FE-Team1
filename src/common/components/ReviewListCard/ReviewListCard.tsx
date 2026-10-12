@@ -5,6 +5,7 @@ import type {
   ReviewListCardProps,
   ReviewListCardSize,
 } from "./ReviewListCard.types";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
 
 const STAR_NUMBERS = [1, 2, 3, 4, 5] as const;
 
@@ -29,6 +30,7 @@ export function ReviewListCard({
   className,
 }: ReviewListCardProps) {
   const t = useTranslations("Review");
+  const { toDisplayName } = useWithdrawnAccountName();
   const safeRating = Math.min(Math.max(Math.round(rating), 0), STAR_NUMBERS.length);
 
   if (isLoading) {
@@ -65,7 +67,7 @@ export function ReviewListCard({
     >
       <div className="flex flex-col items-start gap-2">
         <div className="flex items-center gap-3">
-          <h3 className="text-md-medium text-[var(--black-500)]">{reviewerName}</h3>
+          <h3 className="text-md-medium text-[var(--black-500)]">{toDisplayName(reviewerName)}</h3>
           <time dateTime={writtenAt} className="text-xs-regular text-[var(--gray-400)]">
             {writtenAt}
           </time>
