@@ -75,7 +75,7 @@ export function GnbMobileMenu({
         aria-label={t("fullMenu")}
         className="absolute inset-y-0 right-0 flex w-55 max-w-[85vw] flex-col overflow-y-auto bg-(--gray-50)"
       >
-        <div className="flex h-13.5 shrink-0 items-center justify-end border-b border-(--line-100) px-4">
+        <header className="flex h-13.5 shrink-0 items-center justify-end border-b border-(--line-100) px-4">
           <button
             type="button"
             onClick={onClose}
@@ -84,7 +84,7 @@ export function GnbMobileMenu({
           >
             <Image src="/images/gnb/icon-x.svg" alt="" width={24} height={24} className="size-6" />
           </button>
-        </div>
+        </header>
 
         <nav className="flex flex-col">
           <ul className="m-0 flex list-none flex-col p-0">

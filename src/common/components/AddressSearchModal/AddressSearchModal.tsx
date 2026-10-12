@@ -165,7 +165,7 @@ export function AddressSearchModal({
         tabIndex={-1}
         className={`flex w-full max-w-[260px] flex-col gap-[30px] rounded-[24px] bg-(--gray-50) px-4 py-6 min-[744px]:max-w-[560px] min-[744px]:gap-10 min-[744px]:rounded-[32px] min-[744px]:px-6 min-[744px]:pt-8 min-[744px]:pb-10 ${FOCUS_RING} ${className}`}
       >
-        <div className="flex w-full items-center justify-between">
+        <header className="flex w-full items-center justify-between">
           <h2 id={titleId} className="text-2lg-bold text-(--black-400) min-[744px]:text-2xl-semibold">
             {title}
           </h2>
@@ -177,10 +177,20 @@ export function AddressSearchModal({
           >
             <CloseIcon className="size-full" />
           </button>
-        </div>
+        </header>
 
         <div className="flex flex-col gap-6">
-          <div className="flex w-full items-center gap-3 rounded-2xl bg-(--background-100) px-4 py-3.5 min-[744px]:h-16 min-[744px]:gap-4 min-[744px]:px-6">
+          {/* 검색 영역임을 알리는 form(role="search")이다. Enter 검색은 기존대로 input의 onKeyDown이 맡는다.
+              onSubmit은 그 밖의 경로(모바일 키보드의 검색 키 등)로 제출될 때 페이지가 이동하지 않게 막고
+              같은 검색을 실행한다. */}
+          <form
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSearchSubmit();
+            }}
+            className="flex w-full items-center gap-3 rounded-2xl bg-(--background-100) px-4 py-3.5 min-[744px]:h-16 min-[744px]:gap-4 min-[744px]:px-6"
+          >
             <input
               ref={searchInputRef}
               // type="search"는 Chrome 계열에서 controlled value와 결합되면 한글 IME 조합을
@@ -219,13 +229,9 @@ export function AddressSearchModal({
             >
               <SearchIcon className="size-full" />
             </button>
-          </div>
+          </form>
 
-          <div
-            role="group"
-            aria-label={t("results")}
-            className="flex max-h-[280px] flex-col gap-4 overflow-y-auto"
-          >
+          <div className="flex max-h-[280px] flex-col gap-4 overflow-y-auto">
             {isLoading ? (
               <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
                 {t("searching")}
@@ -244,17 +250,22 @@ export function AddressSearchModal({
               </p>
             ) : null}
 
-            {!isLoading &&
-              results.map((address) => (
-                <AddressCard
-                  key={addressKey(address)}
-                  address={address}
-                  selected={
-                    selectedAddress !== null && addressKey(selectedAddress) === addressKey(address)
-                  }
-                  onSelect={onSelectAddress}
-                />
-              ))}
+            {!isLoading && results.length > 0 ? (
+              <ul aria-label={t("results")} className="m-0 flex list-none flex-col gap-4 p-0">
+                {results.map((address) => (
+                  <li key={addressKey(address)}>
+                    <AddressCard
+                      address={address}
+                      selected={
+                        selectedAddress !== null &&
+                        addressKey(selectedAddress) === addressKey(address)
+                      }
+                      onSelect={onSelectAddress}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         </div>
 

@@ -102,15 +102,17 @@ export function MoveTypeCard({
         className="pointer-events-none absolute inset-0 rounded-2xl peer-focus-visible:ring-2 peer-focus-visible:ring-[var(--primary-400)] peer-focus-visible:ring-offset-2"
       />
 
-      <div className="flex flex-1 flex-col items-start gap-2 min-[744px]:w-full min-[744px]:flex-none min-[744px]:flex-row min-[744px]:items-start">
+      {/* label의 자식은 phrasing content만 허용되므로(HTML 명세) 아래 묶음은 div/p 대신 span으로 둔다.
+          모두 flex 컨테이너이거나 flex item이라 태그와 무관하게 블록처럼 배치된다. */}
+      <span className="flex flex-1 flex-col items-start gap-2 min-[744px]:w-full min-[744px]:flex-none min-[744px]:flex-row min-[744px]:items-start">
         <span
           aria-hidden="true"
           className="flex size-6 shrink-0 items-center justify-center"
         >
           <CheckIndicator checked={checked} />
         </span>
-        <div className="flex shrink-0 flex-col items-start justify-center whitespace-nowrap">
-          <p
+        <span className="flex shrink-0 flex-col items-start justify-center whitespace-nowrap">
+          <span
             className={
               checked
                 ? "text-lg-semibold text-[var(--primary-400)]"
@@ -118,8 +120,8 @@ export function MoveTypeCard({
             }
           >
             {title}
-          </p>
-          <p
+          </span>
+          <span
             className={
               checked
                 ? "text-md-regular text-[var(--primary-400)]"
@@ -127,11 +129,11 @@ export function MoveTypeCard({
             }
           >
             {description}
-          </p>
-        </div>
-      </div>
+          </span>
+        </span>
+      </span>
 
-      <div className="size-[120px] shrink-0">
+      <span className="size-[120px] shrink-0">
         <Image
           src={imageSrc}
           alt=""
@@ -139,7 +141,7 @@ export function MoveTypeCard({
           height={120}
           className="size-full object-contain"
         />
-      </div>
+      </span>
     </label>
   );
 }

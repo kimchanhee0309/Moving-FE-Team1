@@ -139,22 +139,27 @@ export function GnbProfileMenu({
         </p>
       </div>
 
-      {items.map((item, index) => {
-        const isLastItem = index === items.length - 1;
+      {/* 이동 항목은 목록이므로 ul/li로 묶는다. 패널이 role="menu"라 ul/li에는 role="none"을 주고
+          Link가 menuitem을 맡는다(WAI-ARIA menu 패턴). */}
+      <ul role="none" className="m-0 list-none p-0">
+        {items.map((item, index) => {
+          const isLastItem = index === items.length - 1;
 
-        return (
-          <Link
-            key={item.href}
-            ref={index === 0 ? firstItemRef : undefined}
-            href={item.href}
-            role="menuitem"
-            onClick={onNavigate}
-            className={`block whitespace-nowrap no-underline hover:bg-(--background-200) ${PROFILE_MENU_SIZE.rowWidth} ${isLastItem ? PROFILE_MENU_SIZE.lastItemPadding : PROFILE_MENU_SIZE.itemPadding} ${PROFILE_MENU_SIZE.itemText} ${FOCUS_RING}`}
-          >
-            {navLabel(item.label)}
-          </Link>
-        );
-      })}
+          return (
+            <li key={item.href} role="none">
+              <Link
+                ref={index === 0 ? firstItemRef : undefined}
+                href={item.href}
+                role="menuitem"
+                onClick={onNavigate}
+                className={`block whitespace-nowrap no-underline hover:bg-(--background-200) ${PROFILE_MENU_SIZE.rowWidth} ${isLastItem ? PROFILE_MENU_SIZE.lastItemPadding : PROFILE_MENU_SIZE.itemPadding} ${PROFILE_MENU_SIZE.itemText} ${FOCUS_RING}`}
+              >
+                {navLabel(item.label)}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
 
       <button
         type="button"

@@ -24,12 +24,12 @@ function AddressChip({ type }: { type: AddressLineProps["type"] }) {
 
 function AddressLine({ type, value }: AddressLineProps) {
   return (
-    <div className="flex w-full items-start gap-2">
+    <span className="flex w-full items-start gap-2">
       <AddressChip type={type} />
       <span className="min-w-0 flex-1 [word-break:break-word] text-md-regular text-(--black-400) min-[744px]:text-lg-regular">
         {value}
       </span>
-    </div>
+    </span>
   );
 }
 
@@ -64,13 +64,15 @@ export function AddressCard({
           : "border-(--line-100)! bg-(--gray-50)! hover:border-(--gray-300)!"
       } ${FOCUS_RING} ${className}`}
     >
-      <p className="text-md-semibold text-(--black-400) min-[744px]:text-lg-semibold">
+      {/* button의 자식은 phrasing content만 허용되므로(HTML 명세) p/div 대신 span으로 둔다.
+          button이 flex-col 컨테이너라 각 span은 한 줄씩 차지한다. */}
+      <span className="text-md-semibold text-(--black-400) min-[744px]:text-lg-semibold">
         {address.zonecode}
-      </p>
-      <div className="flex w-full flex-col gap-4">
+      </span>
+      <span className="flex w-full flex-col gap-4">
         <AddressLine type="road" value={address.roadAddress} />
         <AddressLine type="jibun" value={address.jibunAddress} />
-      </div>
+      </span>
     </button>
   );
 }
