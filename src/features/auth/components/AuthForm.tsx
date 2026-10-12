@@ -169,6 +169,7 @@ export function AuthForm({ role, mode, redirectTo, initialRecoveryMode, onSubmit
                   inputClassName={AUTH_INPUT_CLASS}
                   onBlur={() => setTouched((current) => ({ ...current, email: true }))}
                   onChange={(value) => handleFieldChange("email", value)}
+                  onVerificationProgress={() => setSubmitError("")}
                 />
               );
             }

@@ -26,6 +26,11 @@ interface SignupEmailFieldProps {
   inputClassName: string;
   onChange: (value: string) => void;
   onBlur: () => void;
+  /**
+   * 인증을 다시 시작(코드 요청·이메일 다시 입력)하거나 완료했을 때 호출합니다.
+   * AuthForm이 "이메일 인증이 만료되었습니다" 같은 이전 가입 시도의 폼 오류를 지우는 데 사용합니다.
+   */
+  onVerificationProgress: () => void;
 }
 
 // 입력 박스(54px)와 같은 행에 버튼을 두기 위해 AuthForm label 높이만큼 내립니다.
@@ -43,7 +48,7 @@ const TEXT_BUTTON_CLASS = "cursor-pointer rounded-sm text-sm text-[var(--gray-50
  * - 코드 입력값·오류 문구·focus 이동만 소유하며, 인증 상태와 API 호출은 useSignupEmailVerification에 위임합니다.
  * - 가입 요청과 가입 버튼 활성화는 AuthForm 책임입니다.
  */
-export function SignupEmailField({ value, error, canRequestCode, disabled, verification, fieldClassName, inputClassName, onChange, onBlur }: SignupEmailFieldProps) {
+export function SignupEmailField({ value, error, canRequestCode, disabled, verification, fieldClassName, inputClassName, onChange, onBlur, onVerificationProgress }: SignupEmailFieldProps) {
   const t = useTranslations("Auth");
   const apiErrorMessage = useApiErrorMessage();
   const emailRef = useRef<HTMLInputElement>(null);
@@ -65,6 +70,8 @@ export function SignupEmailField({ value, error, canRequestCode, disabled, verif
     if (isBusy || !canRequestCode) return;
     setSendError("");
     setCodeError("");
+    // 새 인증을 시작했으므로 이전 가입 시도에서 남은 인증 만료 안내는 더 이상 맞지 않습니다.
+    onVerificationProgress();
     try {
       await verification.sendCode(value);
       setCode("");
@@ -86,6 +93,8 @@ export function SignupEmailField({ value, error, canRequestCode, disabled, verif
     try {
       await verification.verifyCode(value, code);
       setCode("");
+      // 인증 완료 안내와 인증 만료 오류가 함께 보이지 않도록 폼 오류를 지웁니다.
+      onVerificationProgress();
       // 코드 입력 영역이 사라지면서 focus를 잃지 않도록 인증 완료 안내가 연결된 이메일 칸으로 옮깁니다.
       emailRef.current?.focus();
     } catch (caught) {
@@ -99,6 +108,7 @@ export function SignupEmailField({ value, error, canRequestCode, disabled, verif
     setCode("");
     setSendError("");
     setCodeError("");
+    onVerificationProgress();
     emailRef.current?.focus();
   }
 
