@@ -192,6 +192,11 @@ export function Gnb(props: GnbProps) {
         <div className="flex items-center min-[1200px]:gap-20">
           <Link
             href={ROUTES.HOME}
+            // GNB는 모든 페이지에 있어서, 기본 prefetch를 두면 어느 페이지에 들어가든 랜딩 페이지의
+            // JS(약 54KB)와 데이터를 미리 받는다. 로고로 홈에 가는 경우는 드물어 prefetch를 끈다.
+            // App Router에서 `prefetch={false}`는 화면 진입 시와 hover 시 모두 받지 않으므로,
+            // 랜딩은 로고를 누른 시점에 받는다.
+            prefetch={false}
             onClick={handleCloseMenu}
             aria-label={t("goHome")}
             className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg ${FOCUS_RING}`}

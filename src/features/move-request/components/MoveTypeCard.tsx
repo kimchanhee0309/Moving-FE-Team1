@@ -139,6 +139,10 @@ export function MoveTypeCard({
           alt=""
           width={120}
           height={120}
+          // 이 카드 이미지가 견적 요청 첫 화면의 LCP 요소다. 기본값(lazy)이면 화면 배치가 끝난 뒤에야
+          // 요청을 시작하므로 즉시, 높은 우선순위로 받는다. 카드는 3장뿐이고 모두 첫 화면에 보인다.
+          loading="eager"
+          fetchPriority="high"
           className="size-full object-contain"
         />
       </span>

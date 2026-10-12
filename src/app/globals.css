@@ -1,11 +1,17 @@
 @import "tailwindcss";
 @import "../styles/colors.css";
 @import "../styles/typography.css";
+@import "../../public/fonts/pretendard-dynamic-subset/pretendard-variable-dynamic-subset.css";
 
 body {
   color: var(--black-500);
   background-color: var(--background-100);
-  font-family: var(--font-pretendard), sans-serif;
+  /*
+   * 1순위(--font-pretendard): 화면 문구에 쓰이는 글자만 담은 핵심 서브셋(next/font가 preload).
+   * 2순위("Pretendard Variable"): 그 밖의 글자(이름·주소 등 사용자 입력)를 unicode-range 조각으로
+   * 필요할 때만 내려받는 동적 서브셋. 두 폰트는 같은 Pretendard라 섞여도 모양이 같습니다.
+   */
+  font-family: var(--font-pretendard), "Pretendard Variable", sans-serif;
 }
 
 /* 브라우저 자격 증명 자동완성은 유지하되 기본 파란 배경이 앱의 active 상태처럼 보이지 않게 합니다. */

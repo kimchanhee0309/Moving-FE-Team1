@@ -127,6 +127,9 @@ export function MoveRequestBlockedState({
               alt=""
               fill
               sizes="(min-width: 1200px) 280px, 181px"
+              // 진행 중 화면에서는 이 일러스트가 LCP 요소라 지연 로딩하지 않는다.
+              loading="eager"
+              fetchPriority="high"
               className="object-contain"
             />
           </div>
