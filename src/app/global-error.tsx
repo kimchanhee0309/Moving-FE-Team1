@@ -10,10 +10,13 @@ import { routing } from "@/i18n/routing";
 import "./globals.css";
 
 const pretendard = localFont({
-  src: "../../public/fonts/PretendardVariable.woff2",
+  src: "../../public/fonts/PretendardVariable.core.woff2",
   variable: "--font-pretendard",
   display: "swap",
   weight: "45 920",
+  // 핵심 서브셋에 없는 글자는 globals.css의 다음 순위 "Pretendard Variable" 조각으로 넘어가야 하므로,
+  // 그 사이에 끼어드는 Arial 기반 대체 폰트를 만들지 않습니다.
+  adjustFontFallback: false,
 });
 
 type AppLocale = (typeof routing.locales)[number];
