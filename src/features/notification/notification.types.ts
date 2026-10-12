@@ -15,7 +15,8 @@ export type NotificationType =
   | "NEW_MOVE_REQUEST"
   | "MOVE_DAY"
   | "MOVE_REQUEST_CANCELED"
-  | "CONFIRMED_MOVE_CANCELED";
+  | "CONFIRMED_MOVE_CANCELED"
+  | "QUOTE_CANCELED_BY_MOVER_WITHDRAWAL";
 
 /** `GET /notifications`, `PATCH /notifications/:id/read` 응답의 알림 한 건입니다. */
 export interface NotificationApiItem {

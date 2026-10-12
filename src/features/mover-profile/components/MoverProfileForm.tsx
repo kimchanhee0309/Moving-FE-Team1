@@ -35,7 +35,8 @@ function getMoverTextErrors(values: MoverTextValues, t: ProfileTranslator) {
     nickname: !values.nickname.trim()
       ? t("nicknameRequired")
       : values.nickname.trim().length > 50 ? t("nicknameTooLong") : undefined,
-    careerYears: !/^\d+$/.test(values.careerYears.trim()) || Number(values.careerYears) > 50
+    // BE mover-profile.constants의 허용 범위(1~40년)와 같게 검증합니다.
+    careerYears: !/^\d+$/.test(values.careerYears.trim()) || Number(values.careerYears) < 1 || Number(values.careerYears) > 40
       ? t("experienceInvalid")
       : undefined,
     shortIntroduction: !values.shortIntroduction.trim()
@@ -220,8 +221,8 @@ export function MoverProfileForm({
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
                 type="number"
-                min="0"
-                max="50"
+                min="1"
+                max="40"
                 inputMode="numeric"
                 placeholder={t("experiencePlaceholder")}
                 value={textValues.careerYears}
