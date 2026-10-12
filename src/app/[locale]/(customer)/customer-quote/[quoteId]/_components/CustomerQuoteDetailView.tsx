@@ -13,7 +13,10 @@ import {
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import { formatDateTimeWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { shareToKakaoTalk } from "@/common/utils/kakao-share";
-import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+import {
+  isWithdrawnMoverName,
+  useWithdrawnAccountName,
+} from "@/common/hooks/useWithdrawnAccountName";
 
 import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
 
@@ -139,7 +142,7 @@ export function CustomerQuoteDetailView({
   const t = useTranslations("Quote");
   const moveType = useTranslations("MoveType");
   const locale = useLocale();
-  const { toDisplayName, formatMoverName } = useWithdrawnAccountName();
+  const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
   const isConfirmed = quote.status === QUOTE_STATUS.CONFIRMED;
   const canConfirm = variant === "pending";
   const priceLabel = t("priceValue", { price: quote.price });
@@ -165,7 +168,9 @@ export function CustomerQuoteDetailView({
     const shareUrl = getShareUrl();
     void shareToKakaoTalk({
       url: shareUrl,
-      title: t("kakaoTitle", { name: toDisplayName(quote.moverName) }),
+      title: isWithdrawnMoverName(quote.moverName)
+        ? t("withdrawnMoverKakaoTitle")
+        : t("kakaoTitle", { name: quote.moverName }),
       description: quote.message || t("kakaoDescription"),
       imageUrl: quote.profileImageUrl,
       buttonTitle: t("kakaoButton"),
@@ -217,7 +222,7 @@ export function CustomerQuoteDetailView({
             <div className="relative mb-5 size-[134px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
               <Image
                 src={quote.profileImageUrl}
-                alt={t("moverProfile", { name: toDisplayName(quote.moverName) })}
+                alt={formatMoverProfileAlt(quote.moverName)}
                 width={134}
                 height={134}
                 className="size-[134px] object-cover"

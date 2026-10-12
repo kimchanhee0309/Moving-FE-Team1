@@ -334,7 +334,7 @@ export function ReviewWriteModal({
   const moveType = useTranslations("MoveType");
   const common = useTranslations("Common");
   const locale = useLocale();
-  const { toDisplayName, formatMoverName } = useWithdrawnAccountName();
+  const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
   const titleId = useId();
   const contentId = useId();
   const dialogRef = useModalAccessibility(isOpen, onClose);
@@ -435,7 +435,7 @@ export function ReviewWriteModal({
               </div>
               <ProfileAvatar
                 src={profileSrc}
-                alt={quote("moverProfile", { name: toDisplayName(moverName) })}
+                alt={formatMoverProfileAlt(moverName)}
                 isDefault={isDefaultProfile}
               />
             </div>

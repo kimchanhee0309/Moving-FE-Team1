@@ -109,7 +109,7 @@ export function QuoteHistoryCard({
 }: QuoteHistoryCardProps) {
   const t = useTranslations("Quote");
   const moveType = useTranslations("MoveType");
-  const { toDisplayName, formatMoverName } = useWithdrawnAccountName();
+  const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
   const serviceTypeLabel = moveType(serviceType);
   const serviceTypeIcon = SERVICE_TYPE_ICON[serviceType];
   const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
@@ -225,7 +225,7 @@ export function QuoteHistoryCard({
                 <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
                   <Image
                     src={profileSrc}
-                    alt={t("moverProfile", { name: toDisplayName(moverName) })}
+                    alt={formatMoverProfileAlt(moverName)}
                     width={50}
                     height={50}
                     className="size-full object-cover"

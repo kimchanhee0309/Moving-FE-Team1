@@ -148,8 +148,7 @@ function MoverProfile({
   moverName: string;
   size: 50 | 80;
 }) {
-  const t = useTranslations("Quote");
-  const { toDisplayName } = useWithdrawnAccountName();
+  const { formatMoverProfileAlt } = useWithdrawnAccountName();
   const isDefaultImage = !src;
   const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
   const isLarge = size === 80;
@@ -173,7 +172,7 @@ function MoverProfile({
         >
           <Image
             src={profileSrc}
-            alt={t("moverProfile", { name: toDisplayName(moverName) })}
+            alt={formatMoverProfileAlt(moverName)}
             fill
             sizes={`${croppedImageSize}px`}
             quality={100}
@@ -183,7 +182,7 @@ function MoverProfile({
       ) : (
         <Image
           src={profileSrc}
-          alt={t("moverProfile", { name: toDisplayName(moverName) })}
+          alt={formatMoverProfileAlt(moverName)}
           fill
           sizes={`${size}px`}
           className="object-cover"

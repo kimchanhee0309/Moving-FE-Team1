@@ -77,8 +77,7 @@ interface AvatarProps {
 }
 
 function Avatar({ src, moverName, className }: AvatarProps) {
-  const t = useTranslations("Quote");
-  const { toDisplayName } = useWithdrawnAccountName();
+  const { formatMoverProfileAlt } = useWithdrawnAccountName();
   const isDefaultImage = !src;
   const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
 
@@ -91,7 +90,7 @@ function Avatar({ src, moverName, className }: AvatarProps) {
     >
       <Image
         src={profileSrc}
-        alt={t("moverProfile", { name: toDisplayName(moverName) })}
+        alt={formatMoverProfileAlt(moverName)}
         fill
         sizes="(min-width: 1280px) 150px, (min-width: 768px) 120px, 96px"
         quality={isDefaultImage ? 100 : 75}
