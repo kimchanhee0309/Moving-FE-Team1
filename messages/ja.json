@@ -660,7 +660,8 @@
   "Account": {
     "currentPassword": "現在のパスワード",
     "currentPasswordPlaceholder": "現在のパスワードを入力してください",
-    "currentPasswordHint": "メールアドレスまたはパスワードを変更する際に、現在のパスワードを確認します。",
+    "currentPasswordHint": "パスワードを変更する際に、現在のパスワードを確認します。",
+    "emailReadOnly": "登録したメールアドレスは変更できません。",
     "currentPasswordRequired": "現在のパスワードを入力してください。",
     "newPassword": "新しいパスワード",
     "newPasswordPlaceholder": "新しいパスワードを入力してください",
@@ -691,6 +692,7 @@
     "DESIGNATED_REQUEST_ALREADY_EXISTS": "このドライバーにはすでに指定依頼を送っています。",
     "DESIGNATED_REQUEST_LIMIT_EXCEEDED": "指定見積もりは最大3名までです。",
     "EMAIL_ALREADY_EXISTS": "このメールアドレスはすでに使用されています。",
+    "EMAIL_CHANGE_NOT_ALLOWED": "登録したメールアドレスは変更できません。",
     "FAVORITE_ALREADY_EXISTS": "このドライバーはすでにお気に入りです。",
     "FAVORITE_NOT_FOUND": "お気に入りのドライバーが見つかりません。",
     "INTERNAL_SERVER_ERROR": "サーバー内部エラーが発生しました。",

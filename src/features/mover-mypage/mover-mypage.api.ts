@@ -4,7 +4,7 @@ import { MOVER_MY_PAGE_QUERY_KEY } from "@/common/api/query-keys";
 import { createApiResponseReader } from "@/common/api/response-reader";
 import type { ReviewScore } from "@/common/components/ReviewProgressBar";
 import { PROFILE_SERVICE_OPTIONS } from "@/common/constants/profile";
-import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { normalizePhoneDigits } from "@/common/validation/contact";
 
 import type {
   MoverBasicInfoFormValues,
@@ -118,11 +118,11 @@ export async function updateMoverBasicInfo(
   const payload: Record<string, string | null> = {};
   const changed = values.changedFields;
   if (!changed || changed.name) payload.name = values.name.trim();
-  if (!changed || changed.email) payload.email = normalizeEmail(values.email);
   if (!changed || changed.phone) {
     payload.phone = values.phone.trim() ? normalizePhoneDigits(values.phone) : null;
   }
-  if (values.currentPassword && (!changed || changed.email || values.newPassword)) {
+  // 가입 이메일은 수정할 수 없어 요청에 넣지 않으며, 현재 비밀번호는 비밀번호를 바꿀 때만 전송합니다.
+  if (values.currentPassword && values.newPassword) {
     payload.currentPassword = values.currentPassword;
   }
   if (values.newPassword) payload.newPassword = values.newPassword;
