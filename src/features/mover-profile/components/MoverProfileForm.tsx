@@ -221,8 +221,8 @@ export function MoverProfileForm({
                 inputSize="sm"
                 containerClassName={responsiveInputClass}
                 type="number"
-                min="0"
-                max="50"
+                min="1"
+                max="40"
                 inputMode="numeric"
                 placeholder={t("experiencePlaceholder")}
                 value={textValues.careerYears}
