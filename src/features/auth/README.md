@@ -7,6 +7,7 @@ Provider 순서는 `QueryProvider → AuthProvider → ModalProvider → 모든 
 ## API 계약
 
 - `POST /auth/signup`, `POST /auth/login`: 실제 DTO를 전송하고 `GET /auth/me`로 쿠키 세션을 확인합니다.
+- `POST /auth/signup/email-code`, `/email-code/verify`: 가입 화면에서 이메일로 받은 6자리 코드를 확인하고 15분 만료 이메일 인증 토큰을 받습니다. 토큰은 `POST /auth/signup`의 `emailVerificationToken`으로만 전송하며 저장소에 보관하지 않습니다. 인증을 마치면 이메일 칸을 잠그고, "이메일 다시 입력"으로 잠금을 풀면 인증을 처음부터 다시 진행합니다. SNS 가입은 이 인증을 거치지 않습니다.
 - `GET /auth/me`: 최신 공개 사용자 DTO를 조회합니다. email은 non-null이며 profileCompleted는 서버 값입니다.
 - `POST /auth/refresh/session`: 공개 페이지에서 비회원은 `user: null` 200, 남은 Refresh가 있으면 자동 복구합니다.
 - `POST /auth/refresh`: 공통 API client만 호출합니다.

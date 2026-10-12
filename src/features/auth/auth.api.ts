@@ -9,12 +9,14 @@ import type { AuthFormValues, AuthMode, SocialProvider } from "./auth.types";
  * POST /auth/signup 또는 /auth/login 연동. 가입만 name/phone을 전송하고 role은 진입 화면에서 받습니다.
  * 확인 비밀번호는 화면 검증용이며, 토큰은 서버의 HttpOnly 쿠키로만 전달됩니다.
  * 쿠키 변경 중의 이전 요청 무효화는 changeAuthSession, 성공 캐시 반영은 AuthProvider가 담당합니다.
+ * emailVerificationToken은 가입에서만 전송합니다. 값이 없으면 key 자체를 보내지 않아 로그인 DTO와 기존 가입 DTO 모양을 유지합니다.
  */
-export async function submitCredentials(mode: AuthMode, role: UserRole, values: AuthFormValues): Promise<{ user: AuthUser }> {
+export async function submitCredentials(mode: AuthMode, role: UserRole, values: AuthFormValues, emailVerificationToken?: string): Promise<{ user: AuthUser }> {
   const payload = { email: values.email.trim().toLowerCase(), password: values.password, role,
     ...(mode === "signup" ? {
       name: values.name.trim(),
       phone: values.phone,
+      ...(emailVerificationToken ? { emailVerificationToken } : {}),
     } : {}) };
   return changeAuthSession(async () => ({ user: readUser(await apiClient<unknown>(`/auth/${mode}`, { method: "POST", body: JSON.stringify(payload) })) }));
 }
@@ -63,6 +65,42 @@ export const withdrawAccountSession = (currentPassword: string): Promise<null> =
     method: "DELETE",
     body: JSON.stringify(currentPassword ? { currentPassword } : {}),
   }));
+
+/** 화면의 만료 안내와 재발송 타이머에 쓰는 인증코드 발송 결과입니다. */
+export interface SignupEmailCodeResult {
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+}
+
+/**
+ * POST /auth/signup/email-code 연동. 가입하려는 이메일로 6자리 인증코드를 요청합니다.
+ * 이미 가입된 이메일(409 EMAIL_ALREADY_EXISTS)과 60초 내 재요청(429)은 ApiError로 전달하며 화면이 문구를 정합니다.
+ */
+export async function requestSignupEmailCode(email: string): Promise<SignupEmailCodeResult> {
+  const result = await apiClient<SignupEmailCodeResult>("/auth/signup/email-code", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+  if (!result || typeof result.expiresInSeconds !== "number" || typeof result.resendAfterSeconds !== "number") {
+    throw new ApiError(200, "INVALID_RESPONSE", "이메일 인증 응답이 올바르지 않습니다.");
+  }
+  return { expiresInSeconds: result.expiresInSeconds, resendAfterSeconds: result.resendAfterSeconds };
+}
+
+/**
+ * POST /auth/signup/email-code/verify 연동. 코드가 맞으면 가입 요청에 넣을 15분 만료 이메일 인증 토큰을 받습니다.
+ * 이 토큰은 로그인 권한이 없는 가입 전용 값이며 저장소에 보관하지 않고 가입 화면의 메모리 상태로만 유지합니다.
+ */
+export async function verifySignupEmailCode(email: string, code: string): Promise<{ emailVerificationToken: string }> {
+  const result = await apiClient<{ emailVerificationToken: string }>("/auth/signup/email-code/verify", {
+    method: "POST",
+    body: JSON.stringify({ email: email.trim().toLowerCase(), code }),
+  });
+  if (!result || typeof result.emailVerificationToken !== "string" || !result.emailVerificationToken) {
+    throw new ApiError(200, "INVALID_RESPONSE", "이메일 인증 응답이 올바르지 않습니다.");
+  }
+  return { emailVerificationToken: result.emailVerificationToken };
+}
 
 export interface AccountRecoveryInput {
   name: string;
@@ -118,7 +156,7 @@ export async function authenticateCredentials(input: AuthCredentialsRequest): Pr
     name: input.mode === "signup" ? input.name : "",
     phone: input.mode === "signup" ? input.phone : "",
     passwordConfirm: "",
-  });
+  }, input.mode === "signup" ? input.emailVerificationToken : undefined);
   const session = await fetchAuthenticatedSession();
   if (session.failure) throw session.failure;
   if (!session.user) {
