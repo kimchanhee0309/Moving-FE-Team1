@@ -56,7 +56,8 @@ test("일반 유저 프로필 등록은 multipart 배열과 지역을 백엔드 
 test("일반 유저 프로필 수정은 검증과 동일한 숫자 전화번호를 전송한다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
     assert.ok(options.body instanceof FormData);
-    assert.equal(options.body.get("email"), "customer@example.com");
+    // 가입 이메일은 수정할 수 없으므로 수정 요청에 포함하지 않습니다.
+    assert.equal(options.body.has("email"), false);
     assert.equal(options.body.get("phone"), "01012345678");
     return success({
       profile: {
@@ -124,7 +125,6 @@ test("일반 유저 비밀번호 변경은 수정하지 않은 기존 기본정�
     newPasswordConfirm: "NewPassword2!",
     changedFields: {
       name: false,
-      email: false,
       phone: false,
       serviceTypeIds: false,
       region: false,
@@ -132,18 +132,19 @@ test("일반 유저 비밀번호 변경은 수정하지 않은 기존 기본정�
   });
 });
 
-test("일반 유저는 이메일 변경 시 현재 비밀번호를 프로필 수정 API에 전달한다", async () => {
+test("일반 유저 프로필 수정은 가입 이메일과 비밀번호 변경 없는 현재 비밀번호를 전송하지 않는다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
     assert.ok(options.body instanceof FormData);
-    assert.equal(options.body.get("currentPassword"), "CurrentPassword1!");
+    assert.equal(options.body.has("email"), false);
+    assert.equal(options.body.has("currentPassword"), false);
     assert.equal(options.body.has("newPassword"), false);
-    assert.equal(options.body.get("email"), "new-customer@example.com");
+    assert.equal(options.body.get("name"), "김지훈2");
     assert.equal(options.body.has("region"), false);
     return success({
       profile: {
         id: "customer-profile-1",
         name: "김지훈2",
-        email: "new-customer@example.com",
+        email: "customer@example.com",
         phone: "01012345678",
         profileImageUrl: null,
         serviceTypes: ["HOME"],
@@ -159,14 +160,13 @@ test("일반 유저는 이메일 변경 시 현재 비밀번호를 프로필 수
     serviceTypeIds: ["HOME"],
     region: "서울",
     name: "김지훈2",
-    email: "new-customer@example.com",
+    email: "customer@example.com",
     phone: "01012345678",
     currentPassword: "CurrentPassword1!",
     newPassword: "",
     newPasswordConfirm: "",
     changedFields: {
-      name: false,
-      email: true,
+      name: true,
       phone: false,
       serviceTypeIds: false,
       region: false,
@@ -209,7 +209,6 @@ test("일반 유저는 비밀번호 없이 서비스와 거주지만 수정할 �
     newPasswordConfirm: "",
     changedFields: {
       name: false,
-      email: false,
       phone: false,
       serviceTypeIds: true,
       region: true,
@@ -326,7 +325,7 @@ test("기사님 받은 리뷰는 실제 페이지 query와 summary를 화면 모
 test("기사님 기본정보의 빈 전화번호는 null로 전송하고 비밀번호는 입력한 경우만 보낸다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
     const payload: unknown = JSON.parse(String(options.body));
-    assert.deepEqual(payload, { name: "기사님", email: "mover@example.com", phone: null });
+    assert.deepEqual(payload, { name: "기사님", phone: null });
     return success({ basicInfo: { name: "기사님", email: "mover@example.com", phone: null } });
   });
 
@@ -341,12 +340,11 @@ test("기사님 기본정보의 빈 전화번호는 null로 전송하고 비밀�
   assert.equal(basicInfo.phone, "");
 });
 
-test("기사님 기본정보는 이메일과 전화번호를 검증 기준으로 정규화한다", async () => {
+test("기사님 기본정보는 가입 이메일을 전송하지 않고 전화번호를 검증 기준으로 정규화한다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
     const payload: unknown = JSON.parse(String(options.body));
     assert.deepEqual(payload, {
       name: "기사님",
-      email: "mover@example.com",
       phone: "01012345678",
     });
     return success({ basicInfo: { name: "기사님", email: "mover@example.com", phone: "01012345678" } });
@@ -380,20 +378,17 @@ test("기사님 비밀번호 변경은 수정하지 않은 기존 기본정보�
     currentPassword: "OldPassword1!",
     newPassword: "NewPassword2!",
     newPasswordConfirm: "NewPassword2!",
-    changedFields: { name: false, email: false, phone: false },
+    changedFields: { name: false, phone: false },
   });
 });
 
-test("기사님은 이메일 변경 시 현재 비밀번호를 기본정보 수정 API에 전달한다", async () => {
+test("기사님 기본정보 수정은 가입 이메일과 비밀번호 변경 없는 현재 비밀번호를 전송하지 않는다", async () => {
   mock.method(globalThis, "fetch", async (_input: RequestInfo | URL, options: RequestInit) => {
-    assert.deepEqual(JSON.parse(String(options.body)), {
-      email: "new-mover@example.com",
-      currentPassword: "CurrentPassword1!",
-    });
+    assert.deepEqual(JSON.parse(String(options.body)), { name: "김기사2" });
     return success({
       basicInfo: {
         name: "김기사2",
-        email: "new-mover@example.com",
+        email: "mover@example.com",
         phone: "01012345678",
       },
     });
@@ -401,11 +396,11 @@ test("기사님은 이메일 변경 시 현재 비밀번호를 기본정보 수�
 
   await updateMoverBasicInfo({
     name: "김기사2",
-    email: "new-mover@example.com",
+    email: "mover@example.com",
     phone: "01012345678",
     currentPassword: "CurrentPassword1!",
     newPassword: "",
     newPasswordConfirm: "",
-    changedFields: { name: false, email: true, phone: false },
+    changedFields: { name: true, phone: false },
   });
 });

@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { formatLongDate } from "@/common/utils/date-format";
 
+import { formatMoveDateForApi } from "../move-request.utils";
 import type { MoveDateCalendarProps } from "./MoveDateCalendar.types";
 
 // 2023-01-01은 일요일이라 일~토 순서의 요일 이름을 locale별로 만들 때 기준일로 씁니다.
@@ -159,49 +160,60 @@ export function MoveDateCalendar({
         </button>
       </div>
 
-      <div className="flex flex-col items-center" role="group" aria-label={t("selectDate")}>
-        <div className="flex items-center">
-          {weekdayLabels.map((label) => (
-            <span
-              key={label}
-              className={`flex ${config.cellClass} items-center justify-center ${config.weekdayText}`}
-            >
-              {label}
-            </span>
-          ))}
-        </div>
+      {/*
+        달력은 요일(열)과 주(행)로 읽는 표 데이터라 table로 마크업한다. 스크린 리더가 "수요일 열"처럼
+        날짜가 속한 요일을 함께 읽어준다. 셀 크기는 기존과 같이 `cellClass`가 정하고, 표 기본 여백이
+        끼어들지 않게 th/td의 padding을 0으로 둔다.
+      */}
+      <table aria-label={t("selectDate")} className="border-collapse">
+        <thead>
+          <tr>
+            {weekdayLabels.map((label) => (
+              <th
+                key={label}
+                scope="col"
+                className={`${config.cellClass} p-0 text-center align-middle ${config.weekdayText}`}
+              >
+                {label}
+              </th>
+            ))}
+          </tr>
+        </thead>
 
-        {weeks.map((week) => (
-          <div key={week[0].date.toISOString()} className="flex items-center">
-            {week.map((cell) => {
-              const selected = cell.isCurrentMonth && isSameDay(value, cell.date);
-              const isPastOrToday = cell.date.getTime() <= today.getTime();
-              const isSelectable = cell.isCurrentMonth && !isPastOrToday;
-              return (
-                <button
-                  key={cell.date.toISOString()}
-                  type="button"
-                  disabled={!isSelectable}
-                  aria-pressed={selected}
-                  aria-label={formatLongDate(cell.date, locale)}
-                  onClick={() => onSelect(cell.date)}
-                  className={[
-                    "flex items-center justify-center rounded-xl transition-colors",
-                    config.cellClass,
-                    selected
-                      ? `bg-(--primary-400) ${config.selectedText}`
-                      : isSelectable
-                        ? `${config.dayText} hover:bg-(--background-200)`
-                        : "cursor-default text-(--gray-300)",
-                  ].join(" ")}
-                >
-                  {cell.date.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+        <tbody>
+          {weeks.map((week) => (
+            <tr key={week[0].date.toISOString()}>
+              {week.map((cell) => {
+                const selected = cell.isCurrentMonth && isSameDay(value, cell.date);
+                const isPastOrToday = cell.date.getTime() <= today.getTime();
+                const isSelectable = cell.isCurrentMonth && !isPastOrToday;
+                return (
+                  <td key={cell.date.toISOString()} className="p-0">
+                    <button
+                      type="button"
+                      disabled={!isSelectable}
+                      aria-pressed={selected}
+                      aria-label={formatLongDate(cell.date, locale)}
+                      onClick={() => onSelect(cell.date)}
+                      className={[
+                        "flex items-center justify-center rounded-xl transition-colors",
+                        config.cellClass,
+                        selected
+                          ? `bg-(--primary-400) ${config.selectedText}`
+                          : isSelectable
+                            ? `${config.dayText} hover:bg-(--background-200)`
+                            : "cursor-default text-(--gray-300)",
+                      ].join(" ")}
+                    >
+                      <time dateTime={formatMoveDateForApi(cell.date)}>{cell.date.getDate()}</time>
+                    </button>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

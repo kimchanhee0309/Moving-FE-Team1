@@ -673,7 +673,8 @@
   "Account": {
     "currentPassword": "현재 비밀번호",
     "currentPasswordPlaceholder": "현재 비밀번호를 입력해 주세요",
-    "currentPasswordHint": "이메일 또는 비밀번호를 변경할 때 현재 비밀번호를 확인합니다.",
+    "currentPasswordHint": "비밀번호를 변경할 때 현재 비밀번호를 확인합니다.",
+    "emailReadOnly": "가입한 이메일은 수정할 수 없습니다.",
     "currentPasswordRequired": "현재 비밀번호를 입력해 주세요.",
     "newPassword": "새 비밀번호",
     "newPasswordPlaceholder": "새 비밀번호를 입력해 주세요",
@@ -704,6 +705,7 @@
     "DESIGNATED_REQUEST_ALREADY_EXISTS": "이미 같은 기사님에게 지정 요청을 보냈습니다.",
     "DESIGNATED_REQUEST_LIMIT_EXCEEDED": "지정 견적 최대 인원(3명)을 초과했습니다.",
     "EMAIL_ALREADY_EXISTS": "이미 사용 중인 이메일입니다.",
+    "EMAIL_CHANGE_NOT_ALLOWED": "가입한 이메일은 수정할 수 없습니다.",
     "EMAIL_VERIFICATION_CODE_ATTEMPTS_EXCEEDED": "인증코드 확인 횟수를 초과했습니다. 새 코드를 요청해 주세요.",
     "EMAIL_VERIFICATION_CODE_EXPIRED": "인증코드가 만료되었습니다. 새 코드를 요청해 주세요.",
     "EMAIL_VERIFICATION_CODE_INVALID": "인증코드가 올바르지 않습니다.",

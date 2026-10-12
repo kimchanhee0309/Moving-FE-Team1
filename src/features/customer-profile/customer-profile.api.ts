@@ -3,7 +3,7 @@ import { apiClient } from "@/common/api/client";
 import { createApiResponseReader } from "@/common/api/response-reader";
 import { isServiceType, type ServiceType } from "@/common/constants/domain";
 import { isProfileRegion } from "@/common/constants/profile";
-import { normalizeEmail, normalizePhoneDigits } from "@/common/validation/contact";
+import { normalizePhoneDigits } from "@/common/validation/contact";
 
 import type {
   CustomerProfile,
@@ -67,9 +67,9 @@ export async function updateCustomerProfile(values: CustomerProfileEditFormValue
   }
   if ((!changed || changed.region) && values.region) formData.append("region", values.region);
   if (!changed || changed.name) formData.append("name", values.name.trim());
-  if (!changed || changed.email) formData.append("email", normalizeEmail(values.email));
   if (!changed || changed.phone) formData.append("phone", normalizePhoneDigits(values.phone));
-  if (values.currentPassword && (!changed || changed.email || values.newPassword)) {
+  // 가입 이메일은 수정할 수 없어 요청에 넣지 않으며, 현재 비밀번호는 비밀번호를 바꿀 때만 전송합니다.
+  if (values.currentPassword && values.newPassword) {
     formData.append("currentPassword", values.currentPassword);
   }
   if (values.newPassword) formData.append("newPassword", values.newPassword);

@@ -673,7 +673,8 @@
   "Account": {
     "currentPassword": "現在のパスワード",
     "currentPasswordPlaceholder": "現在のパスワードを入力してください",
-    "currentPasswordHint": "メールアドレスまたはパスワードを変更する際に、現在のパスワードを確認します。",
+    "currentPasswordHint": "パスワードを変更する際に、現在のパスワードを確認します。",
+    "emailReadOnly": "登録したメールアドレスは変更できません。",
     "currentPasswordRequired": "現在のパスワードを入力してください。",
     "newPassword": "新しいパスワード",
     "newPasswordPlaceholder": "新しいパスワードを入力してください",
@@ -704,6 +705,7 @@
     "DESIGNATED_REQUEST_ALREADY_EXISTS": "このドライバーにはすでに指定依頼を送っています。",
     "DESIGNATED_REQUEST_LIMIT_EXCEEDED": "指定見積もりは最大3名までです。",
     "EMAIL_ALREADY_EXISTS": "このメールアドレスはすでに使用されています。",
+    "EMAIL_CHANGE_NOT_ALLOWED": "登録したメールアドレスは変更できません。",
     "EMAIL_VERIFICATION_CODE_ATTEMPTS_EXCEEDED": "認証コードの確認回数を超えました。新しいコードをリクエストしてください。",
     "EMAIL_VERIFICATION_CODE_EXPIRED": "認証コードの有効期限が切れました。新しいコードをリクエストしてください。",
     "EMAIL_VERIFICATION_CODE_INVALID": "認証コードが正しくありません。",
