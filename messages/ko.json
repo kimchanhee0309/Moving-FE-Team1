@@ -292,6 +292,7 @@
     "favorite": "찜한 기사님",
     "noRecommended": "추천 기사님이 없어요.",
     "noFavorites": "찜한 기사님이 없어요.",
+    "favoritePagination": "찜한 기사님 페이지 이동",
     "detail": "{name} 기사님 상세 보기",
     "loading": "기사님 목록을 불러오는 중이에요.",
     "loadError": "기사님 목록을 불러오지 못했어요.",
@@ -630,7 +631,9 @@
     "guideTitle": "지정 견적 요청하기",
     "guideDescription": "일반 견적 요청을 먼저 진행해 주세요.",
     "guideAction": "일반 견적 요청 하기",
-    "kakaoTitle": "{name} 기사님"
+    "kakaoTitle": "{name} 기사님",
+    "favoriteAdded": "기사님을 찜했어요",
+    "favoriteRemoved": "기사님 찜을 해제했어요"
   },
   "Address": {
     "searchPlaceholder": "텍스트를 입력해 주세요.",

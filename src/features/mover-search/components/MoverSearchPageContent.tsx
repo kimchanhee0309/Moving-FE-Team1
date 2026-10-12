@@ -18,6 +18,7 @@ import { authHref } from "@/features/auth/auth.utils";
 import { useDebouncedSearch } from "../hooks/useDebouncedSearch";
 import { useLoadMoreSentinel } from "../hooks/useLoadMoreSentinel";
 import { useMoverSearchInfiniteQuery } from "../hooks/useMoverSearchInfiniteQuery";
+import type { FavoriteToggleTarget } from "../hooks/useMoverSearchSidebar";
 import {
   useMoverSearchFavorites,
   useMoverSearchRecommended,
@@ -125,7 +126,7 @@ export function MoverSearchPageContent() {
     Boolean(hasNextPage) && !isFetchingNextPage,
   );
 
-  const handleFavoriteClick = (moverId: string) => {
+  const handleFavoriteClick = (mover: FavoriteToggleTarget) => {
     if (viewer === "pending") {
       return;
     }
@@ -141,7 +142,7 @@ export function MoverSearchPageContent() {
       return;
     }
 
-    favoritesQuery.toggleFavorite(moverId);
+    favoritesQuery.toggleFavorite(mover);
   };
 
   const sidebarMovers = isCustomer
@@ -230,7 +231,7 @@ export function MoverSearchPageContent() {
                   <Link
                     href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
                     className="block min-[744px]:w-full"
-                    aria-label={t("detail", {name: mover.moverName})}
+                    aria-label={t("detail", { name: mover.moverName })}
                   >
                     <MoverSearchCard
                       serviceType={mover.serviceType}
@@ -247,7 +248,7 @@ export function MoverSearchPageContent() {
                       isFavorite={favoritesQuery.favoriteIdSet.has(mover.id)}
                       onFavoriteClick={
                         canInteractFavorite
-                          ? () => handleFavoriteClick(mover.id)
+                          ? () => handleFavoriteClick(mover)
                           : undefined
                       }
                     />

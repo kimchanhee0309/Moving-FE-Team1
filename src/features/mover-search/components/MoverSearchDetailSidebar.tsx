@@ -104,10 +104,16 @@ export function MoverSearchDetailCompactShare({
   const quote = useTranslations("Quote");
 
   return (
-    <div className="flex w-full flex-col gap-3">
-      <p className="text-lg-semibold text-[var(--content-strong)]">
+    <section
+      aria-labelledby="mover-share-heading-compact"
+      className="flex w-full flex-col gap-3"
+    >
+      <h2
+        id="mover-share-heading-compact"
+        className="text-lg-semibold text-[var(--content-strong)]"
+      >
         {t("shareTitle")}
-      </p>
+      </h2>
       <div className="flex gap-3">
         <IconButton
           kind="clip"
@@ -128,7 +134,7 @@ export function MoverSearchDetailCompactShare({
           onClick={onShareFacebook}
         />
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -160,7 +166,9 @@ export function MoverSearchDetailStickyBar({
             onClick={onDesignatedClick}
             className={isDesignatedComplete ? DESIGNATED_COMPLETE_CLASS : ""}
           >
-            {isDesignatedComplete ? t("designatedDone") : t("designatedRequest")}
+            {isDesignatedComplete
+              ? t("designatedDone")
+              : t("designatedRequest")}
           </Button>
         </div>
       </div>
@@ -177,10 +185,16 @@ function MoverSearchDetailShare({
   const quote = useTranslations("Quote");
 
   return (
-    <div className="flex flex-col gap-[22px]">
-      <p className="text-xl-semibold text-[var(--content-strong)]">
+    <section
+      aria-labelledby="mover-share-heading"
+      className="flex flex-col gap-[22px]"
+    >
+      <h2
+        id="mover-share-heading"
+        className="text-xl-semibold text-[var(--content-strong)]"
+      >
         {t("shareTitle")}
-      </p>
+      </h2>
       <div className="flex gap-4">
         <IconButton
           kind="clip"
@@ -201,6 +215,6 @@ function MoverSearchDetailShare({
           onClick={onShareFacebook}
         />
       </div>
-    </div>
+    </section>
   );
 }

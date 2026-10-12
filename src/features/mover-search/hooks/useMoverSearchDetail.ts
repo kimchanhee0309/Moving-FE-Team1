@@ -17,12 +17,24 @@ import {
 
 import { fetchMoverDetail, fetchMoverReviews } from "../mover-search.api";
 import { moverSearchQueryKeys } from "../mover-search.constants";
+import type { MoverDetail } from "../mover-search.types";
 
-export function useMoverSearchDetail(moverId: string, reviewPage: number) {
+/**
+ * `initialMover`는 page.tsx(Server Component)가 JSON-LD용으로 이미 조회해 둔 같은
+ * `GET /movers/:id` 결과입니다. TanStack Query의 `initialData`로 넘기면 클라이언트가
+ * 똑같은 데이터를 다시 받아올 때까지 로딩 상태로 깜빡이지 않고, 그 뒤에도 평소처럼
+ * staleTime 기준으로 백그라운드 재검증합니다. 전역 TanStack Query 설정은 바꾸지 않습니다.
+ */
+export function useMoverSearchDetail(
+  moverId: string,
+  reviewPage: number,
+  initialMover?: MoverDetail | null,
+) {
   const detailQuery = useQuery({
     queryKey: moverSearchQueryKeys.detail(moverId),
     queryFn: ({ signal }) => fetchMoverDetail(moverId, signal),
     enabled: moverId.length > 0,
+    ...(initialMover !== undefined ? { initialData: initialMover } : {}),
   });
   const reviewQuery = useQuery({
     queryKey: moverSearchQueryKeys.reviews(moverId, reviewPage),
