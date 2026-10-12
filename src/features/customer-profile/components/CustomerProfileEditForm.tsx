@@ -1,0 +1,249 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useState, type FormEvent } from "react";
+
+import { Button } from "@/common/components/button";
+import { Input } from "@/common/components/Input";
+import { ProfileImageInput } from "@/common/components/ProfileImageInput";
+import {
+  ProfileMultiSelectChipGroup,
+  ProfileSingleSelectChipGroup,
+} from "@/common/components/ProfileSelectionChip";
+import { PROFILE_REGION_OPTIONS, PROFILE_SERVICE_OPTIONS } from "@/common/constants/profile";
+import { ROUTES } from "@/common/constants/routes";
+import { haveSameSelection } from "@/common/utils/selection";
+import { getPhoneError, normalizePhoneDigits } from "@/common/validation/contact";
+import { getNameError } from "@/common/validation/name";
+import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
+import { useValidationMessage } from "@/common/validation/useValidationMessage";
+import { AccountWithdrawalButton } from "@/features/auth/components/AccountWithdrawalButton";
+import { useRouter } from "@/i18n/navigation";
+
+import type {
+  CustomerProfileEditFormProps,
+  CustomerProfileEditFormValues,
+} from "../customer-profile.types";
+
+type TextField = "name" | "phone" | "currentPassword" | "newPassword" | "newPasswordConfirm";
+
+const TEXT_FIELDS: ReadonlyArray<TextField> = [
+  "name",
+  "phone",
+  "currentPassword",
+  "newPassword",
+  "newPasswordConfirm",
+];
+
+export function CustomerProfileEditForm({
+  initialValues,
+  isPending = false,
+  submissionError,
+  currentPasswordError,
+  onCurrentPasswordChange,
+  onSubmit,
+}: CustomerProfileEditFormProps) {
+  const t = useTranslations("Profile");
+  const auth = useTranslations("Auth");
+  const account = useTranslations("Account");
+  const translateValidation = useValidationMessage();
+  const router = useRouter();
+  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [imageInputVersion, setImageInputVersion] = useState(0);
+  const [profileImageError, setProfileImageError] = useState<string | null>(null);
+  const [values, setValues] = useState(() => ({
+    name: initialValues.name,
+    email: initialValues.email,
+    phone: initialValues.phone,
+    currentPassword: initialValues.currentPassword,
+    newPassword: initialValues.newPassword,
+    newPasswordConfirm: initialValues.newPasswordConfirm,
+  }));
+  const [serviceTypeIds, setServiceTypeIds] = useState(initialValues.serviceTypeIds);
+  const [region, setRegion] = useState(initialValues.region);
+  const [touched, setTouched] = useState<Partial<Record<TextField, boolean>>>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [serviceTouched, setServiceTouched] = useState(false);
+  const [regionTouched, setRegionTouched] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const isBusy = isPending || isSubmitting;
+  // 서비스·지역·일반 프로필 정보는 세션으로 수정하고, 비밀번호 변경만 재인증합니다. 가입 이메일은 수정할 수 없습니다.
+  const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
+  const normalizedPhone = normalizePhoneDigits(values.phone);
+  const changedFields = {
+    name: values.name.trim() !== initialValues.name.trim(),
+    phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
+    serviceTypeIds: !haveSameSelection(serviceTypeIds, initialValues.serviceTypeIds),
+    region: region !== initialValues.region,
+  };
+  const requiresCurrentPassword = isChangingPassword;
+
+  const errors: Partial<Record<TextField, string>> = {
+    name: translateValidation(getNameError(values.name)),
+    phone: translateValidation(getPhoneError(values.phone)),
+    currentPassword:
+      requiresCurrentPassword && !values.currentPassword
+        ? account("currentPasswordRequired")
+        : values.currentPassword
+          ? translateValidation(getCurrentPasswordError(values.currentPassword) ?? currentPasswordError)
+          : undefined,
+    newPassword:
+      isChangingPassword && !values.newPassword
+        ? account("newPasswordRequired")
+        : isChangingPassword
+          ? translateValidation(getNewPasswordError(values.newPassword))
+          : undefined,
+    newPasswordConfirm:
+      isChangingPassword && !values.newPasswordConfirm
+        ? account("newPasswordConfirmRequired")
+        : isChangingPassword && values.newPassword !== values.newPasswordConfirm
+          ? account("newPasswordMismatch")
+          : undefined,
+  };
+  // 서버에 이미 저장된 기존 값이 현재 프론트 규칙과 다르더라도, 사용자가 변경하지
+  // 않은 필드 때문에 비밀번호 변경까지 막히지 않도록 변경한 필드만 차단합니다.
+  const hasError = Boolean(
+    (changedFields.name && errors.name) ||
+      (changedFields.phone && errors.phone) ||
+      errors.currentPassword ||
+      errors.newPassword ||
+      errors.newPasswordConfirm,
+  );
+  const hasServiceError = (hasSubmitted || serviceTouched) && serviceTypeIds.length === 0;
+  const hasRegionError = (hasSubmitted || regionTouched) && region === null;
+  const hasChanges =
+    changedFields.name ||
+    changedFields.phone ||
+    isChangingPassword ||
+    profileImage !== null ||
+    changedFields.serviceTypeIds ||
+    changedFields.region;
+
+  const updateValue = (field: TextField, value: string) => {
+    if (field === "currentPassword") onCurrentPasswordChange?.();
+    setTouched((current) => ({ ...current, [field]: true }));
+    setValues((current) => ({ ...current, [field]: value }));
+    setStatusMessage("");
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setHasSubmitted(true);
+    setStatusMessage("");
+
+    if (!hasChanges || hasError || profileImageError || serviceTypeIds.length === 0 || region === null || isBusy) {
+      const firstInvalidField = TEXT_FIELDS.find((field) => errors[field]);
+      if (firstInvalidField) {
+        event.currentTarget
+          .querySelector<HTMLInputElement>(`[name="${firstInvalidField}"]`)
+          ?.focus();
+      }
+      return;
+    }
+
+    const nextValues: CustomerProfileEditFormValues = {
+      ...values,
+      name: values.name.trim(),
+      email: values.email.trim(),
+      phone: values.phone.trim(),
+      profileImage,
+      serviceTypeIds,
+      region,
+      changedFields,
+    };
+
+    setIsSubmitting(true);
+    try {
+      const savedProfile = await onSubmit(nextValues);
+      setProfileImage(null);
+      setImageInputVersion((current) => current + 1);
+      setValues({
+        name: savedProfile.name,
+        email: savedProfile.email,
+        phone: savedProfile.phone ?? "",
+        currentPassword: "",
+        newPassword: "",
+        newPasswordConfirm: "",
+      });
+      setStatusMessage(t("updated"));
+    } catch {
+      // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const inputClassName = "max-w-none min-[1200px]:[&>div]:h-16";
+  const inputSectionClassName = "border-b border-[var(--line-100)] py-6";
+  const selectionSectionClassName =
+    "border-b border-[var(--line-100)] py-6 min-[1200px]:py-8";
+  const buttonClassName =
+    "h-[54px] min-h-[54px] min-[1200px]:h-[60px] min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
+
+  return (
+    <main className="min-h-[calc(100vh-54px)] bg-[var(--gray-50)] px-6 min-[744px]:min-h-[calc(100vh-88px)] min-[744px]:px-0">
+      <form
+        noValidate
+        aria-busy={isBusy}
+        className="mx-auto flex w-full max-w-[327px] flex-col pb-8 pt-10 min-[744px]:pt-8 min-[1200px]:max-w-[1120px] min-[1200px]:pb-8 min-[1200px]:pt-[63px]"
+        onSubmit={handleSubmit}
+      >
+        <h1 className="text-xl-bold border-b border-[var(--line-100)] pb-6 text-[var(--black-400)] min-[1200px]:text-3xl-bold min-[1200px]:pb-12">
+          {t("editTitle")}
+        </h1>
+
+        <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
+          <div className="flex flex-col">
+            <div className={inputSectionClassName}>
+              <Input name="name" label={auth("name")} inputSize="sm" containerClassName={inputClassName} value={values.name} error={changedFields.name ? errors.name : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, name: true }))} onChange={(event) => updateValue("name", event.currentTarget.value)} />
+            </div>
+            <div className={inputSectionClassName}>
+              {/* 가입 이메일은 로그인 ID라 수정할 수 없습니다. disabled 대신 readOnly로 두어 키보드 focus와 보조 기술 읽기를 유지하고 사유를 도움말로 안내합니다. 입력 가능한 칸과 구분되도록 배경을 회색으로 두고 focus 테두리는 강조색 대신 회색을 씁니다. */}
+              <Input name="email" label={auth("email")} type="email" autoComplete="email" inputSize="sm" containerClassName={`${inputClassName} [&>div]:bg-[var(--gray-100)]! [&>div]:hover:border-[var(--line-200)]! [&>div]:focus-within:border-[var(--gray-300)]!`} className="cursor-default text-[var(--gray-400)]!" value={values.email} readOnly aria-readonly="true" helperText={account("emailReadOnly")} />
+            </div>
+            <div className={inputSectionClassName}>
+              <Input name="phone" label={auth("phone")} type="tel" autoComplete="tel" inputMode="tel" inputSize="sm" containerClassName={inputClassName} value={values.phone} error={changedFields.phone ? errors.phone : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, phone: true }))} onChange={(event) => updateValue("phone", event.currentTarget.value)} />
+            </div>
+            <div className={inputSectionClassName}>
+              <Input name="currentPassword" label={account("currentPassword")} type="password" autoComplete="current-password" inputSize="sm" containerClassName={inputClassName} placeholder={account("currentPasswordPlaceholder")} value={values.currentPassword} error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined} helperText={!currentPasswordError ? account("currentPasswordHint") : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))} onChange={(event) => updateValue("currentPassword", event.currentTarget.value)} />
+            </div>
+            <div className={inputSectionClassName}>
+              <Input name="newPassword" label={account("newPassword")} type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder={account("newPasswordPlaceholder")} value={values.newPassword} error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))} onChange={(event) => updateValue("newPassword", event.currentTarget.value)} />
+            </div>
+            <div className={`${inputSectionClassName} min-[1200px]:border-b-0`}>
+              <Input name="newPasswordConfirm" label={account("newPasswordConfirm")} type="password" autoComplete="new-password" inputSize="sm" containerClassName={inputClassName} placeholder={account("newPasswordConfirmPlaceholder")} value={values.newPasswordConfirm} error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined} disabled={isBusy} onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))} onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)} />
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <ProfileImageInput key={imageInputVersion} className={selectionSectionClassName} file={profileImage} initialImageUrl={initialValues.profileImageUrl} disabled={isBusy} isLoading={isPending} onFileChange={(file) => { setProfileImage(file); setStatusMessage(""); }} onValidationErrorChange={setProfileImageError} />
+
+            <section className={`flex flex-col min-[1200px]:min-h-[208px] ${selectionSectionClassName}`} aria-labelledby="customer-edit-service-title">
+              <h2 id="customer-edit-service-title" className="text-lg-semibold text-[var(--black-300)]">{t("customerServices")}</h2>
+              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">{t("customerServicesEditHint")}</p>
+              <ProfileMultiSelectChipGroup options={PROFILE_SERVICE_OPTIONS} values={serviceTypeIds} size="md" disabled={isBusy} isInvalid={hasServiceError} className="mt-4 min-[1200px]:mt-8 min-[1200px]:gap-[14px]" ariaLabel={t("customerServicesSelect")} ariaDescribedBy={hasServiceError ? "customer-edit-service-error" : undefined} onValuesChange={(nextValues) => { setServiceTouched(true); setServiceTypeIds(nextValues); setStatusMessage(""); }} />
+              {hasServiceError ? <p id="customer-edit-service-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">{t("customerServicesError")}</p> : null}
+            </section>
+
+            <section className="flex flex-col py-6 min-[1200px]:py-8" aria-labelledby="customer-edit-region-title">
+              <h2 id="customer-edit-region-title" className="text-lg-semibold text-[var(--black-300)]">{t("livingRegion")}</h2>
+              <p className="mt-2 text-xs-regular text-[var(--gray-400)]">{t("livingRegionEditHint")}</p>
+              <ProfileSingleSelectChipGroup name="customer-edit-region" options={PROFILE_REGION_OPTIONS} value={region} size="md" disabled={isBusy} isInvalid={hasRegionError} required className="mt-4 min-[1200px]:mt-8 min-[1200px]:max-w-[416px] min-[1200px]:!gap-x-[14px] min-[1200px]:!gap-y-[18px]" ariaLabel={t("livingRegionSelect")} ariaDescribedBy={hasRegionError ? "customer-edit-region-error" : undefined} onValueChange={(nextRegion) => { setRegionTouched(true); setRegion(nextRegion); setStatusMessage(""); }} />
+              {hasRegionError ? <p id="customer-edit-region-error" role="alert" className="text-xs-medium text-[var(--primary-400)]">{t("livingRegionRequired")}</p> : null}
+            </section>
+
+            {submissionError ? <p role="alert" className="text-md-medium mb-3 rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">{submissionError}</p> : null}
+            {statusMessage ? <p role="status" className="text-md-medium mb-3 rounded-xl bg-[var(--primary-100)] px-4 py-3 text-[var(--primary-400)]">{statusMessage}</p> : null}
+
+            <div className="flex flex-col gap-2 min-[1200px]:mt-16 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
+              <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError || serviceTypeIds.length === 0 || region === null || Boolean(profileImageError)} isLoading={isBusy} className={`min-[1200px]:order-2 ${buttonClassName}`}>{t("edit")}</Button>
+              <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${buttonClassName}`} onClick={() => router.push(ROUTES.HOME)}>{t("cancel")}</Button>
+            </div>
+            <AccountWithdrawalButton className="mt-4 min-[1200px]:mt-5" buttonClassName={buttonClassName} disabled={isBusy} />
+          </div>
+        </div>
+      </form>
+    </main>
+  );
+}

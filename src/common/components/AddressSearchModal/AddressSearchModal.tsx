@@ -1,0 +1,289 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useEffect, useId, useRef } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
+
+import { AddressCard } from "@/common/components/AddressCard";
+
+import { ClearCircleIcon, CloseIcon, SearchIcon } from "./icons";
+import type { AddressResult, AddressSearchModalProps } from "./AddressSearchModal.types";
+
+const FOCUS_RING =
+  "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
+
+const FOCUSABLE_SELECTOR = [
+  "button:not([disabled])",
+  "a[href]",
+  "input:not([disabled])",
+  "textarea:not([disabled])",
+  "select:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+function addressKey(address: AddressResult) {
+  return `${address.zonecode}-${address.roadAddress}-${address.jibunAddress}`;
+}
+
+/**
+ * Figma의 `Component/address-card`(모달) 컴포넌트를 구현한 공통 검색 모달입니다.
+ * 이름과 달리 카카오 우편번호 API를 직접 호출하지 않습니다 — 검색어 입력과 결과
+ * 렌더링만 담당하는 "껍데기 UI"이며, 실제 검색 로직은 항상 부모(추후 adapter/hook)가
+ * `results`/`isLoading` props로 채워 넣습니다.
+ *
+ * 검색은 타이핑마다 자동으로 일어나지 않는다 — `onSearchChange`는 입력 중인 텍스트 표시만
+ * 갱신하고, 실제 검색 요청은 Enter 또는 돋보기 버튼으로 `onSearchSubmit`이 호출될 때만
+ * 트리거되도록 부모가 구현해야 한다(타이핑 중에는 `results`가 이전 검색 결과를 유지).
+ *
+ * 접근성: 열릴 때 검색 input으로 포커스를 이동하고 Tab 포커스를 내부로 가두며,
+ * Esc와 backdrop 클릭으로 닫을 수 있고 닫힐 때 이전 포커스로 복귀합니다.
+ *
+ * 크기(Figma의 sm/md variant)는 AddressCard와 동일하게 이 모달을 쓰는 페이지의 태블릿
+ * breakpoint(744px, Figma 기준)에 맞춘 `min-[744px]:`로 전환됩니다. Tailwind 기본 `sm:`(640px)를
+ * 쓰면 640~743px 구간에서 페이지는 아직 모바일 레이아웃인데 모달만 먼저 md 스타일로 바뀌는
+ * 불일치가 생겨 이렇게 고정했다. `sm`은 모바일 팝업 화면(node 1:4815) 전용 사이즈이고 `md`는
+ * 태블릿/데스크톱이 함께 쓰는 사이즈임을 실제 모바일 화면 목업으로 확인했다 — 744px 미만(모바일)만
+ * sm 레이아웃을, 744px 이상(태블릿+데스크톱)은 md 레이아웃을 사용합니다.
+ */
+export function AddressSearchModal({
+  isOpen,
+  title,
+  searchValue,
+  onSearchChange,
+  onSearchSubmit,
+  onSearchClear,
+  results,
+  isLoading = false,
+  selectedAddress,
+  onSelectAddress,
+  onConfirm,
+  onClose,
+  searchPlaceholder,
+  className = "",
+}: AddressSearchModalProps) {
+  const t = useTranslations("Address");
+  const common = useTranslations("Common");
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // onClose가 useCallback 없이 매 렌더마다 새로 만들어지는 부모(예: page.tsx의
+  // closeAddressModal)가 있으면, 이 값을 effect 의존성에 그대로 넣었을 때 검색어 입력마다
+  // (=searchValue가 바뀔 때마다 부모가 리렌더되어 onClose 참조가 바뀔 때마다) 아래 focus trap
+  // effect가 매번 cleanup(이전 포커스로 복귀) 후 재실행(input에 재포커스)됐다. 이 순간적인
+  // "포커스 이탈 후 복귀"가 한글 IME 조합 버퍼를 매 keystroke마다 끊어서 "진행"이
+  // "ㅈㅣㄴㅎㅐ"처럼 낱자로 쪼개져 보이는 원인이었다. ref로 최신 onClose만 읽고 effect
+  // 의존성에서는 빼서, 모달이 열리고 닫힐 때만 focus trap이 실행되게 한다.
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previouslyFocusedElement =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    searchInputRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onCloseRef.current();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      const dialog = dialogRef.current;
+      if (!dialog) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      );
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      previouslyFocusedElement?.focus();
+    };
+  }, [isOpen]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  const handleBackdropMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  };
+
+  const hasQuery = searchValue.trim().length > 0;
+  const showEmptyMessage = !isLoading && hasQuery && results.length === 0;
+  const showHint = !isLoading && !hasQuery && results.length === 0;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onMouseDown={handleBackdropMouseDown}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={`flex w-full max-w-[260px] flex-col gap-[30px] rounded-[24px] bg-(--gray-50) px-4 py-6 min-[744px]:max-w-[560px] min-[744px]:gap-10 min-[744px]:rounded-[32px] min-[744px]:px-6 min-[744px]:pt-8 min-[744px]:pb-10 ${FOCUS_RING} ${className}`}
+      >
+        <header className="flex w-full items-center justify-between">
+          <h2 id={titleId} className="text-2lg-bold text-(--black-400) min-[744px]:text-2xl-semibold">
+            {title}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={common("closeTitle", { title })}
+            className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
+          >
+            <CloseIcon className="size-full" />
+          </button>
+        </header>
+
+        <div className="flex flex-col gap-6">
+          {/* 검색 영역임을 알리는 form(role="search")이다. Enter 검색은 기존대로 input의 onKeyDown이 맡는다.
+              onSubmit은 그 밖의 경로(모바일 키보드의 검색 키 등)로 제출될 때 페이지가 이동하지 않게 막고
+              같은 검색을 실행한다. */}
+          <form
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSearchSubmit();
+            }}
+            className="flex w-full items-center gap-3 rounded-2xl bg-(--background-100) px-4 py-3.5 min-[744px]:h-16 min-[744px]:gap-4 min-[744px]:px-6"
+          >
+            <input
+              ref={searchInputRef}
+              // type="search"는 Chrome 계열에서 controlled value와 결합되면 한글 IME 조합을
+              // 깨뜨려(자음/모음이 조합 전에 매 입력마다 확정돼 "진행"이 "ㅈㅣㄴㅎㅐ"처럼 낱자로
+              // 쪼개짐) 이 서비스 주 사용자층(한국어 입력)에 치명적이다. 네이티브 검색 input의
+              // × 지우기 버튼도 이미 CSS로 숨기고 커스텀 버튼을 따로 만들어 써서 "search" 타입이
+              // 주는 이점이 없어 "text"로 바꾼다.
+              type="text"
+              value={searchValue}
+              onChange={(event) => onSearchChange(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  onSearchSubmit();
+                }
+              }}
+              placeholder={searchPlaceholder ?? t("searchPlaceholder")}
+              aria-label={title}
+              className="text-2lg-regular min-w-0 flex-1 appearance-none bg-transparent text-(--black-400)! outline-none focus-visible:outline-2! focus-visible:outline-offset-2! focus-visible:outline-(--black-400)! placeholder:text-(--gray-300) [&::-webkit-search-cancel-button]:appearance-none"
+            />
+            {searchValue.length > 0 ? (
+              <button
+                type="button"
+                onClick={onSearchClear}
+                aria-label={common("clearSearch")}
+                className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
+              >
+                <ClearCircleIcon className="size-full" />
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onSearchSubmit}
+              aria-label={t("search")}
+              className={`flex size-6 shrink-0 items-center justify-center text-(--gray-400)! min-[744px]:size-9 ${FOCUS_RING}`}
+            >
+              <SearchIcon className="size-full" />
+            </button>
+          </form>
+
+          <div className="flex max-h-[280px] flex-col gap-4 overflow-y-auto">
+            {isLoading ? (
+              <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
+                {t("searching")}
+              </p>
+            ) : null}
+
+            {showHint ? (
+              <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
+                {t("hint")}
+              </p>
+            ) : null}
+
+            {showEmptyMessage ? (
+              <p className="text-md-regular px-1 py-6 text-center text-(--gray-400)">
+                {t("empty")}
+              </p>
+            ) : null}
+
+            {!isLoading && results.length > 0 ? (
+              <ul aria-label={t("results")} className="m-0 flex list-none flex-col gap-4 p-0">
+                {results.map((address) => (
+                  <li key={addressKey(address)}>
+                    <AddressCard
+                      address={address}
+                      selected={
+                        selectedAddress !== null &&
+                        addressKey(selectedAddress) === addressKey(address)
+                      }
+                      onSelect={onSelectAddress}
+                    />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          disabled={!selectedAddress}
+          onClick={() => {
+            if (selectedAddress) {
+              onConfirm(selectedAddress);
+            }
+          }}
+          className={`text-lg-semibold min-[744px]:text-2lg-semibold flex h-[54px] w-full items-center justify-center rounded-xl text-center text-(--gray-50)! transition-colors min-[744px]:h-16 min-[744px]:rounded-2xl ${
+            selectedAddress ? "bg-(--primary-400)!" : "cursor-not-allowed bg-(--gray-300)!"
+          } ${FOCUS_RING}`}
+        >
+          {t("done")}
+        </button>
+      </div>
+    </div>
+  );
+}

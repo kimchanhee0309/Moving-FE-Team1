@@ -1,0 +1,294 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useState, type FormEvent } from "react";
+
+import { Button } from "@/common/components/button";
+import { Input } from "@/common/components/Input";
+import { ROUTES } from "@/common/constants/routes";
+import { getPhoneError, normalizePhoneDigits } from "@/common/validation/contact";
+import { getNameError } from "@/common/validation/name";
+import { getCurrentPasswordError, getNewPasswordError } from "@/common/validation/password";
+import { useValidationMessage } from "@/common/validation/useValidationMessage";
+import { AccountWithdrawalButton } from "@/features/auth/components/AccountWithdrawalButton";
+import { useRouter } from "@/i18n/navigation";
+
+import type {
+  MoverBasicInfoFormProps,
+  MoverBasicInfoFormValues,
+} from "../mover-mypage.types";
+
+const INITIAL_VALUES: MoverBasicInfoFormValues = {
+  name: "",
+  email: "",
+  phone: "",
+  currentPassword: "",
+  newPassword: "",
+  newPasswordConfirm: "",
+};
+
+const BASIC_INFO_FIELDS: ReadonlyArray<keyof MoverBasicInfoFormValues> = [
+  "name",
+  "email",
+  "phone",
+  "currentPassword",
+  "newPassword",
+  "newPasswordConfirm",
+];
+type BasicInfoField = keyof MoverBasicInfoFormValues;
+
+/**
+ * 기사님 기본정보와 선택적 비밀번호 변경 입력을 검증합니다.
+ * 실제 사용자 조회·수정 mutation과 인증 상태 갱신은 API 계약 확정 뒤 컨테이너에서 연결합니다.
+ */
+export function MoverBasicInfoForm({
+  initialValues,
+  isPending = false,
+  submissionError,
+  currentPasswordError,
+  onCurrentPasswordChange,
+  onSubmit,
+}: MoverBasicInfoFormProps) {
+  const auth = useTranslations("Auth");
+  const account = useTranslations("Account");
+  const profile = useTranslations("Profile");
+  const translateValidation = useValidationMessage();
+  const router = useRouter();
+  const [values, setValues] = useState<MoverBasicInfoFormValues>({
+    ...INITIAL_VALUES,
+    ...initialValues,
+  });
+  const [touched, setTouched] = useState<Partial<Record<BasicInfoField, boolean>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const isBusy = isPending || isSubmitting;
+  const normalizedPhone = normalizePhoneDigits(values.phone);
+  const changedFields = {
+    name: values.name.trim() !== initialValues.name.trim(),
+    phone: normalizedPhone !== normalizePhoneDigits(initialValues.phone),
+  };
+  // 이름·전화번호는 세션으로 수정하고, 비밀번호 변경만 재인증합니다. 가입 이메일은 수정할 수 없습니다.
+  const isChangingPassword = Boolean(values.newPassword || values.newPasswordConfirm);
+  const requiresCurrentPassword = isChangingPassword;
+
+  const errors: Partial<Record<BasicInfoField, string>> = {
+    name: translateValidation(getNameError(values.name)),
+    phone: translateValidation(getPhoneError(values.phone)),
+    currentPassword:
+      requiresCurrentPassword && !values.currentPassword
+        ? account("currentPasswordRequired")
+        : values.currentPassword
+          ? translateValidation(getCurrentPasswordError(values.currentPassword) ?? currentPasswordError)
+          : undefined,
+    newPassword:
+      isChangingPassword && !values.newPassword
+        ? account("newPasswordRequired")
+        : isChangingPassword
+          ? translateValidation(getNewPasswordError(values.newPassword))
+          : undefined,
+    newPasswordConfirm:
+      isChangingPassword && !values.newPasswordConfirm
+        ? account("newPasswordConfirmRequired")
+        : isChangingPassword && values.newPassword !== values.newPasswordConfirm
+          ? account("newPasswordMismatch")
+          : undefined,
+  };
+  const hasError = Boolean(
+    (changedFields.name && errors.name) ||
+      (changedFields.phone && errors.phone) ||
+      errors.currentPassword ||
+      errors.newPassword ||
+      errors.newPasswordConfirm,
+  );
+  const hasChanges =
+    changedFields.name ||
+    changedFields.phone ||
+    isChangingPassword;
+  const responsiveInputClass = "max-w-none min-[1200px]:[&>div]:h-16";
+  const responsiveButtonClass =
+    "h-[54px] min-h-[54px] min-[1200px]:h-[60px] min-[1200px]:min-h-[60px] min-[1200px]:rounded-2xl min-[1200px]:p-4 min-[1200px]:text-2lg-semibold";
+  const firstRowClass =
+    "border-b border-[var(--line-100)] py-6 min-[1200px]:min-h-[186px] min-[1200px]:py-8";
+  const rowClass = "border-b border-[var(--line-100)] py-6 min-[1200px]:py-8";
+
+  const updateValue = (field: BasicInfoField, value: string) => {
+    if (field === "currentPassword") onCurrentPasswordChange?.();
+    setTouched((current) => ({ ...current, [field]: true }));
+    setValues((current) => ({ ...current, [field]: value }));
+    setStatusMessage("");
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatusMessage("");
+
+    if (!hasChanges || hasError || isBusy) {
+      const firstInvalidField = BASIC_INFO_FIELDS.find((field) => errors[field]);
+      if (firstInvalidField) {
+        event.currentTarget.querySelector<HTMLInputElement>(`[name="${firstInvalidField}"]`)?.focus();
+      }
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const savedBasicInfo = await onSubmit({ ...values, changedFields });
+      setValues({
+        ...savedBasicInfo,
+        currentPassword: "",
+        newPassword: "",
+        newPasswordConfirm: "",
+      });
+      setStatusMessage(account("basicInfoUpdated"));
+    } catch {
+      // API 오류 메시지는 mutation 컨테이너의 submissionError로 표시합니다.
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="min-h-[calc(100vh-54px)] bg-[var(--gray-50)] px-6 min-[744px]:min-h-[calc(100vh-88px)] min-[744px]:px-0">
+      <form
+        noValidate
+        aria-busy={isBusy}
+        className="mx-auto flex w-full max-w-[327px] flex-col pb-8 pt-10 min-[744px]:pt-8 min-[1200px]:max-w-[1120px] min-[1200px]:pb-[60px] min-[1200px]:pt-[112px]"
+        onSubmit={handleSubmit}
+      >
+        <h1 className="text-xl-bold border-b border-[var(--line-100)] pb-6 text-[var(--black-400)] min-[1200px]:text-3xl-bold min-[1200px]:pb-12">
+          {account("basicInfoTitle")}
+        </h1>
+
+        <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
+          <div className="flex flex-col">
+            <div className={firstRowClass}>
+              <Input
+                name="name"
+                label={auth("name")}
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                value={values.name}
+                error={changedFields.name ? errors.name : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, name: true }))}
+                onChange={(event) => updateValue("name", event.currentTarget.value)}
+              />
+            </div>
+            <div className={rowClass}>
+              {/* 가입 이메일은 로그인 ID라 수정할 수 없습니다. disabled 대신 readOnly로 두어 키보드 focus와 보조 기술 읽기를 유지하고 사유를 도움말로 안내합니다. 입력 가능한 칸과 구분되도록 배경을 회색으로 두고 focus 테두리는 강조색 대신 회색을 씁니다. */}
+              <Input
+                name="email"
+                label={auth("email")}
+                type="email"
+                autoComplete="email"
+                inputSize="sm"
+                containerClassName={`${responsiveInputClass} [&>div]:bg-[var(--gray-100)]! [&>div]:hover:border-[var(--line-200)]! [&>div]:focus-within:border-[var(--gray-300)]!`}
+                className="cursor-default text-[var(--gray-400)]!"
+                value={values.email}
+                readOnly
+                aria-readonly="true"
+                helperText={account("emailReadOnly")}
+              />
+            </div>
+            <div className={`${rowClass} min-[1200px]:border-b-0`}>
+              <Input
+                name="phone"
+                label={auth("phone")}
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                value={values.phone}
+                error={changedFields.phone ? errors.phone : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, phone: true }))}
+                onChange={(event) => updateValue("phone", event.currentTarget.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <div className={firstRowClass}>
+              <Input
+                name="currentPassword"
+                label={account("currentPassword")}
+                type="password"
+                autoComplete="current-password"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                placeholder={account("currentPasswordPlaceholder")}
+                value={values.currentPassword}
+                error={requiresCurrentPassword || touched.currentPassword || values.currentPassword ? errors.currentPassword : undefined}
+                helperText={
+                  !currentPasswordError
+                    ? account("currentPasswordHint")
+                    : undefined
+                }
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, currentPassword: true }))}
+                onChange={(event) => updateValue("currentPassword", event.currentTarget.value)}
+              />
+            </div>
+            <div className={rowClass}>
+              <Input
+                name="newPassword"
+                label={account("newPassword")}
+                type="password"
+                autoComplete="new-password"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                placeholder={account("newPasswordPlaceholder")}
+                value={values.newPassword}
+                error={touched.currentPassword || touched.newPassword || values.newPassword ? errors.newPassword : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, newPassword: true }))}
+                onChange={(event) => updateValue("newPassword", event.currentTarget.value)}
+              />
+            </div>
+            <div className={`${rowClass} min-[1200px]:border-b-0`}>
+              <Input
+                name="newPasswordConfirm"
+                label={account("newPasswordConfirm")}
+                type="password"
+                autoComplete="new-password"
+                inputSize="sm"
+                containerClassName={responsiveInputClass}
+                placeholder={account("newPasswordConfirmPlaceholder")}
+                value={values.newPasswordConfirm}
+                error={touched.newPassword || touched.newPasswordConfirm || values.newPassword || values.newPasswordConfirm ? errors.newPasswordConfirm : undefined}
+                disabled={isBusy}
+                onBlur={() => setTouched((current) => ({ ...current, newPasswordConfirm: true }))}
+                onChange={(event) => updateValue("newPasswordConfirm", event.currentTarget.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {submissionError ? (
+          <p role="alert" className="text-md-medium rounded-xl bg-[var(--secondary-red-100)] px-4 py-3 text-[var(--secondary-red-200)]">
+            {submissionError}
+          </p>
+        ) : null}
+
+        {statusMessage ? (
+          <p role="status" className="text-md-medium rounded-xl bg-[var(--primary-100)] px-4 py-3 text-[var(--primary-400)]">
+            {statusMessage}
+          </p>
+        ) : null}
+
+        <div className="ml-auto mt-8 flex w-full flex-col min-[1200px]:mt-6 min-[1200px]:max-w-[500px]">
+          <div className="flex flex-col gap-2 min-[1200px]:grid min-[1200px]:grid-cols-2 min-[1200px]:gap-5">
+            <Button type="submit" size="sm" fullWidth disabled={!hasChanges || isBusy || hasError} isLoading={isBusy} className={`min-[1200px]:order-2 ${responsiveButtonClass}`}>
+              {profile("edit")}
+            </Button>
+            <Button type="button" size="sm" variant="outlined" fullWidth disabled={isBusy} className={`min-[1200px]:order-1 ${responsiveButtonClass}`} onClick={() => router.push(ROUTES.MOVER.MY_PAGE)}>
+              {profile("cancel")}
+            </Button>
+          </div>
+          <AccountWithdrawalButton className="mt-4 min-[1200px]:mt-5" buttonClassName={responsiveButtonClass} disabled={isBusy} />
+        </div>
+      </form>
+    </main>
+  );
+}

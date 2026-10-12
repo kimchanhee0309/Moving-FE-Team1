@@ -1,0 +1,70 @@
+.container {
+  display: flex;
+  min-height: 400px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.title {
+  color: var(--black-400);
+}
+
+.description {
+  margin-top: 8px;
+  color: var(--gray-500);
+}
+
+.action {
+  margin-top: 24px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16px;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--primary-400);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.button {
+  min-width: 140px;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  background-color: var(--primary-400);
+  color: var(--gray-50);
+}
+
+.button:hover {
+  background-color: var(--primary-500);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--black-400);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1600ms;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

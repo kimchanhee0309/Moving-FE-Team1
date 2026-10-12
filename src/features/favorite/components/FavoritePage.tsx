@@ -1,0 +1,440 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { useCallback, useMemo, useState } from "react";
+
+import { ApiError } from "@/common/api/error";
+import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
+import { MoverSearchCard } from "@/common/components/MoverSearch";
+import { ROUTES } from "@/common/constants/routes";
+import { Link } from "@/i18n/navigation";
+
+import {
+  useFavoriteMovers,
+  useRemoveFavoriteMovers,
+} from "../hooks/useFavoriteMovers";
+import { useLoadMoreSentinel } from "../hooks/useLoadMoreSentinel";
+
+const CHECKBOX_BOX_CLASS = [
+  "pointer-events-none flex size-5 shrink-0 items-center justify-center rounded-[4px]",
+  "border border-[var(--line-200)] bg-[var(--gray-50)]",
+  "transition-colors",
+  "peer-hover:border-[var(--primary-300)]",
+  "peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--black-400)]",
+  "peer-disabled:opacity-50",
+].join(" ");
+
+function FavoriteCheckbox({
+  checked,
+  disabled,
+  onChange,
+  "aria-label": ariaLabel,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: () => void;
+  "aria-label": string;
+}) {
+  return (
+    <span className="relative flex size-9 shrink-0 items-center justify-center">
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={disabled}
+        onChange={onChange}
+        aria-label={ariaLabel}
+        className="peer absolute inset-0 z-10 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+      />
+      <span
+        className={[
+          CHECKBOX_BOX_CLASS,
+          checked
+            ? "border-[var(--primary-400)]! bg-[var(--primary-400)]!"
+            : "",
+        ].join(" ")}
+        aria-hidden="true"
+      >
+        {checked ? (
+          <svg
+            viewBox="0 0 12 12"
+            className="size-3 text-[var(--gray-50)]"
+            fill="none"
+          >
+            <path
+              d="M2 6.2L4.8 9L10 3"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ) : null}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * 카드 우상단 선택 컨트롤입니다.
+ * 주변 56px은 상세 이동·선택·호버가 없는 데드존이고, 가운데 20px만 선택됩니다.
+ * 공용 MoverSearchCard는 수정하지 않기 위해 페이지에서 별도로 둡니다.
+ */
+function FavoriteCardSelectControl({
+  checked,
+  disabled,
+  moverName,
+  onChange,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  moverName: string;
+  onChange: (isSelected: boolean) => void;
+}) {
+  const t = useTranslations("Quote");
+
+  return (
+    <div
+      className="absolute top-3 right-3 z-20 flex size-14 cursor-default items-center justify-center min-[744px]:top-4 min-[744px]:right-5"
+      onClick={(event) => {
+        event.stopPropagation();
+        if (event.target === event.currentTarget) {
+          event.preventDefault();
+        }
+      }}
+      onMouseDown={(event) => {
+        event.stopPropagation();
+      }}
+      onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
+    >
+      <label className="relative flex size-5 cursor-pointer items-center justify-center">
+        <span className="sr-only">{t("selectMover", { name: moverName })}</span>
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+          className="peer absolute inset-0 z-10 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+        />
+        <span
+          className={[
+            CHECKBOX_BOX_CLASS,
+            checked
+              ? "border-[var(--primary-400)]! bg-[var(--primary-400)]!"
+              : "",
+          ].join(" ")}
+          aria-hidden="true"
+        >
+          {checked ? (
+            <svg
+              viewBox="0 0 12 12"
+              className="size-3 text-[var(--gray-50)]"
+              fill="none"
+            >
+              <path
+                d="M2 6.2L4.8 9L10 3"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : null}
+        </span>
+      </label>
+    </div>
+  );
+}
+
+/**
+ * 찜한 기사님 페이지입니다.
+ * GET /favorites 무한 스크롤 목록·DELETE 선택 삭제만 담당하며
+ * 기사님 찾기 찜 토글은 연동하지 않습니다.
+ */
+export function FavoritePage() {
+  const t = useTranslations("Favorite");
+  const apiErrorMessage = useApiErrorMessage();
+  const quote = useTranslations("Quote");
+  const common = useTranslations("Common");
+  const favoritesQuery = useFavoriteMovers();
+  const removeMutation = useRemoveFavoriteMovers();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = favoritesQuery;
+
+  const movers = useMemo(() => {
+    const pages = data?.pages ?? [];
+    const flattened = pages.flatMap((page) => page.items);
+    // 페이지 경계 중복 id는 한 번만 노출합니다.
+    const seen = new Set<string>();
+    return flattened.filter((mover) => {
+      if (seen.has(mover.id)) return false;
+      seen.add(mover.id);
+      return true;
+    });
+  }, [data?.pages]);
+
+  const serverTotalCount = data?.pages[0]?.pagination.totalCount ?? 0;
+  const moverIdSet = new Set(movers.map((mover) => mover.id));
+  // 목록 갱신 후 사라진 id는 선택 카운트에서 제외합니다.
+  const activeSelectedIds = selectedIds.filter((id) => moverIdSet.has(id));
+  // 전체선택은 현재까지 로드된 목록 기준입니다.
+  const loadedCount = movers.length;
+  const selectedCount = activeSelectedIds.length;
+  const isAllSelected = loadedCount > 0 && selectedCount === loadedCount;
+  const hasSelection = selectedCount > 0;
+  const isBusy = removeMutation.isPending;
+  const isEmpty = !isPending && !isError && serverTotalCount === 0;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      // sentinel이 연속으로 호출돼도 진행 중 요청을 취소·재시작하지 않습니다.
+      void fetchNextPage({ cancelRefetch: false });
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const sentinelRef = useLoadMoreSentinel(
+    handleLoadMore,
+    Boolean(hasNextPage) && !isFetchingNextPage && !isEmpty,
+  );
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+      return;
+    }
+    setSelectedIds(movers.map((mover) => mover.id));
+  };
+
+  const handleSelectChange = (moverId: string, isSelected: boolean) => {
+    setSelectedIds((prev) => {
+      if (isSelected) {
+        if (prev.includes(moverId)) return prev;
+        return [...prev, moverId];
+      }
+      return prev.filter((id) => id !== moverId);
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (activeSelectedIds.length === 0 || isBusy) return;
+
+    setActionError(null);
+    const idsToRemove = [...activeSelectedIds];
+
+    removeMutation.mutate(idsToRemove, {
+      // 삭제 중 새로 고른 항목은 유지하고, 요청에 포함된 id만 제거합니다.
+      onSuccess: () => {
+        setSelectedIds((previousIds) =>
+          previousIds.filter((id) => !idsToRemove.includes(id)),
+        );
+      },
+      onError: (mutationError) => {
+        // FAVORITE_REMOVE_FAILED는 hook이 만든 일괄 실패 오류라 서버 문구 대신 현재 locale 문구를 씁니다.
+        const message =
+          mutationError instanceof ApiError &&
+          mutationError.code !== "FAVORITE_REMOVE_FAILED"
+            ? apiErrorMessage(mutationError, t("removeError"))
+            : t("removeError");
+        setActionError(message);
+      },
+    });
+  };
+
+  const listErrorMessage =
+    error instanceof ApiError
+      ? apiErrorMessage(error, t("loadError"))
+      : t("loadError");
+
+  return (
+    <div className="min-h-screen bg-[#fafafa]">
+      <header className="bg-[var(--gray-50)] py-4 shadow-[0px_2px_10px_0px_rgba(248,248,248,0.1)] min-[744px]:py-5 min-[1200px]:py-8">
+        {/*
+          컨테이너 폭·padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` + `px-6/px-18/px-40` 기준과
+          맞춘다 — 예전엔 `max-w-[1200px]`+`min-[1200px]:px-2`라 1200px 이상 화면에서 GNB 로고와
+          이 제목의 중앙정렬 기준 폭이 달라 화면이 커질수록 간격이 계속 벌어졌다.
+        */}
+        <div className="mx-auto w-full max-w-[1920px] px-6 min-[744px]:px-18 min-[1200px]:px-40">
+          <h1 className="text-2xl-semibold text-[var(--black-500)] max-[743px]:text-xl-bold">
+            {t("title")}
+          </h1>
+        </div>
+      </header>
+
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-6 pt-4 pb-10 min-[744px]:gap-7 min-[744px]:px-[72px] min-[744px]:pt-6 min-[1200px]:gap-7 min-[1200px]:px-0 min-[1200px]:pt-8">
+        <div className="flex h-9 w-full items-center justify-between">
+          <div className="group flex items-center gap-1">
+            <FavoriteCheckbox
+              checked={isAllSelected && loadedCount > 0}
+              disabled={loadedCount === 0 || isBusy || isPending}
+              onChange={handleToggleSelectAll}
+              aria-label={t("selectAll")}
+            />
+            <button
+              type="button"
+              onClick={handleToggleSelectAll}
+              disabled={loadedCount === 0 || isBusy || isPending}
+              className={[
+                "text-lg-regular whitespace-nowrap text-[var(--black-300)]",
+                "max-[743px]:text-md-regular",
+                "transition-colors hover:text-[var(--black-500)]",
+                "disabled:cursor-not-allowed disabled:opacity-50",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+              ].join(" ")}
+            >
+              {t("selectAllCount", { selected: selectedCount, total: loadedCount })}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            disabled={!hasSelection || isBusy}
+            className={[
+              "rounded-md px-3 py-1 text-lg-regular whitespace-nowrap max-[743px]:text-md-regular",
+              "transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+              hasSelection && !isBusy
+                ? "text-[var(--input-placeholder)] hover:bg-[var(--gray-100)] hover:text-[var(--black-300)]"
+                : "cursor-not-allowed text-[var(--gray-400)]",
+            ].join(" ")}
+          >
+            {isBusy ? t("deleting") : t("deleteSelected")}
+          </button>
+        </div>
+
+        {actionError ? (
+          <p role="alert" className="text-md-regular text-[var(--primary-400)]">
+            {actionError}
+          </p>
+        ) : null}
+
+        {isPending ? (
+          <p
+            role="status"
+            className="py-20 text-center text-lg-regular text-[var(--input-placeholder)]"
+          >
+            {t("loading")}
+          </p>
+        ) : isError ? (
+          <section
+            className="flex flex-col items-center justify-center gap-4 py-20"
+            role="alert"
+          >
+            <p className="text-lg-regular text-center text-[var(--input-placeholder)] min-[744px]:text-2xl-regular">
+              {listErrorMessage}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                void refetch();
+              }}
+              className={[
+                "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! px-4",
+                "text-lg-semibold text-[var(--gray-50)]!",
+                "min-[744px]:h-16 min-[744px]:rounded-2xl min-[744px]:text-2lg-semibold",
+                "transition-opacity hover:opacity-90",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+              ].join(" ")}
+            >
+              {common("retry")}
+            </button>
+          </section>
+        ) : isEmpty ? (
+          <section
+            className="flex flex-col items-center justify-center gap-4 py-20"
+            aria-live="polite"
+          >
+            <p className="text-lg-regular text-center text-[var(--input-placeholder)] min-[744px]:text-2xl-regular">
+              {t("empty")}
+            </p>
+            <Link
+              href={ROUTES.PUBLIC.MOVER_SEARCH}
+              className={[
+                "flex h-[54px] items-center justify-center rounded-xl bg-[var(--primary-400)]! px-4",
+                "text-lg-semibold text-[var(--gray-50)]!",
+                "min-[744px]:h-16 min-[744px]:rounded-2xl min-[744px]:text-2lg-semibold",
+                "transition-opacity hover:opacity-90",
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]",
+              ].join(" ")}
+            >
+              {t("findMover")}
+            </Link>
+          </section>
+        ) : (
+          <>
+            <ul className="flex flex-col gap-5">
+              {movers.map((mover) => (
+                <li
+                  key={mover.id}
+                  className="relative flex w-full justify-center min-[744px]:block"
+                >
+                  <div className="relative w-full max-w-[327px] min-[744px]:max-w-none">
+                    <MoverSearchCard
+                      serviceType={mover.serviceType}
+                      serviceTypes={mover.serviceTypes}
+                      moverName={mover.moverName}
+                      introduction={mover.introduction}
+                      description={mover.description}
+                      profileImageUrl={mover.profileImageUrl}
+                      rating={mover.rating}
+                      reviewCount={mover.reviewCount}
+                      careerYears={mover.careerYears}
+                      confirmedCount={mover.confirmedCount}
+                      favoriteCount={mover.favoriteCount}
+                      className="min-[744px]:w-full!"
+                    />
+                    <FavoriteCardSelectControl
+                      checked={selectedIds.includes(mover.id)}
+                      disabled={isBusy}
+                      moverName={mover.moverName}
+                      onChange={(isSelected) =>
+                        handleSelectChange(mover.id, isSelected)
+                      }
+                    />
+                    {/*
+                      상세 Link를 L자로 나눠 우상단 64×64에는 Link가 없어
+                      hover(pointer)도 뜨지 않습니다.
+                    */}
+                    <Link
+                      href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
+                      aria-label={quote("detailLinkMover", { name: mover.moverName })}
+                      className="absolute inset-y-0 left-0 right-16 z-10 cursor-pointer rounded-l-2xl min-[744px]:rounded-l-[20px]"
+                    />
+                    <Link
+                      href={ROUTES.PUBLIC.MOVER_DETAIL(mover.id)}
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      className="absolute top-16 right-0 bottom-0 z-10 w-16 cursor-pointer rounded-br-2xl min-[744px]:rounded-br-[20px]"
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div ref={sentinelRef} className="h-4 w-full" aria-hidden="true" />
+            {isFetchingNextPage ? (
+              <p className="text-md-regular py-4 text-center text-[var(--gray-400)]">
+                {t("loadingMore")}
+              </p>
+            ) : null}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

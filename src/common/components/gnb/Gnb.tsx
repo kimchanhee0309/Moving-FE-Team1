@@ -1,0 +1,385 @@
+"use client";
+
+import Image from "next/image";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { useEffect, useId, useRef, useState } from "react";
+
+import { ROUTES } from "@/common/constants/routes";
+
+import { GnbMobileMenu } from "./GnbMobileMenu";
+import { GnbNotificationMenu } from "./GnbNotificationMenu";
+import { GnbProfileMenu } from "./GnbProfileMenu";
+import { LocaleSwitcher } from "./LocaleSwitcher";
+import { useGnbLabel } from "./useGnbLabel";
+import {
+  GNB_DEFAULT_LOGIN_HREF,
+  GNB_GUEST_NAV_ITEMS,
+  GNB_NAV_ITEMS_BY_ROLE,
+  GNB_PROFILE_MENU_ITEMS_BY_ROLE,
+} from "./gnb.constants";
+import type { GnbProps } from "./gnb.types";
+
+const FOCUS_RING =
+  "outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--black-400)";
+
+export function Gnb(props: GnbProps) {
+  const t = useTranslations("Common");
+  const navLabel = useGnbLabel();
+  const {
+    isLoading = false,
+    hasUnreadNotification = false,
+    notificationItems = [],
+    hasMoreNotifications = false,
+    isLoadingMoreNotifications = false,
+    onLoadMoreNotifications,
+    onNotificationClick,
+    onNotificationsRead,
+    className,
+  } = props;
+  const loginHref = props.loginHref ?? GNB_DEFAULT_LOGIN_HREF;
+
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isNotificationMenuOpen, setIsNotificationMenuOpen] = useState(false);
+  const menuId = useId();
+  const profileMenuId = useId();
+  const notificationMenuId = useId();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const firstMobileNavLinkRef = useRef<HTMLAnchorElement>(null);
+  const firstProfileMenuItemRef = useRef<HTMLAnchorElement>(null);
+  const notificationCloseButtonRef = useRef<HTMLButtonElement>(null);
+
+  // 로그인 여부에 따라 좁혀진 값을 미리 뽑아 두면, 아래 JSX/handler에서 `props.isAuthenticated`
+  // discriminated union을 매번 다시 좁히지 않고도 안전하게 재사용할 수 있다.
+  const authenticatedUser = !isLoading && props.isAuthenticated ? props.user : null;
+  const onLogout = !isLoading && props.isAuthenticated ? props.onLogout : undefined;
+
+  const navItems = authenticatedUser
+    ? GNB_NAV_ITEMS_BY_ROLE[authenticatedUser.role]
+    : GNB_GUEST_NAV_ITEMS;
+  const profileMenuItems = authenticatedUser
+    ? GNB_PROFILE_MENU_ITEMS_BY_ROLE[authenticatedUser.role]
+    : [];
+
+  const handleCloseMenu = () => setIsMenuOpen(false);
+  const handleDismissMenu = () => {
+    setIsMenuOpen(false);
+    menuButtonRef.current?.focus();
+  };
+  const handleToggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+    setIsProfileMenuOpen(false);
+    setIsNotificationMenuOpen(false);
+  };
+
+  const handleCloseProfileMenu = () => setIsProfileMenuOpen(false);
+  const handleDismissProfileMenu = () => {
+    setIsProfileMenuOpen(false);
+    profileButtonRef.current?.focus();
+  };
+  const handleToggleProfileMenu = () => {
+    setIsProfileMenuOpen((prev) => !prev);
+    setIsMenuOpen(false);
+    setIsNotificationMenuOpen(false);
+  };
+  const handleLogoutClick = () => {
+    handleDismissProfileMenu();
+    onLogout?.();
+  };
+
+  const handleCloseNotificationMenu = () => setIsNotificationMenuOpen(false);
+  const handleDismissNotificationMenu = () => {
+    setIsNotificationMenuOpen(false);
+    notificationButtonRef.current?.focus();
+  };
+  const handleToggleNotificationMenu = () => {
+    setIsNotificationMenuOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        onNotificationClick?.();
+      }
+      return next;
+    });
+    setIsMenuOpen(false);
+    setIsProfileMenuOpen(false);
+  };
+
+  useEffect(() => {
+    if (isMenuOpen) {
+      firstMobileNavLinkRef.current?.focus();
+    }
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (isProfileMenuOpen) {
+      firstProfileMenuItemRef.current?.focus();
+    }
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (isNotificationMenuOpen) {
+      notificationCloseButtonRef.current?.focus();
+    }
+  }, [isNotificationMenuOpen]);
+
+  // 알림 드롭다운이 "열림 -> 닫힘"으로 바뀌는 시점에만 onNotificationsRead를 호출한다. Esc/바깥클릭/X버튼/
+  // 벨 재클릭/항목 클릭 이동 등 닫히는 경로가 여러 곳이라, 각 핸들러에 흩어 놓지 않고 이전 값을 ref로 들고
+  // 있다가 "직전엔 열려 있었는데 지금은 닫힘"인 전환만 감지한다(effect cleanup은 open->true 전환에서도
+  // 실행되어 버려서 이 용도로는 쓸 수 없다).
+  const wasNotificationMenuOpenRef = useRef(false);
+  useEffect(() => {
+    if (wasNotificationMenuOpenRef.current && !isNotificationMenuOpen) {
+      onNotificationsRead?.();
+    }
+    wasNotificationMenuOpenRef.current = isNotificationMenuOpen;
+  }, [isNotificationMenuOpen, onNotificationsRead]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleDismissMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isProfileMenuOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleDismissProfileMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isProfileMenuOpen]);
+
+  useEffect(() => {
+    if (!isNotificationMenuOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        handleDismissNotificationMenu();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isNotificationMenuOpen]);
+
+  return (
+    <>
+      <header
+        className={
+          className
+            ? `fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50) ${className}`
+            : "fixed inset-x-0 top-0 z-40 w-full border-b border-(--line-100) bg-(--gray-50)"
+        }
+      >
+      <div className="mx-auto flex h-13.5 max-w-[1920px] items-center justify-between gap-4 px-6 min-[744px]:px-18 min-[1200px]:h-22 min-[1200px]:gap-8 min-[1200px]:px-40">
+        <div className="flex items-center min-[1200px]:gap-20">
+          <Link
+            href={ROUTES.HOME}
+            // GNB는 모든 페이지에 있어서, 기본 prefetch를 두면 어느 페이지에 들어가든 랜딩 페이지의
+            // JS(약 54KB)와 데이터를 미리 받는다. 로고로 홈에 가는 경우는 드물어 prefetch를 끈다.
+            // App Router에서 `prefetch={false}`는 화면 진입 시와 hover 시 모두 받지 않으므로,
+            // 랜딩은 로고를 누른 시점에 받는다.
+            prefetch={false}
+            onClick={handleCloseMenu}
+            aria-label={t("goHome")}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg ${FOCUS_RING}`}
+          >
+            <Image
+              src="/images/gnb/logo-icon.svg"
+              alt=""
+              width={44}
+              height={44}
+              className="size-8 min-[1200px]:size-11"
+            />
+            <Image
+              src="/images/gnb/logo-wordmark.svg"
+              alt={t("brand")}
+              width={66}
+              height={34}
+              className="block h-6.5 w-auto min-[1200px]:h-8.5"
+            />
+          </Link>
+
+          <nav aria-label={t("menu")} className="hidden min-[1200px]:block">
+            <ul className="flex list-none items-center gap-10 m-0 p-0">
+              {navItems.map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className={`text-2lg-bold inline-flex h-22 items-center justify-center whitespace-nowrap py-4 text-(--black-500)! no-underline hover:text-(--primary-400)! ${FOCUS_RING}`}
+                  >
+                    {navLabel(item.label)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        <div className="relative flex shrink-0 items-center gap-3 min-[1200px]:gap-8">
+          <LocaleSwitcher />
+          {isLoading && (
+            <div
+              role="status"
+              aria-label={t("checkingLogin")}
+              className="hidden h-11 w-29 animate-pulse rounded-xl bg-(--gray-100) min-[1200px]:block"
+            />
+          )}
+
+          {authenticatedUser && (
+            <>
+              <div className="flex items-center">
+                <button
+                  ref={notificationButtonRef}
+                  type="button"
+                  onClick={handleToggleNotificationMenu}
+                  aria-haspopup="menu"
+                  aria-expanded={isNotificationMenuOpen}
+                  aria-controls={notificationMenuId}
+                  aria-label={
+                    hasUnreadNotification
+                      ? t("newNotifications", { action: t(isNotificationMenuOpen ? "closeNotifications" : "openNotifications") })
+                      : t(isNotificationMenuOpen ? "closeNotifications" : "openNotifications")
+                  }
+                  className={`relative inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:size-9 ${FOCUS_RING} focus-visible:rounded-full`}
+                >
+                  <Image
+                    src="/images/gnb/icon-alarm.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="size-6 min-[1200px]:size-9"
+                  />
+                  {hasUnreadNotification && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-px -right-px size-2 rounded-full border-[1.5px] border-(--gray-50) bg-(--primary-400)"
+                    />
+                  )}
+                </button>
+              </div>
+
+              {/*
+                알림 벨 자신의 좁은 wrapper 대신, 이 둘러싼 아이콘 그룹(알림/프로필/햄버거) 전체를 기준으로
+                `right-0` 앵커링한다. 벨이 그룹의 맨 왼쪽이라 벨 자신에 앵커링하면 너비 312px 패널이 375px
+                모바일 화면 왼쪽 밖으로 넘친다(iPhone 14 Pro 393px에서도 15px 넘침 재현됨).
+              */}
+              {isNotificationMenuOpen && (
+                <GnbNotificationMenu
+                  menuId={notificationMenuId}
+                  items={notificationItems}
+                  hasMore={hasMoreNotifications}
+                  isLoadingMore={isLoadingMoreNotifications}
+                  onLoadMore={() => onLoadMoreNotifications?.()}
+                  closeButtonRef={notificationCloseButtonRef}
+                  triggerRef={notificationButtonRef}
+                  onNavigate={handleCloseNotificationMenu}
+                  onClose={handleDismissNotificationMenu}
+                />
+              )}
+
+              <div className="relative flex items-center">
+                <button
+                  ref={profileButtonRef}
+                  type="button"
+                  onClick={handleToggleProfileMenu}
+                  aria-haspopup="menu"
+                  aria-expanded={isProfileMenuOpen}
+                  aria-controls={profileMenuId}
+                  aria-label={t(isProfileMenuOpen ? "closeAccountMenu" : "openAccountMenu", { name: authenticatedUser.name })}
+                  className={`inline-flex cursor-pointer items-center gap-4 rounded-lg border-0 bg-transparent p-0 text-(--black-500)! ${FOCUS_RING}`}
+                >
+                  <Image
+                    src="/images/gnb/icon-profile-default.svg"
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="size-6 rounded-full min-[1200px]:size-9"
+                  />
+                  <span className="text-2lg-medium hidden whitespace-nowrap min-[1200px]:inline">
+                    {authenticatedUser.name}
+                  </span>
+                </button>
+
+                {isProfileMenuOpen && (
+                  <GnbProfileMenu
+                    menuId={profileMenuId}
+                    role={authenticatedUser.role}
+                    userName={authenticatedUser.name}
+                    items={profileMenuItems}
+                    firstItemRef={firstProfileMenuItemRef}
+                    triggerRef={profileButtonRef}
+                    onNavigate={handleCloseProfileMenu}
+                    onLogout={handleLogoutClick}
+                    onClose={handleDismissProfileMenu}
+                  />
+                )}
+              </div>
+            </>
+          )}
+
+          {!isLoading && !props.isAuthenticated && (
+            <Link
+              href={loginHref}
+              className={`text-2lg-semibold hidden h-11 w-29 items-center justify-center rounded-xl bg-(--primary-400) p-4 text-(--gray-50)! no-underline hover:bg-(--primary-500) min-[1200px]:inline-flex ${FOCUS_RING}`}
+            >
+              {t("login")}
+            </Link>
+          )}
+
+          <button
+            ref={menuButtonRef}
+            type="button"
+            onClick={handleToggleMenu}
+            aria-label={t(isMenuOpen ? "closeMenu" : "openMenu")}
+            aria-expanded={isMenuOpen}
+            aria-controls={menuId}
+            className={`inline-flex size-6 cursor-pointer items-center justify-center border-0 bg-transparent p-0 min-[1200px]:hidden ${FOCUS_RING}`}
+          >
+            <Image
+              src="/images/gnb/icon-menu.svg"
+              alt=""
+              width={16}
+              height={12}
+              className="block h-3 w-4"
+            />
+          </button>
+        </div>
+      </div>
+
+      {isMenuOpen && (
+        <GnbMobileMenu
+          menuId={menuId}
+          navItems={navItems}
+          isAuthenticated={!!props.isAuthenticated}
+          isAuthLoading={isLoading}
+          loginHref={loginHref}
+          firstNavLinkRef={firstMobileNavLinkRef}
+          onNavigate={handleCloseMenu}
+          onClose={handleDismissMenu}
+        />
+      )}
+      </header>
+
+      {/* GNB가 fixed로 떠 있는 만큼, 헤더 높이만큼 자리를 대신 차지해서 본문이 가려지지 않게 한다. */}
+      <div aria-hidden="true" className="h-13.5 min-[1200px]:h-22" />
+    </>
+  );
+}

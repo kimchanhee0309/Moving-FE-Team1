@@ -1,0 +1,156 @@
+import Image from "next/image";
+import { useTranslations } from "next-intl";
+
+import type { ServiceType } from "@/common/constants/domain";
+
+export interface SubHeaderProps {
+  serviceType: ServiceType;
+  /** 호출부가 현재 locale로 포맷한 표시 문자열, e.g. "2024년 6월 24일" */
+  requestedAt: string;
+  from: string;
+  to: string;
+  /** 호출부가 현재 locale로 포맷한 표시 문자열, e.g. "2024년 07월 01일 (월)" */
+  moveDate: string;
+  className?: string;
+}
+
+export function SubHeader({
+  serviceType,
+  requestedAt,
+  from,
+  to,
+  moveDate,
+  className,
+}: SubHeaderProps) {
+  const t = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const serviceTypeLabel = moveType(serviceType);
+
+  return (
+    <section
+      className={[
+        "w-full bg-[var(--gray-50)] p-6 shadow-[0_8px_10px_rgba(39,39,75,0.02)]",
+        "min-[744px]:px-[72px] min-[744px]:py-8",
+        "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      aria-label={t("moveInfo")}
+    >
+      {/*
+        긴 실주소에서 제목이 flex로 짓눌려 세로로 깨지지 않도록(1200+) 제목은 shrink-0,
+        주소 영역은 min-w-0으로 남은 폭을 쓰며 줄바꿈합니다.
+        744px에서는 주소·이사일 행이 넘치지 않도록 wrap을 허용합니다.
+      */}
+      <div
+        className={[
+          "flex w-full flex-col gap-5",
+          "min-[744px]:gap-7",
+          "min-[1200px]:flex-row min-[1200px]:items-end min-[1200px]:gap-5",
+        ].join(" ")}
+      >
+        <div
+          className={[
+            "flex w-full flex-col",
+            "min-[744px]:gap-1",
+            "min-[1200px]:w-auto min-[1200px]:shrink-0",
+          ].join(" ")}
+        >
+          <h2 className="text-[var(--black-500)]">
+            <span className="text-xl-bold min-[744px]:hidden">
+              {serviceTypeLabel}
+            </span>
+            <span className="hidden text-2xl-bold min-[744px]:inline">
+              {serviceTypeLabel}
+            </span>
+          </h2>
+          <p className="whitespace-nowrap text-[var(--gray-500)]">
+            <span className="text-xs-regular min-[744px]:hidden">
+              {t("requestedAtValue", { date: requestedAt })}
+            </span>
+            <span className="hidden text-md-regular min-[744px]:inline">
+              {t("requestedAtValue", { date: requestedAt })}
+            </span>
+          </p>
+        </div>
+
+        <dl className="flex w-full flex-col gap-1 min-[744px]:hidden">
+          <div className="flex w-full items-start justify-between gap-3">
+            <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
+              {t("from")}
+            </dt>
+            <dd className="text-md-semibold break-keep text-right text-[var(--black-500)]">
+              {from}
+            </dd>
+          </div>
+          <div className="flex w-full items-start justify-between gap-3">
+            <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
+              {t("to")}
+            </dt>
+            <dd className="text-md-semibold break-keep text-right text-[var(--black-500)]">
+              {to}
+            </dd>
+          </div>
+          <div className="flex w-full items-start justify-between gap-3">
+            <dt className="text-md-regular shrink-0 text-[var(--gray-500)]">
+              {t("moveDate")}
+            </dt>
+            <dd className="text-md-semibold whitespace-nowrap text-right text-[var(--black-500)]">
+              {moveDate}
+            </dd>
+          </div>
+        </dl>
+
+        <div
+          className={[
+            "hidden w-full items-start",
+            "min-[744px]:flex min-[744px]:flex-wrap min-[744px]:gap-x-10 min-[744px]:gap-y-4",
+            "min-[1200px]:min-w-0 min-[1200px]:flex-1 min-[1200px]:justify-end",
+          ].join(" ")}
+        >
+          <div className="flex min-w-0 flex-1 items-end gap-3">
+            <div className="flex min-w-0 flex-col items-start">
+              <span className="text-md-regular text-[var(--gray-500)]">
+                {t("from")}
+              </span>
+              <span className="text-2lg-semibold break-keep text-[var(--black-500)]">
+                {from}
+              </span>
+            </div>
+            <div
+              className="relative mb-0.5 h-[23px] w-2 shrink-0 overflow-hidden"
+              aria-hidden="true"
+            >
+              <Image
+                src="/icons/arrow-right.svg"
+                alt=""
+                width={8}
+                height={23}
+                className="block size-full object-contain"
+                unoptimized
+              />
+            </div>
+            <div className="flex min-w-0 flex-col items-start">
+              <span className="text-md-regular text-[var(--gray-500)]">
+                {t("to")}
+              </span>
+              <span className="text-2lg-semibold break-keep text-[var(--black-500)]">
+                {to}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-col items-start">
+            <span className="text-md-regular text-[var(--gray-500)]">
+              {t("moveDate")}
+            </span>
+            <span className="text-2lg-semibold whitespace-nowrap text-[var(--black-500)]">
+              {moveDate}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

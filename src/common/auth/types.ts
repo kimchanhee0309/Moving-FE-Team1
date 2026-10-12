@@ -1,0 +1,54 @@
+import type { QueryObserverResult, RefetchOptions, UseMutationResult } from "@tanstack/react-query";
+import type { UserRole } from "@/common/constants/domain";
+export type { UserRole } from "@/common/constants/domain";
+
+/** 백엔드 공개 DTO 한 곳만 사용합니다. 쿠키와 토큰은 이 모델에 포함되지 않습니다. */
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  profileCompleted: boolean;
+}
+
+export interface AuthSession {
+  user: AuthUser | null;
+  failure: Error | null;
+}
+
+export type AuthStatus = "loading" | "guest" | "authenticated" | "auth-error" | "network-error" | "error";
+
+export type AuthAccess = "loading" | "unavailable" | "guest" | "role-mismatch" | "profile-required" | "allowed";
+
+interface CredentialsInput {
+  role: UserRole;
+  email: string;
+  password: string;
+}
+
+export type AuthCredentialsRequest =
+  | (CredentialsInput & { mode: "login" })
+  | (CredentialsInput & {
+      mode: "signup";
+      name: string;
+      phone: string;
+      /** 가입 화면의 이메일 인증코드 확인으로 받은 토큰입니다. 서버가 필수로 전환하기 전의 호환을 위해 선택 필드입니다. */
+      emailVerificationToken?: string;
+    });
+
+export interface AuthContextValue {
+  user: AuthUser | null;
+  status: AuthStatus;
+  isPending: boolean;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  error: Error | null;
+  logout: UseMutationResult<null, Error, void>;
+  withdrawal: UseMutationResult<null, Error, string>;
+  credentials: UseMutationResult<{ user: AuthUser }, Error, AuthCredentialsRequest>;
+  /** 기존 무인자 호출을 유지하며 서버 복구는 cancelRefetch: false로 진행 중 Query를 공유합니다. */
+  refetch: (options?: RefetchOptions) => Promise<QueryObserverResult<AuthSession, Error>>;
+  refetchUser: () => Promise<AuthUser | null>;
+  checkAccess: (role: UserRole, allowIncompleteProfile?: boolean) => AuthAccess;
+}

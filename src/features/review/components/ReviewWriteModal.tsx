@@ -1,0 +1,526 @@
+"use client";
+
+import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
+import { useEffect, useId, useRef, useState } from "react";
+import type { MouseEvent, ReactNode } from "react";
+
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
+import type { ServiceType } from "@/common/constants/domain";
+import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
+import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+
+import { toDisplayRegionAddress } from "../review.utils";
+
+const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
+const STAR_NUMBERS = [1, 2, 3, 4, 5] as const;
+const MIN_CONTENT_LENGTH = 10;
+const FOCUS_RING =
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--black-400)]";
+const SECTION_TITLE =
+  // Mobile/Tablet 16 · Desktop 18 (typography 반응형 접두사 미적용)
+  "text-[16px] leading-[26px] font-semibold text-[var(--black-300)] min-[1200px]:text-[18px]";
+const FOCUSABLE_SELECTOR = [
+  "button:not([disabled])",
+  "a[href]",
+  "input:not([disabled])",
+  "textarea:not([disabled])",
+  "select:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+type ClassValue = string | false | null | undefined;
+
+function cn(...classNames: ClassValue[]) {
+  return classNames.filter(Boolean).join(" ");
+}
+
+function formatMoveDate(date: string, locale: string) {
+  return Number.isNaN(new Date(date).getTime()) ? "" : formatDateWithWeekday(date, locale, SERVICE_TIME_ZONE);
+}
+
+function useModalAccessibility(isOpen: boolean, onClose: () => void) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const prevFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const dialog = dialogRef.current;
+    dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab" || !dialog) return;
+
+      const nodes = Array.from(
+        dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      );
+      if (nodes.length === 0) return;
+
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+      prevFocus?.focus();
+    };
+  }, [isOpen, onClose]);
+
+  return dialogRef;
+}
+
+function Chip({
+  iconSrc,
+  label,
+  tone,
+}: {
+  iconSrc: string;
+  label: string;
+  tone: "service" | "designated";
+}) {
+  const isService = tone === "service";
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-center gap-0.5 rounded py-0.5 pl-1 pr-[7px]",
+        "shadow-[4px_4px_4px_rgba(217,217,217,0.1)]",
+        "min-[1200px]:gap-1 min-[1200px]:rounded-md min-[1200px]:py-1 min-[1200px]:pl-[5px]",
+        isService ? "bg-[var(--primary-100)]" : "bg-[#ffeef0]",
+      )}
+    >
+      <Image
+        src={iconSrc}
+        alt=""
+        width={20}
+        height={20}
+        className="size-5 shrink-0 object-contain"
+        unoptimized
+      />
+      <span
+        className={cn(
+          "text-sm-semibold whitespace-nowrap min-[1200px]:text-md-semibold",
+          isService ? "text-[var(--primary-400)]" : "text-[#ff4f64]",
+        )}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function MoveInfoItem({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-col items-start",
+        className,
+      )}
+    >
+      <span className="text-xs-regular whitespace-nowrap text-center text-[var(--gray-500)] min-[1200px]:text-md-regular">
+        {label}
+      </span>
+      <span
+        className="w-full truncate text-sm-medium text-[var(--black-500)] min-[1200px]:text-lg-regular"
+        title={value}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function FieldSection({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex w-full flex-col items-start gap-3">
+      <p className={SECTION_TITLE}>{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function MovingBadge() {
+  return (
+    <span
+      className="relative flex h-[23px] w-5 shrink-0 items-center justify-center"
+      aria-hidden="true"
+    >
+      <span className="relative h-[18.2px] w-4">
+        <Image
+          src="/icons/ic-moving-badge.svg"
+          alt=""
+          width={16}
+          height={18}
+          className="size-full object-contain"
+          unoptimized
+        />
+      </span>
+      <span className="absolute left-1/2 top-1/2 flex h-[7.2px] w-[12.8px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <Image
+          src="/icons/ic-moving-badge-m.svg"
+          alt=""
+          width={12}
+          height={6}
+          className="h-[6.1px] w-[11.6px] object-contain"
+          unoptimized
+        />
+      </span>
+    </span>
+  );
+}
+
+function ProfileAvatar({
+  src,
+  alt,
+  isDefault,
+}: {
+  src: string;
+  alt: string;
+  isDefault: boolean;
+}) {
+  return (
+    <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
+      <div
+        className={cn(
+          "absolute",
+          isDefault ? "left-[-12.5px] top-[-7px] size-[75px]" : "inset-0",
+        )}
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes={isDefault ? "75px" : "50px"}
+          className="object-cover"
+          unoptimized={isRemoteAssetUrl(src)}
+        />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 평점 별점 UI입니다.
+ * 호버 중에는 hoverRating으로 미리보기하고, 마우스가 벗어나면 확정 rating만 표시합니다.
+ */
+function StarRating({
+  rating,
+  onChange,
+}: {
+  rating: number;
+  onChange: (rating: number) => void;
+}) {
+  const t = useTranslations("Review");
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  // 호버 미리보기 > 확정 점수 순으로 표시
+  const displayRating = hoverRating ?? rating;
+
+  return (
+    <div
+      className="flex items-start"
+      role="group"
+      aria-label={t("ratingGroup")}
+      onMouseLeave={() => setHoverRating(null)}
+    >
+      {STAR_NUMBERS.map((starNumber) => {
+        const isActive = starNumber <= displayRating;
+        const isSelected = starNumber <= rating;
+        return (
+          <button
+            key={starNumber}
+            type="button"
+            onClick={() => onChange(starNumber)}
+            onMouseEnter={() => setHoverRating(starNumber)}
+            onFocus={() => setHoverRating(starNumber)}
+            onBlur={() => setHoverRating(null)}
+            aria-label={t("ratingOption", { count: starNumber })}
+            aria-pressed={isSelected}
+            className={cn(
+              "relative size-6 shrink-0 min-[1200px]:size-9",
+              FOCUS_RING,
+            )}
+          >
+            <Image
+              src="/icons/ic-star.svg"
+              alt=""
+              width={36}
+              height={36}
+              className={cn(
+                "pointer-events-none size-full select-none object-contain transition-[opacity,filter] duration-150 [-webkit-user-drag:none]",
+                !isActive && "opacity-25 grayscale",
+              )}
+              draggable={false}
+              onDragStart={(event) => event.preventDefault()}
+              unoptimized
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export interface ReviewWriteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  moverName: string;
+  profileImageUrl?: string | null;
+  serviceType: ServiceType;
+  isDesignatedRequest?: boolean;
+  departure: string;
+  arrival: string;
+  movedAt: string;
+  rating: number;
+  content: string;
+  onRatingChange: (rating: number) => void;
+  onContentChange: (content: string) => void;
+  onSubmit: () => void;
+  isSubmitting?: boolean;
+  closeOnBackdrop?: boolean;
+  className?: string;
+}
+
+export function ReviewWriteModal({
+  isOpen,
+  onClose,
+  moverName,
+  profileImageUrl,
+  serviceType,
+  isDesignatedRequest = false,
+  departure,
+  arrival,
+  movedAt,
+  rating,
+  content,
+  onRatingChange,
+  onContentChange,
+  onSubmit,
+  isSubmitting = false,
+  closeOnBackdrop = true,
+  className,
+}: ReviewWriteModalProps) {
+  const review = useTranslations("Review");
+  const quote = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const common = useTranslations("Common");
+  const locale = useLocale();
+  const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
+  const titleId = useId();
+  const contentId = useId();
+  const dialogRef = useModalAccessibility(isOpen, onClose);
+  const canSubmit =
+    rating >= 1 &&
+    content.trim().length >= MIN_CONTENT_LENGTH &&
+    !isSubmitting;
+  const profileSrc = profileImageUrl ?? DEFAULT_PROFILE_IMAGE;
+  const isDefaultProfile = !profileImageUrl;
+
+  if (!isOpen) return null;
+
+  const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (closeOnBackdrop && event.target === event.currentTarget) onClose();
+  };
+
+  return (
+    <div
+      className={[
+        "fixed inset-0 z-50 flex justify-center bg-black/50",
+        // Mobile: 하단 시트 · Tablet+: 중앙 (Figma 744)
+        "items-end min-[744px]:items-center min-[744px]:p-6",
+      ].join(" ")}
+      onClick={handleBackdropClick}
+    >
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={cn(
+          // Mobile: 가로 full-bleed(좌우 바깥 여백 없음). 안쪽 콘텐츠만 px-6
+          "flex w-full flex-col gap-[26px] bg-[var(--gray-50)]",
+          "rounded-t-[32px] px-6 py-8 shadow-[4px_4px_5px_rgba(169,169,169,0.2)]",
+          // Tablet: sm 모달 375 중앙
+          "min-[744px]:w-[375px] min-[744px]:rounded-[32px]",
+          // Desktop: md 모달 600
+          "min-[1200px]:w-[600px] min-[1200px]:gap-10 min-[1200px]:p-8",
+          className,
+        )}
+      >
+        <div className="flex w-full items-center justify-between">
+          <h2
+            id={titleId}
+            className={[
+              // Mobile/Tablet sm: 18 bold · Desktop md: 24 semibold
+              "text-[18px] leading-[26px] font-bold text-[var(--black-400)]",
+              "min-[1200px]:text-[24px] min-[1200px]:leading-8 min-[1200px]:font-semibold",
+            ].join(" ")}
+          >
+            {review("modalTitle")}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={common("close")}
+            className={cn(
+              "group relative flex size-6 shrink-0 items-center justify-center rounded-lg min-[1200px]:size-9",
+              "transition-colors hover:bg-[var(--background-200)]",
+              FOCUS_RING,
+            )}
+          >
+            <span
+              className="absolute h-0.5 w-3 rotate-45 bg-[var(--black-300)] transition-colors group-hover:bg-[var(--black-500)] min-[1200px]:w-4"
+              aria-hidden="true"
+            />
+            <span
+              className="absolute h-0.5 w-3 -rotate-45 bg-[var(--black-300)] transition-colors group-hover:bg-[var(--black-500)] min-[1200px]:w-4"
+              aria-hidden="true"
+            />
+          </button>
+        </div>
+
+        <div className="flex w-full flex-col gap-7 min-[1200px]:gap-8">
+          <div className="flex w-full flex-col gap-3.5 min-[1200px]:gap-4">
+            <div className="flex items-center gap-2 min-[1200px]:gap-3">
+              <Chip
+                iconSrc="/icons/ic-solid-box.svg"
+                label={moveType(serviceType)}
+                tone="service"
+              />
+              {isDesignatedRequest ? (
+                <Chip
+                  iconSrc="/icons/ic-solid-document.svg"
+                  label={moveType("designated")}
+                  tone="designated"
+                />
+              ) : null}
+            </div>
+
+            <div className="flex w-full items-center justify-between">
+              <div className="flex flex-col items-start gap-1">
+                <MovingBadge />
+                <p className="text-lg-semibold whitespace-nowrap text-[#373737] min-[1200px]:text-2lg-semibold">
+                  {formatMoverName(moverName)}
+                </p>
+              </div>
+              <ProfileAvatar
+                src={profileSrc}
+                alt={formatMoverProfileAlt(moverName)}
+                isDefault={isDefaultProfile}
+              />
+            </div>
+
+            <div className="h-px w-full bg-[var(--line-100)]" aria-hidden="true" />
+
+            {/* 모달 M/T(폭 375): 주소 한 줄 + 이사일 다음 줄로 겹침 방지. Desktop만 Figma 3열 한 줄 */}
+            <div className="flex w-full min-w-0 flex-col gap-3 min-[1200px]:flex-row min-[1200px]:items-end min-[1200px]:gap-10">
+              <div className="flex min-w-0 w-full items-end gap-2 min-[1200px]:flex-1 min-[1200px]:gap-3">
+                <MoveInfoItem
+                  label={quote("from")}
+                  value={toDisplayRegionAddress(departure)}
+                  className="min-w-0 flex-1"
+                />
+                <div
+                  className="relative h-[23px] w-3 shrink-0 min-[1200px]:w-4"
+                  aria-hidden="true"
+                >
+                  <Image
+                    src="/icons/arrow-right.svg"
+                    alt=""
+                    width={16}
+                    height={23}
+                    className="size-full object-contain"
+                    unoptimized
+                  />
+                </div>
+                <MoveInfoItem
+                  label={quote("to")}
+                  value={toDisplayRegionAddress(arrival)}
+                  className="min-w-0 flex-1"
+                />
+              </div>
+              <MoveInfoItem
+                label={quote("moveDate")}
+                value={formatMoveDate(movedAt, locale)}
+                className="w-full shrink-0 min-[1200px]:w-auto"
+              />
+            </div>
+
+            <div className="h-px w-full bg-[var(--line-100)]" aria-hidden="true" />
+          </div>
+
+          <FieldSection title={review("ratingTitle")}>
+            <StarRating rating={rating} onChange={onRatingChange} />
+          </FieldSection>
+
+          <div className="flex w-full flex-col items-start gap-3">
+            <label htmlFor={contentId} className={SECTION_TITLE}>
+              {review("contentLabel")}
+            </label>
+            <textarea
+              id={contentId}
+              value={content}
+              onChange={(event) => onContentChange(event.target.value)}
+              placeholder={review("contentPlaceholder")}
+              rows={5}
+              className={cn(
+                "h-40 w-full resize-none rounded-2xl border! border-[var(--line-200)]! bg-[var(--gray-50)]!",
+                "px-4! py-3.5! text-lg-regular text-[var(--black-400)] placeholder:text-[#ababab]",
+                "min-[1200px]:px-6! min-[1200px]:text-2lg-regular",
+                FOCUS_RING,
+              )}
+            />
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canSubmit}
+          className={cn(
+            "flex h-[54px] w-full items-center justify-center rounded-xl p-4",
+            "text-lg-semibold text-[var(--gray-50)]!",
+            "min-[1200px]:h-16 min-[1200px]:rounded-2xl min-[1200px]:text-2lg-semibold",
+            FOCUS_RING,
+            canSubmit
+              ? // 공통 Button solid hover(#e04829)와 맞춤
+                "bg-[var(--primary-400)]! transition-colors hover:bg-[#e04829]!"
+              : "cursor-not-allowed bg-[var(--gray-300)]!",
+          )}
+        >
+          {isSubmitting ? review("submitting") : review("submit")}
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,536 @@
+"use client";
+
+import Image from "next/image";
+import Script from "next/script";
+import { useLocale, useTranslations } from "next-intl";
+import { useState } from "react";
+
+import { isRemoteAssetUrl } from "@/common/api/asset-url";
+import { CopyLinkToast } from "@/common/components/CopyLinkToast";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+} from "@/common/components/page-state";
+import { OriginalTextNotice } from "@/common/components/OriginalTextNotice";
+import { useProfileOptionLabel } from "@/common/components/ProfileSelectionChip/useProfileOptionLabel";
+import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+import { ROUTES } from "@/common/constants/routes";
+import { getPathname, useRouter } from "@/i18n/navigation";
+import { authHref } from "@/features/auth/auth.utils";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+
+import {
+  useMoverSearchDesignatedRequest,
+  useMoverSearchDetail,
+} from "../hooks/useMoverSearchDetail";
+import { useMoverSearchFavorites } from "../hooks/useMoverSearchSidebar";
+import { getKakaoShareImageUrl, shareMoverDetailToKakao } from "../kakao-share";
+import {
+  createMoverDetailShareUrl,
+  KAKAO_JS_SDK_INTEGRITY,
+  KAKAO_JS_SDK_SRC,
+} from "../mover-search.constants";
+import type { MoverDetail } from "../mover-search.types";
+import { getMoverSearchViewer, getRegionLabel } from "../mover-search.utils";
+import { DesignatedRequestGuideModal } from "./DesignatedRequestGuideModal";
+import { MoverSearchDetailReviews } from "./MoverSearchDetailReviews";
+import {
+  MoverSearchDetailCompactShare,
+  MoverSearchDetailSidebar,
+  MoverSearchDetailStickyBar,
+} from "./MoverSearchDetailSidebar";
+
+interface MoverSearchDetailPageContentProps {
+  moverId: string;
+  mockHasGeneralQuote?: boolean;
+  /** page.tsx(Server Component)가 JSON-LD용으로 이미 조회해 둔 결과입니다. 있으면 첫 렌더에 바로 써서 로딩 상태를 건너뜁니다. */
+  initialMover?: MoverDetail | null;
+}
+
+export function MoverSearchDetailPageContent({
+  moverId,
+  mockHasGeneralQuote = false,
+  initialMover,
+}: MoverSearchDetailPageContentProps) {
+  const t = useTranslations("MoverDetail");
+  const quote = useTranslations("Quote");
+  const moveType = useTranslations("MoveType");
+  const optionLabel = useProfileOptionLabel();
+  const router = useRouter();
+  const locale = useLocale();
+  const { user, isPending: isAuthPending, error: authError } = useAuth();
+  const viewer = getMoverSearchViewer(user, isAuthPending, Boolean(authError));
+  const isCustomer = viewer === "customer";
+  const canInteractFavorite = viewer === "guest" || viewer === "customer";
+
+  const [reviewPaging, setReviewPaging] = useState({ moverId, page: 1 });
+  const reviewPage = reviewPaging.moverId === moverId ? reviewPaging.page : 1;
+  const [toast, setToast] = useState<{ isVisible: boolean; message?: string }>({
+    isVisible: false,
+  });
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+
+  const {
+    mover,
+    isDetailPending,
+    isDetailError,
+    refetchDetail,
+    reviewSummary,
+    isReviewPending,
+  } = useMoverSearchDetail(moverId, reviewPage, initialMover);
+  const favoritesQuery = useMoverSearchFavorites(
+    user?.id,
+    isCustomer,
+    (isFavoriteNow) =>
+      setToast({
+        isVisible: true,
+        message: isFavoriteNow ? t("favoriteAdded") : t("favoriteRemoved"),
+      }),
+  );
+  const designatedQuery = useMoverSearchDesignatedRequest(
+    user?.id,
+    isCustomer,
+    mockHasGeneralQuote,
+  );
+
+  const detailHref = ROUTES.PUBLIC.MOVER_DETAIL(moverId);
+  const isFavorite = favoritesQuery.favoriteIdSet.has(moverId);
+  const isDesignatedComplete = designatedQuery.designatedIdSet.has(moverId);
+
+  const handleFavoriteClick = () => {
+    if (viewer === "pending" || !mover) {
+      return;
+    }
+    if (viewer === "guest") {
+      router.push(authHref(ROUTES.AUTH.LOGIN.CUSTOMER, detailHref));
+      return;
+    }
+    if (viewer !== "customer") {
+      return;
+    }
+    favoritesQuery.toggleFavorite(mover);
+  };
+
+  const handleDesignatedClick = () => {
+    if (viewer === "pending" || isDesignatedComplete) {
+      return;
+    }
+    if (viewer === "guest") {
+      router.push(authHref(ROUTES.AUTH.LOGIN.CUSTOMER, detailHref));
+      return;
+    }
+    if (viewer !== "customer") {
+      return;
+    }
+    if (designatedQuery.isPending) {
+      return;
+    }
+    if (!designatedQuery.hasGeneralQuote) {
+      setIsGuideOpen(true);
+      return;
+    }
+    designatedQuery.completeDesignated(moverId);
+  };
+
+  const getShareUrl = () =>
+    createMoverDetailShareUrl(
+      window.location.origin,
+      getPathname({ href: detailHref, locale }),
+    );
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      setToast({ isVisible: true, message: undefined });
+    } catch {
+      setToast((current) => ({ ...current, isVisible: false }));
+    }
+  };
+
+  const handleShareKakao = () => {
+    if (!mover) {
+      return;
+    }
+
+    const url = getShareUrl();
+    const didShare = shareMoverDetailToKakao({
+      url,
+      title: t("kakaoTitle", { name: mover.moverName }),
+      introduction: mover.introduction,
+      imageUrl: getKakaoShareImageUrl(
+        mover.profileImageUrl,
+        window.location.origin,
+      ),
+    });
+
+    if (!didShare) {
+      void handleCopyLink();
+    }
+  };
+
+  const handleShareFacebook = () => {
+    window.open(
+      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl())}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  if (isDetailPending) {
+    return <LoadingState message={t("loading")} />;
+  }
+
+  if (isDetailError) {
+    return (
+      <ErrorState title={t("loadError")} onRetry={() => void refetchDetail()} />
+    );
+  }
+
+  if (!mover) {
+    return (
+      <EmptyState
+        title={t("notFound")}
+        description={t("notFoundDescription")}
+      />
+    );
+  }
+
+  const displayedFavoriteCount = mover.favoriteCount;
+  const serviceTypes =
+    mover.serviceTypes.length > 0 ? mover.serviceTypes : [mover.serviceType];
+  const reviews = reviewSummary?.reviews ?? [];
+  const ratingCounts = reviewSummary?.ratingCounts ?? [];
+  const reviewTotalPages = reviewSummary?.totalPages ?? 0;
+  const reviewTotalCount = reviewSummary?.totalCount ?? 0;
+  const reviewRating = reviewSummary?.averageRating ?? mover.rating;
+
+  return (
+    <div className="bg-[var(--gray-50)] pb-[110px] min-[1200px]:pb-16">
+      <Script
+        src={KAKAO_JS_SDK_SRC}
+        integrity={KAKAO_JS_SDK_INTEGRITY}
+        crossOrigin="anonymous"
+        strategy="afterInteractive"
+      />
+      <CopyLinkToast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        onClose={() =>
+          setToast((current) => ({ ...current, isVisible: false }))
+        }
+      />
+      <DesignatedRequestGuideModal
+        isOpen={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        onRequestNormalQuote={() => {
+          setIsGuideOpen(false);
+          router.push(ROUTES.CUSTOMER.MOVE_REQUEST);
+        }}
+      />
+
+      {/* Figma 배너 높이: 모바일 1:8197 122, 태블릿 1:7983 157, 데스크톱 1:8301 225. */}
+      <div
+        aria-hidden="true"
+        className="h-[122px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-mobile.png')] min-[744px]:hidden"
+      />
+      <div
+        aria-hidden="true"
+        className="hidden h-[157px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-tablet.png')] min-[744px]:block min-[1200px]:hidden"
+      />
+      {/*
+        데스크톱 배너(1:8301)는 1920×225 고정 프레임 안에 좌측 작은 M(x 210~380, 프로필 왼쪽과
+        겹치는 위치)·우측 큰 M(x 1112~1437)이 절대 좌표로 박혀 있다. 뷰포트가 1920보다 넓어지면
+        bg-cover로 늘리는 대신 에셋을 1920×225 그대로 중앙 고정해 두 M 위치를 그대로 유지하고,
+        남는 좌우 영역은 같은 배너색(--primary-400)으로 채운다.
+      */}
+      <div
+        aria-hidden="true"
+        className="hidden h-[225px] w-full bg-[var(--primary-400)] bg-[length:1920px_225px] bg-center bg-no-repeat bg-[url('/images/mover-search/banner-desktop.png')] min-[1200px]:block"
+      />
+
+      <div className="mx-auto w-full max-w-[1200px] px-5 min-[744px]:px-[72px] min-[1200px]:px-0">
+        {/* overlap = 배너높이 − (GNB하단→프로필상단). 모바일 122−80=42, 태블릿 157−80=77, 데스크톱 1:8300 225−122=103. */}
+        <div className="-mt-[42px] flex flex-col min-[744px]:-mt-[77px] min-[1200px]:-mt-[103px]">
+          <div className="relative z-10 mb-[13px] flex size-16 items-center justify-center overflow-hidden rounded-xl bg-[var(--black-300)] p-0.5 min-[744px]:mb-[23px] min-[744px]:size-[100px] min-[744px]:p-1 min-[1200px]:mb-5 min-[1200px]:size-[134px] min-[1200px]:rounded-[12px] min-[1200px]:p-1.5">
+            <Image
+              src={
+                mover.profileImageUrl ??
+                "/images/mover-search/profile-placeholder.png"
+              }
+              alt={quote("moverProfile", { name: mover.moverName })}
+              width={134}
+              height={134}
+              className="size-full object-contain"
+              priority
+              unoptimized={isRemoteAssetUrl(mover.profileImageUrl)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-10 min-[1200px]:flex-row min-[1200px]:items-start min-[1200px]:gap-[53px]">
+            <div className="flex min-w-0 flex-1 flex-col gap-8 min-[1200px]:gap-10">
+              <section
+                aria-labelledby="mover-profile-heading"
+                className="flex flex-col gap-8"
+              >
+                <div className="flex flex-col gap-4 min-[744px]:gap-5">
+                  <div className="flex flex-col gap-2 min-[744px]:gap-3">
+                    <div className="flex flex-wrap items-center gap-1 min-[744px]:gap-2">
+                      {serviceTypes.map((serviceType) => (
+                        <ServiceTypeChip
+                          key={serviceType}
+                          serviceType={serviceType}
+                        />
+                      ))}
+                    </div>
+                    {/* 기사님이 작성한 소개글은 번역하지 않고 원문(한국어)으로 표시합니다. */}
+                    <p
+                      lang="ko"
+                      className="text-2lg-semibold text-[var(--black-300)] min-[744px]:text-2xl-semibold"
+                    >
+                      {mover.introduction}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                      <MovingBadge />
+                      {/* 이 페이지가 다루는 기사님을 식별하는 유일한 h1입니다. */}
+                      <h1
+                        id="mover-profile-heading"
+                        className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-2lg-semibold"
+                      >
+                        {quote("moverName", { name: mover.moverName })}
+                      </h1>
+                    </div>
+                    <p
+                      className="text-md-medium flex items-center gap-1 text-[var(--content-muted)] min-[744px]:text-2lg-medium"
+                      aria-label={t("favoriteCount", {
+                        count: displayedFavoriteCount,
+                      })}
+                    >
+                      {displayedFavoriteCount}
+                      <Image
+                        src="/icons/button/like-sm.svg"
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="size-6"
+                      />
+                    </p>
+                  </div>
+
+                  <p
+                    lang="ko"
+                    className="text-md-regular whitespace-pre-line text-[var(--content-muted)] min-[744px]:text-lg-regular"
+                  >
+                    {mover.detailDescription}
+                  </p>
+                  <OriginalTextNotice className="-mt-2" />
+                </div>
+
+                <dl className="flex h-[95px] items-center justify-between gap-2 rounded-xl border border-[var(--line-200)] bg-[var(--gray-50)] px-10 min-[744px]:h-[120px] min-[744px]:rounded-2xl min-[744px]:px-[100px]">
+                  <div className="flex flex-col items-center text-center">
+                    <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">
+                      {t("progress")}
+                    </dt>
+                    <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
+                      {t("confirmedCount", { count: mover.confirmedCount })}
+                    </dd>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">
+                      {t("reviews")}
+                    </dt>
+                    <dd className="flex items-center gap-0.5 min-[744px]:gap-1.5">
+                      <Image
+                        src="/icons/ic-star.svg"
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="size-5 min-[744px]:size-6"
+                      />
+                      <span className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
+                        {mover.rating.toFixed(1)}
+                      </span>
+                      <span className="text-md-medium text-[var(--content-placeholder)] min-[744px]:text-lg-medium">
+                        ({mover.reviewCount})
+                      </span>
+                    </dd>
+                  </div>
+                  <div className="flex flex-col items-center text-center">
+                    <dt className="text-sm-medium text-[var(--content-muted)] min-[744px]:text-lg-regular min-[744px]:text-[var(--black-300)]">
+                      {t("totalCareer")}
+                    </dt>
+                    <dd className="text-lg-semibold text-[var(--black-300)] min-[744px]:text-xl-bold">
+                      {t("careerYears", { count: mover.careerYears })}
+                    </dd>
+                  </div>
+                </dl>
+              </section>
+
+              <ChipGroup
+                title={t("services")}
+                labels={mover.serviceTypes.map((type) => moveType(type))}
+                variant="service"
+              />
+              <ChipGroup
+                title={t("regions")}
+                labels={mover.regionValues.map((value) => {
+                  // 지역 label은 API 값(한국어)이므로 표시 직전에만 Options 번역으로 바꿉니다.
+                  const label = getRegionLabel(value);
+                  return optionLabel(label, label);
+                })}
+                variant="region"
+              />
+
+              <hr className="w-full border-0 border-t border-[var(--line-200)] min-[1200px]:hidden" />
+
+              <div className="min-[1200px]:hidden">
+                <MoverSearchDetailCompactShare
+                  onCopyLink={() => void handleCopyLink()}
+                  onShareKakao={() => void handleShareKakao()}
+                  onShareFacebook={handleShareFacebook}
+                />
+              </div>
+
+              <hr className="w-full border-0 border-t border-[var(--line-200)]" />
+
+              <MoverSearchDetailReviews
+                rating={reviewRating}
+                reviewCount={
+                  reviewTotalCount > 0 ? reviewTotalCount : mover.reviewCount
+                }
+                ratingCounts={ratingCounts}
+                reviews={reviews}
+                totalCount={reviewTotalCount}
+                totalPages={reviewTotalPages}
+                currentPage={reviewPage}
+                onPageChange={(page) => setReviewPaging({ moverId, page })}
+                isLoading={isReviewPending}
+              />
+            </div>
+
+            <div className="hidden min-[1200px]:block">
+              <MoverSearchDetailSidebar
+                moverName={mover.moverName}
+                isDesignatedComplete={isDesignatedComplete}
+                canToggleFavorite={canInteractFavorite}
+                isFavorite={isFavorite}
+                onDesignatedClick={handleDesignatedClick}
+                onFavoriteClick={handleFavoriteClick}
+                onCopyLink={() => void handleCopyLink()}
+                onShareKakao={() => void handleShareKakao()}
+                onShareFacebook={handleShareFacebook}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <MoverSearchDetailStickyBar
+        isDesignatedComplete={isDesignatedComplete}
+        canToggleFavorite={canInteractFavorite}
+        isFavorite={isFavorite}
+        onDesignatedClick={handleDesignatedClick}
+        onFavoriteClick={handleFavoriteClick}
+      />
+    </div>
+  );
+}
+
+function ServiceTypeChip({ serviceType }: { serviceType: ServiceType }) {
+  const moveType = useTranslations("MoveType");
+  const icon =
+    serviceType === SERVICE_TYPE.OFFICE
+      ? "/icons/mover-search/ic-solid-company.svg"
+      : "/icons/ic-solid-box.svg";
+  const backgroundClass =
+    serviceType === SERVICE_TYPE.OFFICE
+      ? "bg-[#ffeef0]"
+      : "bg-[var(--primary-100)]";
+
+  return (
+    <span
+      className={`inline-flex h-[26px] w-fit items-center gap-0.5 rounded py-0.5 pr-[7px] pl-1 shadow-[4px_4px_4px_rgba(217,217,217,0.1)] min-[744px]:h-8 min-[744px]:gap-1 min-[744px]:rounded-md min-[744px]:py-1 min-[744px]:pr-[7px] min-[744px]:pl-[5px] ${backgroundClass}`}
+    >
+      <Image
+        src={icon}
+        alt=""
+        width={20}
+        height={20}
+        className="size-5"
+        unoptimized
+      />
+      <span className="text-sm-semibold text-[var(--primary-400)] min-[744px]:text-md-semibold">
+        {moveType(serviceType)}
+      </span>
+    </span>
+  );
+}
+
+function MovingBadge() {
+  return (
+    <span
+      className="relative flex h-[18.2px] w-4 shrink-0 items-center justify-center"
+      aria-hidden="true"
+    >
+      <Image
+        src="/icons/ic-moving-badge.svg"
+        alt=""
+        fill
+        sizes="20px"
+        className="object-contain"
+      />
+      <span className="absolute top-1/2 left-1/2 flex h-[7.2px] w-[12.8px] -translate-x-1/2 -translate-y-1/2 items-center justify-center">
+        <Image
+          src="/icons/ic-moving-badge-m.svg"
+          alt=""
+          fill
+          sizes="16px"
+          className="object-contain"
+        />
+      </span>
+    </span>
+  );
+}
+
+function ChipGroup({
+  title,
+  labels,
+  variant,
+}: {
+  title: string;
+  labels: string[];
+  variant: "service" | "region";
+}) {
+  const headingId = `mover-${variant}-heading`;
+
+  return (
+    <section
+      aria-labelledby={headingId}
+      className="flex flex-col gap-2 min-[744px]:gap-4"
+    >
+      <h2
+        id={headingId}
+        className="text-lg-semibold text-[var(--content-strong)] min-[744px]:text-xl-semibold"
+      >
+        {title}
+      </h2>
+      <ul className="m-0 flex list-none flex-wrap gap-2 p-0 min-[744px]:gap-3">
+        {labels.map((label) => (
+          <li
+            key={label}
+            className={
+              variant === "service"
+                ? "text-md-medium rounded-full border border-[var(--primary-400)] bg-[var(--primary-100)] px-3 py-1.5 text-[var(--primary-400)] min-[744px]:text-2lg-medium min-[744px]:px-5 min-[744px]:py-2.5"
+                : "text-md-medium rounded-full border border-[var(--gray-300)] bg-[var(--background-100)] px-3 py-1.5 text-[var(--content-strong)] min-[744px]:text-2lg-regular min-[744px]:px-5 min-[744px]:py-2.5"
+            }
+          >
+            {label}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
