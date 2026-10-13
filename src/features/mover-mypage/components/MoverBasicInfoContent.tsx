@@ -8,6 +8,8 @@ import {
 } from "@/common/api/get-error-message";
 import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
+import { ROUTES } from "@/common/constants/routes";
+import { useRouter } from "@/i18n/navigation";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { patchCachedAuthUser } from "@/features/auth/auth.cache";
 
@@ -24,6 +26,7 @@ export function MoverBasicInfoContent() {
   const apiErrorMessage = useApiErrorMessage();
   const common = useTranslations("Common");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { refetchUser } = useAuth();
   const myPageQuery = useQuery({
     queryKey: moverMyPageKeys.detail(),
@@ -73,7 +76,12 @@ export function MoverBasicInfoContent() {
           : undefined
       }
       onCurrentPasswordChange={() => mutation.reset()}
-      onSubmit={(values) => mutation.mutateAsync(values)}
+      onSubmit={async (values) => {
+        const savedBasicInfo = await mutation.mutateAsync(values);
+        // 저장이 끝나면 수정 화면에 머물지 않고 마이페이지로 돌아가 완료 안내를 보여 줍니다.
+        router.push(ROUTES.MOVER.MY_PAGE_UPDATED("basic-info"));
+        return savedBasicInfo;
+      }}
     />
   );
 }

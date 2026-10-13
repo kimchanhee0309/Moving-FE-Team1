@@ -70,6 +70,10 @@ export const ROUTES = {
 
     MY_PAGE: "/mover-mypage",
 
+    // 프로필·기본 정보 수정을 마치고 마이페이지로 돌아갈 때 쓰는 주소입니다.
+    // 마이페이지가 updated 값을 읽어 완료 안내를 한 번 띄운 뒤 주소에서 지웁니다.
+    MY_PAGE_UPDATED: (target: "profile" | "basic-info") => `/mover-mypage?updated=${target}`,
+
     BASIC_INFO_EDIT: "/mover-mypage/basic-info",
 
     REQUESTS: "/requests",

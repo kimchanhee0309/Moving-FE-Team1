@@ -59,7 +59,8 @@ export function CopyLinkToast({
           "min-[1200px]:max-w-[1200px] min-[1200px]:rounded-2xl min-[1200px]:px-8 min-[1200px]:py-5",
         ].join(" ")}
       >
-        <p className="text-lg-semibold whitespace-nowrap text-[var(--primary-400)] min-[1200px]:text-2lg-semibold">
+        {/* 번역된 문구는 375px 화면의 카드 폭보다 길 수 있어 한 줄로 고정하지 않고, 단어 중간이 아닌 곳에서 줄바꿈합니다. */}
+        <p className="text-lg-semibold break-keep text-[var(--primary-400)] min-[1200px]:text-2lg-semibold">
           {message ?? t("linkCopied")}
         </p>
       </div>
