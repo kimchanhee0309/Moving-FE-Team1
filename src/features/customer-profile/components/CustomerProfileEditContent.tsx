@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import {
   getCurrentPasswordMismatchError,
 } from "@/common/api/get-error-message";
+import { isBlockedImageUploadError } from "@/common/api/image-upload-error";
 import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -22,6 +23,7 @@ import { CustomerProfileEditForm } from "./CustomerProfileEditForm";
 export function CustomerProfileEditContent() {
   const t = useTranslations("Profile");
   const apiErrorMessage = useApiErrorMessage();
+  const imageText = useTranslations("ProfileImage");
   const common = useTranslations("Common");
   const queryClient = useQueryClient();
   const { refetchUser } = useAuth();
@@ -63,7 +65,9 @@ export function CustomerProfileEditContent() {
       currentPasswordError={currentPasswordError}
       submissionError={
         mutation.error && !currentPasswordError
-          ? apiErrorMessage(mutation.error, t("updateError"))
+          ? isBlockedImageUploadError(mutation.error, mutation.variables?.profileImage)
+              ? imageText("uploadBlocked")
+              : apiErrorMessage(mutation.error, t("updateError"))
           : undefined
       }
       onCurrentPasswordChange={() => mutation.reset()}

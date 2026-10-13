@@ -676,6 +676,7 @@
     "label": "头像",
     "invalidType": "请选择 JPG、PNG 或 WebP 图片。",
     "tooLarge": "头像图片不能超过 5MB。",
+    "uploadBlocked": "无法上传头像。请缩小图片大小或检查网络连接后重试。",
     "previewAlt": "所选头像预览",
     "cancel": "取消选择图片"
   },

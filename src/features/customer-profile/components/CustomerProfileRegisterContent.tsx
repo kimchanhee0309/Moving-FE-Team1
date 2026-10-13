@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 
+import { isBlockedImageUploadError } from "@/common/api/image-upload-error";
 import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { assertProfileCompleted, isProfileCompletionError } from "@/features/auth/auth.cache";
@@ -13,6 +14,7 @@ import { CustomerProfileForm } from "./CustomerProfileForm";
 export function CustomerProfileRegisterContent() {
   const t = useTranslations("Profile");
   const apiErrorMessage = useApiErrorMessage();
+  const imageText = useTranslations("ProfileImage");
   const queryClient = useQueryClient();
   const { refetchUser } = useAuth();
   const mutation = useMutation({
@@ -32,7 +34,9 @@ export function CustomerProfileRegisterContent() {
         mutation.error
           ? isProfileCompletionError(mutation.error)
             ? t("profileConfirmError")
-            : apiErrorMessage(mutation.error, t("registerError"))
+            : isBlockedImageUploadError(mutation.error, mutation.variables?.profileImage)
+              ? imageText("uploadBlocked")
+              : apiErrorMessage(mutation.error, t("registerError"))
           : undefined
       }
       onSubmit={async (values) => { await mutation.mutateAsync(values); }}

@@ -676,6 +676,7 @@
     "label": "Profile image",
     "invalidType": "Please choose a JPG, PNG, or WebP image.",
     "tooLarge": "Profile images must be 5MB or smaller.",
+    "uploadBlocked": "We couldn't upload your profile image. Try a smaller image or check your connection, then try again.",
     "previewAlt": "Preview of the selected profile image",
     "cancel": "Remove selected image"
   },
