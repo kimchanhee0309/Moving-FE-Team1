@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import {
-  animate,
-  motion,
+  LazyMotion,
   useMotionValue,
   useReducedMotion,
   useTransform,
   type AnimationPlaybackControls,
   type MotionValue,
 } from "motion/react";
+import * as m from "motion/react-m";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useRef, type ReactNode } from "react";
 
@@ -20,7 +20,18 @@ import { Link } from "@/i18n/navigation";
 import { resolveLandingHrefs } from "../landing.utils";
 
 const REVEAL_EASE = [0.22, 1, 0.36, 1] as const;
-const MotionImage = motion.create(Image);
+// motion 대신 기능이 빠진 m 컴포넌트를 쓰고, 애니메이션 기능은 LandingMotionProvider가 hydration 뒤에 받습니다.
+// 첫 화면을 그리기 전에 내려받는 JS를 줄이기 위한 구성이라 이 파일에서 motion 컴포넌트를 직접 import하지 않습니다.
+const MotionImage = m.create(Image);
+const loadMotionFeatures = () => import("../landing.motion-features").then((module) => module.default);
+
+/**
+ * 랜딩의 m 컴포넌트에 애니메이션 기능을 지연 공급합니다. 랜딩 페이지가 본문 전체를 한 번 감쌉니다.
+ * 기능이 도착하기 전에는 각 요소가 initial 상태로 보이다가 도착 즉시 애니메이션을 시작합니다.
+ */
+export function LandingMotionProvider({ children }: { children: ReactNode }) {
+  return <LazyMotion features={loadMotionFeatures}>{children}</LazyMotion>;
+}
 
 // 랜딩 견적 요청·비교 카드의 고정 샘플입니다. 실제 기사님·견적 데이터가 아니며 이름·주소만 locale별 문구로 바꿉니다.
 const SAMPLE_QUOTES = [
@@ -173,12 +184,12 @@ function OrbitItem({ progress, offset, children }: { progress: MotionValue<numbe
   const zIndex = useTransform(progress, (value) => orbitFrame(value + offset).zIndex);
 
   return (
-    <motion.li
+    <m.li
       className="absolute top-1/2 left-1/2 h-[150px] w-[108px] will-change-transform min-[744px]:h-[236px] min-[744px]:w-[196px]"
       style={{ transform, opacity, zIndex }}
     >
       {children}
-    </motion.li>
+    </m.li>
   );
 }
 
@@ -196,9 +207,18 @@ export function MoveTypeCta() {
 
   useEffect(() => {
     if (shouldReduceMotion) return;
-    const controls = animate(progress, [0, 1], { duration: ORBIT_DURATION_SECONDS, ease: "linear", repeat: Infinity });
-    controlsRef.current = controls;
-    return () => controls.stop();
+    let isCancelled = false;
+    // 궤도를 돌리는 animate 엔진은 첫 화면에 필요 없어 hydration 뒤에 따로 받습니다.
+    // 도착 전에 unmount되거나 모션 축소로 바뀌면 시작하지 않습니다.
+    void import("motion").then(({ animate }) => {
+      if (isCancelled) return;
+      controlsRef.current = animate(progress, [0, 1], { duration: ORBIT_DURATION_SECONDS, ease: "linear", repeat: Infinity });
+    });
+    return () => {
+      isCancelled = true;
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+    };
   }, [progress, shouldReduceMotion]);
 
   const pause = () => controlsRef.current?.pause();
@@ -219,7 +239,7 @@ export function MoveTypeCta() {
   }
 
   return (
-    <motion.ul
+    <m.ul
       className="relative h-[190px] w-full overflow-x-clip [--orbit-x:min(112px,28vw)] min-[744px]:h-[300px] min-[744px]:max-w-[677px] min-[744px]:[--orbit-x:200px] min-[1200px]:absolute min-[1200px]:top-[100px] min-[1200px]:left-[calc(50%-100px)] min-[1200px]:h-[310px] min-[1200px]:w-[620px] min-[1200px]:max-w-none min-[1600px]:left-[calc(50%-76px)] min-[1600px]:w-[693px]"
       aria-label={t("moveTypes")}
       onPointerEnter={pause}
@@ -235,7 +255,7 @@ export function MoveTypeCta() {
           </AuthAwareLink>
         </OrbitItem>
       ))}
-    </motion.ul>
+    </m.ul>
   );
 }
 
@@ -253,7 +273,7 @@ export function RequestLandingCta() {
   const sample = SAMPLE_QUOTES[0];
 
   return (
-    <motion.div className="absolute top-[115px] left-[calc(50%-153px)] z-10 h-[350px] w-[226px] min-[744px]:top-[176px] min-[744px]:left-[calc(50%-270px)] min-[744px]:h-auto min-[744px]:w-[460px] min-[1600px]:top-[60px] min-[1600px]:left-[calc(50%-546px)] min-[1600px]:w-[520px]" {...revealProps}>
+    <m.div className="absolute top-[115px] left-[calc(50%-153px)] z-10 h-[350px] w-[226px] min-[744px]:top-[176px] min-[744px]:left-[calc(50%-270px)] min-[744px]:h-auto min-[744px]:w-[460px] min-[1600px]:top-[60px] min-[1600px]:left-[calc(50%-546px)] min-[1600px]:w-[520px]" {...revealProps}>
       <AuthAwareLink
         href={requestHref}
         isLoading={isLoading}
@@ -300,7 +320,7 @@ export function RequestLandingCta() {
           </dl>
         </div>
       </AuthAwareLink>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -365,14 +385,15 @@ function QuotePreviewCard({ sample, href, isLoading, isMobileHidden = false }: {
             </div>
           </div>
         </div>
-        <dl className="flex items-start justify-between gap-3 text-[9.1px]/[15.6px] [&_dd]:text-[10.4px]/[16.9px] [&_dd]:font-semibold [&_dd]:text-(--black-500) [&_dd]:break-keep [&_dt]:text-(--gray-500)">
+        {/* dl 바로 아래에 화살표 이미지와 중첩 div가 오면 목록 구조가 깨지므로 항목마다 dl을 따로 둡니다. */}
+        <div className="flex items-start justify-between gap-3 text-[9.1px]/[15.6px] [&_dd]:text-[10.4px]/[16.9px] [&_dd]:font-semibold [&_dd]:text-(--black-500) [&_dd]:break-keep [&_dt]:text-(--gray-500)">
           <div className="flex items-end gap-2">
-            <div><dt>{t("from")}</dt><dd>{t("sampleFrom")}</dd></div>
+            <dl><dt>{t("from")}</dt><dd>{t("sampleFrom")}</dd></dl>
             <Image className="mb-0.5" src="/images/landing/route-arrow.svg" alt="" width={10} height={15} />
-            <div><dt>{t("to")}</dt><dd>{t("sampleTo")}</dd></div>
+            <dl><dt>{t("to")}</dt><dd>{t("sampleTo")}</dd></dl>
           </div>
-          <div><dt>{t("movingDate")}</dt><dd><span className="min-[744px]:hidden">{formatLongDate(SAMPLE_COMPARE_DATE, locale)}</span><span className="hidden min-[744px]:inline">{formatDateWithWeekday(SAMPLE_COMPARE_DATE, locale)}</span></dd></div>
-        </dl>
+          <dl><dt>{t("movingDate")}</dt><dd><span className="min-[744px]:hidden">{formatLongDate(SAMPLE_COMPARE_DATE, locale)}</span><span className="hidden min-[744px]:inline">{formatDateWithWeekday(SAMPLE_COMPARE_DATE, locale)}</span></dd></dl>
+        </div>
         <p className="flex h-[26px] items-end justify-between border-t-[0.65px] border-(--line-200) text-[10.4px]/[16.9px] font-medium text-(--black-400) min-[744px]:h-[30px] min-[1600px]:h-[34px]">
           {quote("price")}
           <span className="text-[15.6px]/[20.8px] font-bold">{quote("priceValue", { price: sample.price })}</span>
@@ -397,7 +418,7 @@ export function CompareLandingCta() {
   const columns = [SAMPLE_QUOTES.slice(0, 2), SAMPLE_QUOTES.slice(2, 4)];
 
   return (
-    <motion.ul className="relative z-10 mt-[156px] grid w-full max-w-[796px] gap-3 min-[744px]:mt-[26px] min-[744px]:w-[calc(100vw-64px)] min-[744px]:max-w-[680px] min-[744px]:self-start min-[744px]:grid-cols-2 min-[744px]:items-start min-[744px]:gap-4 min-[1200px]:self-center min-[1600px]:static min-[1600px]:mt-0 min-[1600px]:w-full min-[1600px]:max-w-[796px] min-[1600px]:gap-[17px]" aria-label={t("compareFirst")} {...revealProps}>
+    <m.ul className="relative z-10 mt-[156px] grid w-full max-w-[796px] gap-3 min-[744px]:mt-[26px] min-[744px]:w-[calc(100vw-64px)] min-[744px]:max-w-[680px] min-[744px]:self-start min-[744px]:grid-cols-2 min-[744px]:items-start min-[744px]:gap-4 min-[1200px]:self-center min-[1600px]:static min-[1600px]:mt-0 min-[1600px]:w-full min-[1600px]:max-w-[796px] min-[1600px]:gap-[17px]" aria-label={t("compareFirst")} {...revealProps}>
       {columns.map((column, columnIndex) => (
         <li
           key={column[0].id}
@@ -408,6 +429,6 @@ export function CompareLandingCta() {
           ))}
         </li>
       ))}
-    </motion.ul>
+    </m.ul>
   );
 }

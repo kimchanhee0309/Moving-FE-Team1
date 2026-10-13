@@ -159,8 +159,13 @@ export function MoverBasicInfoForm({
           {account("basicInfoTitle")}
         </h1>
 
-        <div className="min-[1200px]:grid min-[1200px]:grid-cols-[500px_500px] min-[1200px]:gap-x-[120px]">
-          <div className="flex flex-col">
+        {/*
+          1200px 이상에서는 좌우 칸을 각각 쌓지 않고 3행 그리드에 세로 방향으로 채웁니다.
+          도움말·오류 문구가 한쪽 칸에만 있어도 같은 행의 두 칸이 같은 높이가 되어 입력란과 구분선이 어긋나지 않습니다.
+          두 묶음 div는 display: contents로 풀어 여섯 칸이 그리드의 직접 항목이 되게 합니다.
+        */}
+        <div className="min-[1200px]:grid min-[1200px]:grid-flow-col min-[1200px]:grid-cols-[500px_500px] min-[1200px]:grid-rows-[repeat(3,auto)] min-[1200px]:gap-x-[120px]">
+          <div className="flex flex-col min-[1200px]:contents">
             <div className={firstRowClass}>
               <Input
                 name="name"
@@ -208,7 +213,7 @@ export function MoverBasicInfoForm({
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col min-[1200px]:contents">
             <div className={firstRowClass}>
               <Input
                 name="currentPassword"

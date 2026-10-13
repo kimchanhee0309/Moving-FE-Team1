@@ -155,7 +155,7 @@ export function MoverSearchPageContent() {
   const canInteractFavorite = viewer === "guest" || viewer === "customer";
 
   return (
-    <div className="bg-[var(--gray-50)]">
+    <main className="bg-[var(--gray-50)]">
       <header className="hidden bg-[var(--gray-50)] py-8 shadow-[0px_2px_10px_0px_rgba(248,248,248,0.1)] min-[1200px]:block">
         {/*
           목록·검색 인풋과 같은 1200 열에 둔다. GNB `px-40`에 맞추면 로고 라인에 붙고,
@@ -276,6 +276,6 @@ export function MoverSearchPageContent() {
           }
         />
       </div>
-    </div>
+    </main>
   );
 }

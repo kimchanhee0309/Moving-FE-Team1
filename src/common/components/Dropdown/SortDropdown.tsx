@@ -77,7 +77,8 @@ export function SortDropdown({
         aria-controls={menuId}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-label={ariaLabel}
+        // 화면에 보이는 선택값이 접근성 이름에 없으면 음성 명령 사용자가 보이는 글자로 버튼을 부를 수 없습니다(WCAG 2.5.3).
+        aria-label={`${ariaLabel}: ${selectedLabel}`}
         className={[
           "inline-flex items-center justify-between rounded-lg !bg-[var(--gray-50)] !text-[var(--black-400)] outline-none transition-colors",
           "hover:!bg-[var(--gray-100)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary-300)]",

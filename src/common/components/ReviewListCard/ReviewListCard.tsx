@@ -74,6 +74,8 @@ export function ReviewListCard({
         </div>
 
         <div
+          // role 없는 div의 aria-label은 보조 기술이 읽지 않으므로 별점 묶음을 하나의 이미지로 알립니다.
+          role="img"
           className="flex items-center gap-0.5"
           aria-label={t("ratingAverage", { count: safeRating })}
         >
