@@ -10,6 +10,8 @@ import {
 import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { MOVER_MY_PAGE_QUERY_KEY } from "@/common/api/query-keys";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
+import { ROUTES } from "@/common/constants/routes";
+import { useRouter } from "@/i18n/navigation";
 
 import {
   getMoverProfile,
@@ -25,6 +27,7 @@ export function MoverProfileEditContent() {
   const imageText = useTranslations("ProfileImage");
   const common = useTranslations("Common");
   const queryClient = useQueryClient();
+  const router = useRouter();
   const profileQuery = useQuery({
     queryKey: moverProfileKeys.current(),
     queryFn: ({ signal }) => getMoverProfile(signal),
@@ -62,7 +65,11 @@ export function MoverProfileEditContent() {
             : apiErrorMessage(mutation.error, t("moverUpdateError"))
           : undefined
       }
-      onSubmit={async (values) => { await mutation.mutateAsync(values); }}
+      onSubmit={async (values) => {
+        await mutation.mutateAsync(values);
+        // 저장이 끝나면 수정 화면에 머물지 않고, 바뀐 프로필을 바로 확인할 수 있는 마이페이지로 돌아갑니다.
+        router.push(ROUTES.MOVER.MY_PAGE_UPDATED("profile"));
+      }}
     />
   );
 }
