@@ -204,6 +204,8 @@ export function MoveTypeCta() {
   const revealProps = useRevealProps();
   const progress = useMotionValue(0);
   const controlsRef = useRef<AnimationPlaybackControls | null>(null);
+  // 카드에 hover·focus가 걸려 있는지 기억합니다. animate 엔진이 늦게 도착해도 멈춘 상태로 시작하기 위한 값입니다.
+  const isPausedRef = useRef(false);
 
   useEffect(() => {
     if (shouldReduceMotion) return;
@@ -212,7 +214,10 @@ export function MoveTypeCta() {
     // 도착 전에 unmount되거나 모션 축소로 바뀌면 시작하지 않습니다.
     void import("motion").then(({ animate }) => {
       if (isCancelled) return;
-      controlsRef.current = animate(progress, [0, 1], { duration: ORBIT_DURATION_SECONDS, ease: "linear", repeat: Infinity });
+      const controls = animate(progress, [0, 1], { duration: ORBIT_DURATION_SECONDS, ease: "linear", repeat: Infinity });
+      // 엔진을 받는 동안 사용자가 이미 카드를 가리키고 있었다면 궤도가 움직이지 않게 바로 멈춥니다.
+      if (isPausedRef.current) controls.pause();
+      controlsRef.current = controls;
     });
     return () => {
       isCancelled = true;
@@ -221,8 +226,14 @@ export function MoveTypeCta() {
     };
   }, [progress, shouldReduceMotion]);
 
-  const pause = () => controlsRef.current?.pause();
-  const play = () => controlsRef.current?.play();
+  const pause = () => {
+    isPausedRef.current = true;
+    controlsRef.current?.pause();
+  };
+  const play = () => {
+    isPausedRef.current = false;
+    controlsRef.current?.play();
+  };
 
   if (shouldReduceMotion) {
     return (
