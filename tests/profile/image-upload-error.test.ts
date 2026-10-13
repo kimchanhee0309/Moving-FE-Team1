@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import { ApiError } from "../../src/common/api/error";
-import { isBlockedImageUploadError } from "../../src/common/api/image-upload-error";
+import {
+  BlockedImageUploadError,
+  isBlockedImageUploadError,
+  runImageUploadRequest,
+} from "../../src/common/api/image-upload-error";
 
 const image = new File(["image"], "profile.png", { type: "image/png" });
 
@@ -30,4 +34,23 @@ test("서버가 사유를 알려 준 오류는 이미지를 첨부했어도 서�
     false,
   );
   assert.equal(isBlockedImageUploadError(new Error("unexpected"), image), false);
+});
+
+test("업로드 요청이 막히면 BlockedImageUploadError로 바꾸고 원래 오류를 cause로 남긴다", async () => {
+  const cause = new TypeError("Failed to fetch");
+
+  await assert.rejects(
+    runImageUploadRequest(image, async () => { throw cause; }),
+    (error: unknown) => error instanceof BlockedImageUploadError && error.cause === cause,
+  );
+});
+
+test("업로드 요청이 성공하면 결과를 그대로 돌려주고 그 밖의 오류는 바꾸지 않는다", async () => {
+  assert.equal(await runImageUploadRequest(image, async () => "saved"), "saved");
+
+  // 저장 뒤 후속 요청의 실패처럼 감싸지 않은 TypeError는 이미지 업로드 실패로 분류되지 않습니다.
+  const serverError = new ApiError(409, "PROFILE_ALREADY_EXISTS", "이미 프로필이 있습니다.");
+  await assert.rejects(runImageUploadRequest(image, async () => { throw serverError; }), serverError);
+  const withoutImage = new TypeError("Failed to fetch");
+  await assert.rejects(runImageUploadRequest(null, async () => { throw withoutImage; }), withoutImage);
 });

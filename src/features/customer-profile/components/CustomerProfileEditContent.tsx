@@ -6,7 +6,10 @@ import { useTranslations } from "next-intl";
 import {
   getCurrentPasswordMismatchError,
 } from "@/common/api/get-error-message";
-import { isBlockedImageUploadError } from "@/common/api/image-upload-error";
+import {
+  BlockedImageUploadError,
+  runImageUploadRequest,
+} from "@/common/api/image-upload-error";
 import { useApiErrorMessage } from "@/common/api/useApiErrorMessage";
 import { ErrorState, LoadingState } from "@/common/components/page-state";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -32,7 +35,9 @@ export function CustomerProfileEditContent() {
     queryFn: ({ signal }) => getCustomerProfile(signal),
   });
   const mutation = useMutation({
-    mutationFn: updateCustomerProfile,
+    // 업로드 요청만 감싸 onSuccess의 후속 요청 실패를 이미지 업로드 실패로 안내하지 않게 합니다.
+    mutationFn: (values: Parameters<typeof updateCustomerProfile>[0]) =>
+      runImageUploadRequest(values.profileImage, () => updateCustomerProfile(values)),
     onSuccess: async (profile) => {
       queryClient.setQueryData(customerProfileKeys.current(), profile);
       const userChanges = { name: profile.name, email: profile.email, phone: profile.phone };
@@ -65,7 +70,7 @@ export function CustomerProfileEditContent() {
       currentPasswordError={currentPasswordError}
       submissionError={
         mutation.error && !currentPasswordError
-          ? isBlockedImageUploadError(mutation.error, mutation.variables?.profileImage)
+          ? mutation.error instanceof BlockedImageUploadError
               ? imageText("uploadBlocked")
               : apiErrorMessage(mutation.error, t("updateError"))
           : undefined

@@ -17,3 +17,32 @@ export function isBlockedImageUploadError(
   if (error instanceof ApiError) return error.status === 413;
   return error instanceof TypeError;
 }
+
+/** 이미지 업로드 요청 자체가 막혔음을 나타냅니다. 화면은 이 오류일 때만 이미지 용량 안내 문구를 보여 줍니다. */
+export class BlockedImageUploadError extends Error {
+  constructor(cause: unknown) {
+    super("Image upload request was blocked.", { cause });
+    this.name = "BlockedImageUploadError";
+  }
+}
+
+/**
+ * 이미지 업로드 요청을 실행하고, 그 요청이 막혀 실패한 경우에만 BlockedImageUploadError로 바꿔 던집니다.
+ * mutationFn 안에서 업로드 요청만 감싸야 합니다. 저장이 끝난 뒤 onSuccess에서 실행하는 후속 요청(사용자 정보 재조회 등)도
+ * 네트워크가 끊기면 TypeError로 실패하는데, mutation.error만 보면 둘을 구분할 수 없어 이미 저장된 프로필을
+ * 업로드 실패로 잘못 안내하게 되기 때문입니다.
+ * @param attachedFile 요청에 첨부한 이미지
+ * @param request 업로드 요청 한 건
+ * @throws 업로드가 막힌 경우 BlockedImageUploadError, 그 외에는 원래 오류
+ */
+export async function runImageUploadRequest<T>(
+  attachedFile: File | null | undefined,
+  request: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await request();
+  } catch (error) {
+    if (isBlockedImageUploadError(error, attachedFile)) throw new BlockedImageUploadError(error);
+    throw error;
+  }
+}
