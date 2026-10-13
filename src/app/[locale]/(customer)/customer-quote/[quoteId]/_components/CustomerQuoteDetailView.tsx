@@ -199,7 +199,7 @@ export function CustomerQuoteDetailView({
           className={[
             "px-6",
             "min-[744px]:px-[72px]",
-            "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
+            "min-[1200px]:px-[max(clamp(72px,18.75vw,360px),calc(50%_-_600px))]",
           ].join(" ")}
         >
           <h1 className="text-2xl-semibold text-[var(--black-500)]">
@@ -214,7 +214,7 @@ export function CustomerQuoteDetailView({
         className={[
           "px-6 pb-10",
           "min-[744px]:px-[72px]",
-          "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
+          "min-[1200px]:px-[max(clamp(72px,18.75vw,360px),calc(50%_-_600px))]",
         ].join(" ")}
       >
         <div className="-mt-[83px] flex flex-col gap-10 min-[1200px]:flex-row min-[1200px]:items-start min-[1200px]:gap-10">
