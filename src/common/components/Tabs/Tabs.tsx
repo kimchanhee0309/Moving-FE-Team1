@@ -100,8 +100,11 @@ export function Tabs<T extends string>({
       className={[
         "w-full border-b border-[var(--line-100)] bg-[var(--gray-50)]",
         "px-6",
+        // Figma 데스크톱(1920px)은 좌우 360px 안쪽의 1200px 열에 탭을 둡니다. 1920px까지는 화면 폭에 비례해 여백을 줄이고,
+        // 그보다 넓은 화면(QHD 등)에서는 여백을 360px에 고정하지 않고 1200px 열을 가운데에 두어
+        // 최대 1920px로 가운데 정렬되는 GNB·본문과 탭 위치가 어긋나지 않게 합니다.
         "min-[744px]:px-[72px] min-[744px]:shadow-[0_2px_5px_rgba(248,248,248,0.2)]",
-        "min-[1200px]:px-[clamp(72px,18.75vw,360px)] min-[1200px]:pt-4 min-[1200px]:shadow-[0_2px_5px_rgba(248,248,248,0.1)]",
+        "min-[1200px]:px-[max(clamp(72px,18.75vw,360px),calc(50%_-_600px))] min-[1200px]:pt-4 min-[1200px]:shadow-[0_2px_5px_rgba(248,248,248,0.1)]",
         className,
       ]
         .filter(Boolean)

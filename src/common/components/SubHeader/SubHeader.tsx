@@ -31,7 +31,7 @@ export function SubHeader({
       className={[
         "w-full bg-[var(--gray-50)] p-6 shadow-[0_8px_10px_rgba(39,39,75,0.02)]",
         "min-[744px]:px-[72px] min-[744px]:py-8",
-        "min-[1200px]:px-[clamp(72px,18.75vw,360px)]",
+        "min-[1200px]:px-[max(clamp(72px,18.75vw,360px),calc(50%_-_600px))]",
         className,
       ]
         .filter(Boolean)

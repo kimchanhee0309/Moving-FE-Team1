@@ -233,7 +233,7 @@ export function CustomerQuoteHistoryView() {
         className={[
           "flex flex-col gap-10 px-6 py-6",
           "min-[744px]:px-[72px] min-[744px]:py-10",
-          "min-[1200px]:px-[clamp(72px,18.75vw,400px)] min-[1200px]:py-16",
+          "min-[1200px]:px-[max(clamp(72px,18.75vw,360px),calc(50%_-_600px))] min-[1200px]:py-16",
         ].join(" ")}
       >
         {historyQuery.isLoading ? (
