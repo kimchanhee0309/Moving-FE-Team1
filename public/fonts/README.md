@@ -4,7 +4,7 @@
 
 | 순위 | 파일 | 용도 | 로딩 |
 | --- | --- | --- | --- |
-| 1 | `PretendardVariable.core.woff2` (약 145KB) | 화면 문구에 쓰이는 글자 | `next/font/local`이 모든 페이지에서 preload |
+| 1 | `PretendardVariable.core.woff2` (약 110KB) | 화면 문구에 쓰이는 글자, 굵기 400~900 | `next/font/local`이 모든 페이지에서 preload |
 | 2 | `pretendard-dynamic-subset/` (조각 93개) | 그 밖의 글자(이름·주소 등 사용자 입력) | `unicode-range`에 해당하는 글자가 화면에 나올 때만 해당 조각을 내려받음 |
 | - | `PretendardVariable.woff2` (약 2MB) | 위 두 가지를 만드는 원본 | 페이지에서 불러오지 않음 |
 
@@ -22,8 +22,9 @@
 
 `fonttools`와 `brotli`가 필요합니다(`pip install fonttools brotli`).
 
-1. 위 세 묶음의 글자를 모아 원본에서 `pyftsubset`으로 추출합니다. 옵션은 `--flavor=woff2 --layout-features='*' --notdef-outline --name-IDs='*'`이고, 가변 축(`wght` 45~930)은 그대로 둡니다.
-2. 결과를 `PretendardVariable.core.woff2`로 저장합니다.
+1. 위 세 묶음의 글자를 모아 원본에서 `pyftsubset`으로 추출합니다. 옵션은 `--flavor=woff2 --layout-features='*' --notdef-outline --name-IDs='*'`입니다.
+2. 가변 축 `wght`를 화면에서 쓰는 400~900으로 좁힙니다(`fonttools varLib.instancer <파일> wght=400:900`, 또는 npm `subset-font`의 `variationAxes: { wght: { min: 400, max: 900, default: 400 } }`). 400~900 사이 굵기의 글자 모양은 좁히기 전과 같고, 400보다 얇은 굵기만 쓸 수 없게 됩니다.
+3. 결과를 `PretendardVariable.core.woff2`로 저장하고, `next/font/local`의 `weight`(`layout.tsx`, `global-error.tsx`)를 같은 범위로 맞춥니다.
 
 ## 동적 서브셋에서 공식 배포본과 다른 점
 

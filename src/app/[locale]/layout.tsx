@@ -13,7 +13,8 @@ const pretendard = localFont({
   src: "../../../public/fonts/PretendardVariable.core.woff2",
   variable: "--font-pretendard",
   display: "swap",
-  weight: "45 920",
+  // 핵심 서브셋은 화면에서 쓰는 굵기(400~900)만 담아 용량을 줄였습니다. 더 얇은 굵기가 필요해지면 서브셋을 다시 만들어야 합니다.
+  weight: "400 900",
   // 핵심 서브셋에 없는 글자는 globals.css의 다음 순위 "Pretendard Variable" 조각으로 넘어가야 하므로,
   // 그 사이에 끼어드는 Arial 기반 대체 폰트를 만들지 않습니다.
   adjustFontFallback: false,

@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import {
   CompareLandingCta,
   LandingHeroMedia,
+  LandingMotionProvider,
   MoveTypeCta,
   RequestLandingCta,
 } from "@/features/landing/components/MoveTypeCta";
@@ -19,6 +20,7 @@ export default function HomePage() {
   const t = useTranslations("Landing");
   return (
     <main className="overflow-x-clip bg-(--gray-50) text-(--content-strong)">
+      <LandingMotionProvider>
       {/* 사진 위 어두운 막은 장식이라 별도 요소 대신 after 가상 요소로 그립니다. */}
       <section
         className="relative isolate flex min-h-[313px] flex-col items-center px-4 pt-[75px] pb-12 text-center text-(--gray-50) after:absolute after:inset-0 after:-z-10 after:bg-[rgb(70_43_20/70%)] after:bg-[linear-gradient(180deg,rgb(0_0_0/24%),rgb(0_0_0/60%))] after:content-[''] min-[744px]:min-h-[405px] min-[744px]:pt-[87px]"
@@ -81,6 +83,7 @@ export default function HomePage() {
           {t("footerFirst")}<br className="min-[744px]:hidden" /> {t("footerSecond")}
         </h2>
       </section>
+      </LandingMotionProvider>
     </main>
   );
 }

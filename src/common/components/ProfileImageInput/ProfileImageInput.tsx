@@ -34,6 +34,7 @@ export function ProfileImageInput({
 }: ProfileImageInputProps) {
   const t = useTranslations("ProfileImage");
   const inputId = useId();
+  const labelId = `${inputId}-label`;
   const messageId = `${inputId}-message`;
   const inputRef = useRef<HTMLInputElement>(null);
   const [selectedPreviewUrl, setSelectedPreviewUrl] = useState<string>();
@@ -92,7 +93,7 @@ export function ProfileImageInput({
 
   return (
     <div className={["flex flex-col gap-4", className].filter(Boolean).join(" ")}>
-      <span className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">{t("label")}</span>
+      <span id={labelId} className="text-lg-semibold text-[var(--black-300)] min-[1200px]:!text-[20px] min-[1200px]:!leading-[32px] min-[1200px]:!font-semibold">{t("label")}</span>
       <label
         htmlFor={inputId}
         className={`relative flex size-[100px] items-center justify-center overflow-hidden rounded-md ${previewUrl ? "bg-[var(--black-400)]" : "bg-[var(--background-200)]"} transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[var(--primary-400)] min-[1200px]:size-[160px] ${
@@ -106,6 +107,9 @@ export function ProfileImageInput({
             fill
             sizes="(min-width: 1200px) 160px, 100px"
             className="scale-110 object-cover"
+            // 저장된 프로필 이미지는 프로필 수정 화면에서 가장 큰 콘텐츠(LCP)라 지연 로딩 없이 먼저 받습니다.
+            loading="eager"
+            fetchPriority={file ? undefined : "high"}
             unoptimized={previewUrl.startsWith("blob:") || /^https?:\/\//.test(previewUrl)}
           />
         ) : (
@@ -128,6 +132,8 @@ export function ProfileImageInput({
           type="file"
           accept="image/jpeg,image/png,image/webp"
           className="sr-only"
+          // 감싸는 label에는 이미지나 아이콘만 있어 이름이 비므로 위 제목 글자를 입력의 이름으로 연결합니다.
+          aria-labelledby={labelId}
           disabled={isInteractionDisabled}
           aria-describedby={message ? messageId : undefined}
           aria-invalid={Boolean(message) || undefined}
