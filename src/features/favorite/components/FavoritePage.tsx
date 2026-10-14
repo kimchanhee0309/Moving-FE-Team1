@@ -264,11 +264,13 @@ export function FavoritePage() {
     <div className="min-h-screen bg-[#fafafa]">
       <header className="bg-[var(--gray-50)] py-4 shadow-[0px_2px_10px_0px_rgba(248,248,248,0.1)] min-[744px]:py-5 min-[1200px]:py-8">
         {/*
-          컨테이너 폭·padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` + `px-6/px-18/px-40` 기준과
-          맞춘다 — 예전엔 `max-w-[1200px]`+`min-[1200px]:px-2`라 1200px 이상 화면에서 GNB 로고와
-          이 제목의 중앙정렬 기준 폭이 달라 화면이 커질수록 간격이 계속 벌어졌다.
+          Figma 데스크톱에서 페이지 제목은 GNB 로고 줄(160px)이 아니라 본문 열(1920px 기준 360px)의
+          왼쪽 끝에 맞춰져 있다. 1200px 이상에서는 아래 목록(`max-w-[1200px]`, 좌우 여백 0)의 왼쪽 끝인
+          `50% - 600px`에 제목을 둔다. 다만 본문 열이 GNB 로고보다 왼쪽에 오는 좁은 데스크톱
+          (1520px 미만)에서는 제목이 로고보다 앞으로 튀어나오지 않도록 로고 줄(160px)을 최솟값으로 둔다.
+          1200px 미만은 GNB와 같은 padding을 쓴다.
         */}
-        <div className="mx-auto w-full max-w-[1920px] px-6 min-[744px]:px-18 min-[1200px]:px-40">
+        <div className="mx-auto w-full max-w-[1920px] px-6 min-[744px]:px-18 min-[1200px]:max-w-none min-[1200px]:px-[max(160px,calc(50%_-_600px))]">
           <h1 className="text-2xl-semibold text-[var(--black-500)] max-[743px]:text-xl-bold">
             {t("title")}
           </h1>

@@ -96,15 +96,14 @@ export function MoveRequestBlockedState({
         제목 텍스트만 그린다. 이 진행 바가 실제 견적 요청 폼(위저드)에도 필요한지는 이번 작업
         범위(disabled 화면) 밖이라 그대로 두었다 — 작업 보고에 별도로 남긴다.
 
-        컨테이너 폭·좌우 padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` + `px-6/px-18/px-40`
-        기준과 반드시 맞춰야 한다 — 예전에는 이 헤더만 `max-w-[1200px]`+`min-[1200px]:px-0`을
-        써서, 1200px 이상 화면에서는 GNB 로고 왼쪽 끝과 이 제목의 왼쪽 끝 기준 컨테이너가
-        서로 다른 폭으로 각자 중앙정렬돼(가운데 정렬 기준점이 다름) 화면이 커질수록 두 지점의
-        간격이 한없이 벌어졌다(예: 2560px 화면에서 GNB 로고는 폭 1920px 기준으로 고정되는데
-        제목은 폭 1200px 기준으로 더 오른쪽까지 밀려남).
+        Figma 데스크톱(1920px)에서 이 제목은 GNB 로고 줄(160px)이 아니라 가운데 1200px 열의 왼쪽 끝
+        (360px)에 놓인다. 1200px 이상에서는 그 위치인 `50% - 600px`에 제목을 두어, 1920px보다 넓은
+        화면에서도 로고와 제목의 간격(200px)이 Figma와 같게 유지되도록 한다.
+        다만 1200px 열이 GNB 로고보다 왼쪽에 오는 좁은 데스크톱(1520px 미만)에서는 제목이 로고보다
+        앞으로 튀어나오지 않도록 로고 줄(160px)을 최솟값으로 둔다. 1200px 미만은 GNB와 같은 padding을 쓴다.
       */}
       <header className="w-full shrink-0 bg-(--gray-50) shadow-[0px_2px_10px_rgba(248,248,248,0.1)] min-[744px]:shadow-none min-[1200px]:shadow-[0px_2px_10px_rgba(248,248,248,0.1)]">
-        <div className="mx-auto flex w-full max-w-[1920px] items-center p-6 min-[744px]:h-[54px] min-[744px]:px-18 min-[744px]:py-0 min-[1200px]:h-auto min-[1200px]:px-40 min-[1200px]:py-8">
+        <div className="mx-auto flex w-full max-w-[1920px] items-center p-6 min-[744px]:h-[54px] min-[744px]:px-18 min-[744px]:py-0 min-[1200px]:h-auto min-[1200px]:max-w-none min-[1200px]:px-[max(160px,calc(50%_-_600px))] min-[1200px]:py-8">
           <h1 className="m-0 text-2lg-semibold text-(--content-strong) min-[744px]:text-(--black-500) min-[1200px]:text-2xl-semibold">
             {t("activeTitle")}
           </h1>
