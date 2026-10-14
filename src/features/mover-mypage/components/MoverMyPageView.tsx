@@ -46,12 +46,13 @@ export function MoverMyPageView({
   return (
     <main className="min-h-screen bg-[var(--gray-50)] pb-20">
       {/*
-        컨테이너 폭·padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` 기준과 맞춘다 — 예전엔
-        `max-w-[1280px]`에 1200px 이상 전용 padding이 아예 없어(744px 단계 `px-10`이 그대로
-        이어짐) 1200px 이상 화면에서 GNB 로고와 이 제목의 중앙정렬 기준 폭이 달라 화면이
-        커질수록 간격이 계속 벌어졌다. 744px 미만/744~1199px 구간의 기존 padding은 그대로 둔다.
+        Figma 데스크톱에서 페이지 제목은 GNB 로고 줄(160px)이 아니라 본문 열(1920px 기준 360px)의
+        왼쪽 끝에 맞춰져 있다. 1200px 이상에서는 아래 본문(`max-w-[1280px]` + `px-10`)의 왼쪽 끝인
+        `50% - 600px`에 제목을 둔다. 다만 본문 열이 GNB 로고보다 왼쪽에 오는 좁은 데스크톱
+        (1520px 미만)에서는 제목이 로고보다 앞으로 튀어나오지 않도록 로고 줄(160px)을 최솟값으로 둔다.
+        1200px 미만의 padding은 기존 그대로다.
       */}
-      <div className="mx-auto w-full max-w-[1920px] px-5 pb-4 pt-4 min-[744px]:px-10 min-[744px]:pb-6 min-[744px]:pt-8 min-[1200px]:px-40">
+      <div className="w-full px-5 pb-4 pt-4 min-[744px]:px-10 min-[744px]:pb-6 min-[744px]:pt-8 min-[1200px]:px-[max(160px,calc(50%_-_600px))]">
         <h1 className="text-xl-bold text-[var(--black-500)] min-[1200px]:text-2xl-bold">{t("myPage")}</h1>
       </div>
 

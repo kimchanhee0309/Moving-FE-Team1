@@ -40,11 +40,12 @@ export function MoverQuoteDetail({ quote }: MoverQuoteDetailProps) {
     <>
       <header className="border-b border-[var(--line-100)] bg-white">
         {/*
-          컨테이너 폭·padding은 GNB(`Gnb.tsx`)의 `max-w-[1920px]` + `px-6/px-18/px-40` 기준과
-          맞춘다 — 예전엔 `max-w-[1200px]`+고정 `px-6`이라 1200px 이상 화면에서 GNB 로고와 이
-          제목의 중앙정렬 기준 폭이 달라 화면이 커질수록 간격이 계속 벌어졌다.
+          Figma 데스크톱에서 페이지 제목은 GNB 로고 줄(160px)이 아니라 본문 열의 왼쪽 끝에 맞춰져 있다.
+          1200px 이상에서는 아래 main(`max-w-[1200px]` + `px-6`)의 왼쪽 끝인 `50% - 576px`에 제목을 둔다.
+          다만 본문 열이 GNB 로고보다 왼쪽에 오는 좁은 데스크톱(약 1470px 미만)에서는 제목이 로고보다
+          앞으로 튀어나오지 않도록 로고 줄(160px)을 최솟값으로 둔다. 1200px 미만은 GNB와 같은 padding을 쓴다.
         */}
-        <div className="mx-auto max-w-[1920px] px-6 py-8 min-[744px]:px-18 min-[1200px]:px-40 max-[743px]:py-[10px]">
+        <div className="mx-auto max-w-[1920px] px-6 py-8 min-[744px]:px-18 min-[1200px]:max-w-none min-[1200px]:px-[max(160px,calc(50%_-_576px))] max-[743px]:py-[10px]">
           <h1 className="text-[24px] font-semibold leading-8 text-[var(--black-500)] max-[743px]:text-[18px]">
             {quoteText("detailTitle")}
           </h1>
