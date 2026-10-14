@@ -4,8 +4,10 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
+import { preconnect } from "react-dom";
 import "../globals.css";
 
+import { ENV } from "@/common/constants/env";
 import { Providers } from "@/providers";
 import { routing } from "@/i18n/routing";
 
@@ -57,6 +59,10 @@ const OPEN_GRAPH_LOCALE: Record<(typeof routing.locales)[number], string> = {
   ja: "ja_JP",
 };
 
+// 모든 페이지가 hydration 직후 AuthProvider의 세션 확인으로 백엔드를 호출하므로, HTML을 받는 동안 연결(DNS·TLS)을 미리 맺어 둡니다.
+// apiClient가 credentials: "include"로 요청하므로 crossOrigin을 주지 않습니다. 주면 쿠키 없는 별도 연결이 열려 재사용되지 않습니다.
+const API_ORIGIN = URL.canParse(ENV.API_URL) ? new URL(ENV.API_URL).origin : null;
+
 interface RootLayoutProps {
   children: ReactNode;
   params: Promise<{ locale: string }>;
@@ -69,6 +75,7 @@ export function generateStaticParams() {
 export default async function RootLayout({ children, params }: RootLayoutProps) {
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
+  if (API_ORIGIN) preconnect(API_ORIGIN);
 
   return (
     <html lang={locale} className={pretendard.variable}>
