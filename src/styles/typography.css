@@ -1,13 +1,18 @@
 /* src/styles/typography.css */
+/*
+ * 디자인 시스템의 글자 스타일입니다. 일반 CSS 클래스가 아니라 Tailwind 유틸리티(@utility)로 정의합니다.
+ * 일반 클래스로 두면 min-[1200px]:text-xl-semibold 같은 반응형·상태 접두사가 만들어지지 않아 조용히 무시되고,
+ * 레이어 밖 규칙이라 text-[20px]·font-bold 같은 Tailwind 유틸리티를 항상 이겨 덮어쓸 수도 없습니다.
+ */
 /* Text 3xl */
 
-.text-3xl-bold {
+@utility text-3xl-bold {
   font-size: 32px;
   font-weight: 700;
   line-height: 42px;
 }
 
-.text-3xl-semibold {
+@utility text-3xl-semibold {
   font-size: 32px;
   font-weight: 600;
   line-height: 42px;
@@ -15,25 +20,25 @@
 
 /* Text 2xl */
 
-.text-2xl-bold {
+@utility text-2xl-bold {
   font-size: 24px;
   font-weight: 700;
   line-height: 32px;
 }
 
-.text-2xl-semibold {
+@utility text-2xl-semibold {
   font-size: 24px;
   font-weight: 600;
   line-height: 32px;
 }
 
-.text-2xl-medium {
+@utility text-2xl-medium {
   font-size: 24px;
   font-weight: 500;
   line-height: 32px;
 }
 
-.text-2xl-regular {
+@utility text-2xl-regular {
   font-size: 24px;
   font-weight: 400;
   line-height: 32px;
@@ -41,25 +46,25 @@
 
 /* Text xl */
 
-.text-xl-bold {
+@utility text-xl-bold {
   font-size: 20px;
   font-weight: 700;
   line-height: 32px;
 }
 
-.text-xl-semibold {
+@utility text-xl-semibold {
   font-size: 20px;
   font-weight: 600;
   line-height: 32px;
 }
 
-.text-xl-medium {
+@utility text-xl-medium {
   font-size: 20px;
   font-weight: 500;
   line-height: 32px;
 }
 
-.text-xl-regular {
+@utility text-xl-regular {
   font-size: 20px;
   font-weight: 400;
   line-height: 32px;
@@ -67,25 +72,25 @@
 
 /* Text 2lg */
 
-.text-2lg-bold {
+@utility text-2lg-bold {
   font-size: 18px;
   font-weight: 700;
   line-height: 26px;
 }
 
-.text-2lg-semibold {
+@utility text-2lg-semibold {
   font-size: 18px;
   font-weight: 600;
   line-height: 26px;
 }
 
-.text-2lg-medium {
+@utility text-2lg-medium {
   font-size: 18px;
   font-weight: 500;
   line-height: 26px;
 }
 
-.text-2lg-regular {
+@utility text-2lg-regular {
   font-size: 18px;
   font-weight: 400;
   line-height: 26px;
@@ -93,25 +98,25 @@
 
 /* Text lg */
 
-.text-lg-bold {
+@utility text-lg-bold {
   font-size: 16px;
   font-weight: 700;
   line-height: 26px;
 }
 
-.text-lg-semibold {
+@utility text-lg-semibold {
   font-size: 16px;
   font-weight: 600;
   line-height: 26px;
 }
 
-.text-lg-medium {
+@utility text-lg-medium {
   font-size: 16px;
   font-weight: 500;
   line-height: 26px;
 }
 
-.text-lg-regular {
+@utility text-lg-regular {
   font-size: 16px;
   font-weight: 400;
   line-height: 26px;
@@ -119,25 +124,25 @@
 
 /* Text md */
 
-.text-md-bold {
+@utility text-md-bold {
   font-size: 14px;
   font-weight: 700;
   line-height: 24px;
 }
 
-.text-md-semibold {
+@utility text-md-semibold {
   font-size: 14px;
   font-weight: 600;
   line-height: 24px;
 }
 
-.text-md-medium {
+@utility text-md-medium {
   font-size: 14px;
   font-weight: 500;
   line-height: 24px;
 }
 
-.text-md-regular {
+@utility text-md-regular {
   font-size: 14px;
   font-weight: 400;
   line-height: 24px;
@@ -145,13 +150,13 @@
 
 /* Text sm */
 
-.text-sm-semibold {
+@utility text-sm-semibold {
   font-size: 13px;
   font-weight: 600;
   line-height: 22px;
 }
 
-.text-sm-medium {
+@utility text-sm-medium {
   font-size: 13px;
   font-weight: 500;
   line-height: 22px;
@@ -159,19 +164,19 @@
 
 /* Text xs */
 
-.text-xs-semibold {
+@utility text-xs-semibold {
   font-size: 12px;
   font-weight: 600;
   line-height: 20px;
 }
 
-.text-xs-medium {
+@utility text-xs-medium {
   font-size: 12px;
   font-weight: 500;
   line-height: 18px;
 }
 
-.text-xs-regular {
+@utility text-xs-regular {
   font-size: 12px;
   font-weight: 400;
   line-height: 18px;
