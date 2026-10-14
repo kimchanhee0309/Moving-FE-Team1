@@ -41,6 +41,7 @@ function getTabClassName(isSelected: boolean) {
 }
 
 function getTabLabelClassName(isSelected: boolean) {
+  // Figma 탭 글자: 모바일·태블릿 14/24(선택 bold, 미선택 semibold), 데스크톱 20/32 semibold.
   return isSelected
     ? "text-md-bold min-[1200px]:text-xl-semibold"
     : "text-md-semibold min-[1200px]:text-xl-semibold";
