@@ -133,7 +133,9 @@ export function LandingHeroMedia() {
         alt=""
         fill
         sizes="100vw"
+        // LCP 이미지입니다. preload만으로는 <link rel="preload">와 img에 우선순위가 붙지 않아 CSS·JS와 같은 순위로 받으므로 함께 지정합니다.
         preload
+        fetchPriority="high"
         initial={shouldReduceMotion ? false : { opacity: 0.58, scale: 1.035 }}
         animate={{ opacity: 0.8, scale: 1 }}
         transition={{ duration: 0.9, ease: "easeOut" }}
