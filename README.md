@@ -78,65 +78,8 @@
 ---
 
 ## 2. 시스템 아키텍처
+<img width="1672" height="941" alt="시스템 아키텍쳐" src="https://github.com/user-attachments/assets/560905d3-64eb-4cfd-b6f4-1b9b2b4ec0e0" />
 
-```mermaid
-flowchart LR
-    USER[사용자 브라우저]
-
-    subgraph DOMAIN[Route 53 / moving.it.kr]
-        FE_DOMAIN[moving.it.kr]
-        API_DOMAIN[api.moving.it.kr]
-    end
-
-    subgraph FRONTEND[Frontend]
-        VERCEL[Vercel]
-        NEXT[Next.js App Router]
-    end
-
-    subgraph AWS[AWS]
-        ALB[Application Load Balancer<br/>HTTPS / SSL 종료]
-        EC2[EC2]
-        NGINX[Nginx]
-        PM2[PM2]
-        EXPRESS[Express API Server]
-        RDS[(RDS PostgreSQL)]
-        S3[(S3)]
-        CLOUDFRONT[CloudFront]
-    end
-
-    subgraph EXTERNAL[External Services]
-        OAUTH[Google / Kakao / Naver OAuth]
-        MAIL[Email Service]
-        ADDRESS[주소 검색 API]
-    end
-
-    subgraph CICD[CI/CD]
-        GITHUB[GitHub]
-        ACTIONS[GitHub Actions]
-    end
-
-    USER --> FE_DOMAIN
-    FE_DOMAIN --> VERCEL
-    VERCEL --> NEXT
-
-    USER --> API_DOMAIN
-    API_DOMAIN --> ALB
-    ALB --> NGINX
-    NGINX --> PM2
-    PM2 --> EXPRESS
-
-    EXPRESS --> RDS
-    EXPRESS --> S3
-    S3 --> CLOUDFRONT
-    CLOUDFRONT --> USER
-
-    EXPRESS --> OAUTH
-    EXPRESS --> MAIL
-    NEXT --> ADDRESS
-
-    GITHUB --> ACTIONS
-    ACTIONS --> EC2
-```
 
 ### 요청 흐름
 
@@ -538,204 +481,389 @@ moving-fe-team1/
 
 ## 10. 성능 및 사용자 경험 개선
 
-### TanStack Query 기반 서버 상태 관리
+<details>
+<summary><strong>10.1 폰트·이미지 로딩 최적화로 LCP 개선</strong></summary>
+  
+견적 요청 페이지의 Lighthouse 모바일 측정에서 초기 로딩 병목을 확인하고, 폰트와 주요 이미지의 로딩 방식을 개선했습니다.
 
-- 조회 데이터의 캐싱과 재사용
-- Mutation 성공 후 필요한 Query만 무효화
-- 무한 스크롤 페이지 데이터 관리
-- 다음 페이지 요청 실패 시 기존에 조회된 목록 유지
-- 중복 요청 방지와 로딩 상태 분리
+#### 개선 내용
 
-### 초기 로딩과 추가 로딩 상태 분리
+- 약 2MB의 Pretendard 전체 폰트 대신 화면 문구 중심의 핵심 서브셋을 우선 로딩
+- 사용자 이름·주소 등 핵심 서브셋에 없는 글자는 추가 서브셋으로 보완
+- 첫 화면의 주요 이미지에 `loading="eager"`와 `fetchPriority="high"` 적용
+- GNB 홈 링크의 prefetch를 해제해 현재 화면에 필요하지 않은 랜딩 리소스 다운로드 방지
 
-무한 스크롤에서 첫 요청 실패와 다음 페이지 요청 실패를 구분했습니다.
+#### 측정 결과
 
-- 첫 페이지 실패: 전체 오류 화면 표시
-- 추가 페이지 실패: 기존 카드 목록을 유지하고 재시도 UI 표시
+| 지표 | 변경 전 | 변경 후 |
+| --- | ---: | ---: |
+| Lighthouse 모바일 성능 점수 | 75 | 84 |
+| LCP | 14.2초 | 4.6초 |
+| 폰트 다운로드 | 2,010KB | 146KB |
+| JavaScript 다운로드 | 307KB | 254KB |
+| 요청 수 | 43개 | 39개 |
 
-이를 통해 추가 데이터를 불러오지 못했을 때 기존 데이터까지 사라지는 문제를 방지했습니다.
+> 프로덕션 빌드와 응답 시간이 200ms인 모의 API 환경에서 측정한 결과입니다. 운영 환경의 실제 사용자 지표와는 구분합니다.
 
-### 사용자 입력 중복 제출 방지
+LCP는 크게 개선됐지만, 인증 확인과 활성 요청 조회 이후 주요 화면이 렌더링되는 대기 구간은 추가 개선 대상으로 남았습니다.
 
-- API 요청 중 버튼 비활성화
-- 요청 처리 중 Modal의 Escape 및 배경 클릭 닫기 방지
-- Mutation 완료 후 관련 Query 무효화
-- 서버에서도 중복 견적과 중복 반려 검증
+관련 PR: [FE #97](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/97)
+  
+</details>
 
-### 이미지 전송 최적화
+<details>
+<summary><strong>10.2 모바일 리소스 크기와 애니메이션 로딩 최적화</strong></summary>
 
-- 원본 이미지를 그대로 서버에서 반복 전송하지 않고 S3에 저장
-- CloudFront CDN을 통해 프로필 이미지 제공
-- 이미지 교체 시 기존 파일과 CDN 캐시 정리
+모바일 화면에서 실제로 사용하는 리소스 크기와 기능을 기준으로 추가 최적화를 진행했습니다.
 
-### 역할별 코드 분리
+- 핵심 폰트의 가변 굵기 범위를 실제 사용 범위인 `400~900`으로 축소
+- 이미지 크기 목록에 `480px`을 추가해 작은 화면에서 불필요하게 큰 이미지 다운로드 방지
+- 랜딩 애니메이션 기능을 지연 로딩해 초기 JavaScript 전송량 감소
+- 프로필 수정 화면의 주요 이미지 로딩 우선순위 조정
 
-- 일반 고객과 기사님 화면을 Route Group으로 분리
-- 도메인별 feature 폴더 구성
-- 페이지에서 API 구현 세부 사항을 분리
-- 공통 UI와 비즈니스 UI를 구분하여 유지보수성 향상
+| 항목 | 변경 전 | 변경 후 |
+| --- | ---: | ---: |
+| 핵심 폰트 크기 | 146KB | 109KB |
+| 모바일 랜딩 캐릭터 이미지 | 52KB | 29KB |
+| 첫 화면 이전 JavaScript | 약 285KB | 약 261KB |
+| 랜딩 모바일 성능 점수 | 83~87 | 87~91 |
+
+> 로컬 프로덕션 빌드의 Lighthouse 측정 결과이며, 앞의 견적 요청 페이지와는 별도 측정입니다. 운영 성능은 배포 후 동일 조건에서 다시 확인해야 합니다.
+
+추가로 랜딩 히어로 이미지에 높은 요청 우선순위를 지정하고 API origin 사전 연결을 적용했습니다. 이 추가 변경의 운영 LCP 개선 폭은 후속 측정이 필요합니다.
+
+관련 PR: [FE #101](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/101), [FE #106](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/106)
+
+
+</details>
+
+<details>
+<summary><strong>10.3 페이지 단위 조회와 선택적 캐시 갱신</strong></summary>
+
+목록 데이터는 Cursor 기반 API와 TanStack Query의 `useInfiniteQuery`를 연결해 필요한 페이지부터 조회합니다.
+
+- Backend에서 `limit + 1`개를 조회해 다음 페이지 존재 여부 판단
+- Frontend에서 응답의 `nextCursor`를 다음 요청에 전달
+- 검색·필터·정렬 조건을 Query key에 포함해 조회 상태 구분
+- 견적 전송·반려 등 Mutation 이후 관련 Query를 선택적으로 무효화
+- 다음 페이지를 가져오는 동안 기존 카드 목록 유지
+
+초기 요청 실패와 추가 페이지 요청 실패도 구분했습니다.
+
+| 상황 | 화면 처리 |
+| --- | --- |
+| 첫 페이지 조회 실패 | 오류 화면과 재시도 제공 |
+| 추가 페이지 조회 실패 | 기존 목록을 유지하고 하단에 재시도 제공 |
+
+이는 한 번에 조회·전송하는 데이터 양을 제한하고 목록 이용 흐름을 유지하기 위한 설계입니다. 응답 시간이나 부하 감소율은 별도로 측정하지 않았습니다.
+
+관련 PR: [BE #15](https://github.com/kimchanhee0309/Moving-BE-Team1/pull/15), [FE #56](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/56), [FE #59](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/59)
+
+
+</details>
+
+<details>
+<summary><strong>10.4 인증 갱신 요청 통합과 로딩 범위 축소</strong></summary>
+
+여러 API에서 인증 만료 응답이 동시에 발생해도 하나의 Refresh 요청 결과를 공유하도록 구성했습니다.
+
+- Access Token 누락·만료에 해당하는 오류만 자동 갱신
+- 동시에 진행되는 Refresh 요청을 하나의 Promise로 공유
+- 갱신 성공 후 원래 요청을 최대 한 번 재시도
+- 로그아웃 이전에 시작된 늦은 응답이 인증 상태를 다시 복원하지 않도록 세대 값 검사
+- Backend는 유효한 Access Token이 있으면 토큰을 재발급하지 않도록 처리
+
+공개 페이지의 로딩 범위도 조정했습니다.
+
+- 최초 세션 확인 중에도 랜딩 본문과 공개 메뉴 표시
+- 인증 정보에 의존하는 GNB 계정 영역만 로딩 UI 표시
+- Server Component에서는 같은 요청의 세션 조회 결과를 공유
+
+이를 통해 인증 확인 때문에 공개 화면 전체가 가려지는 현상을 개선하고 중복 토큰 갱신을 줄였습니다.
+
+관련 PR: [FE #78](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/78), [BE #34](https://github.com/kimchanhee0309/Moving-BE-Team1/pull/34)
+
+</details>
+
+<details>
+<summary><strong>10.5 SSE 연결 관리 일원화</strong></summary>
+
+라우트 그룹별 GNB에서 알림 구독을 관리하던 구조를 루트 `NotificationProvider`로 옮겼습니다.
+
+- 같은 앱 인스턴스에서 알림 구독을 한 곳에서 관리
+- 라우트 그룹 이동에 따른 불필요한 연결 종료·재생성 방지
+- 로그인·프로필 등록 상태에 따라 조회와 구독 시작 여부 결정
+- 연결 종료 시 EventSource와 이벤트 리스너 정리
+- 연결 복구 시 알림 목록을 다시 조회해 최신 상태 확인
+
+관련 PR: [FE #77](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/77)
+</details>
+
+<details>
+<summary><strong>10.6 이미지 저장·전송과 캐시 정책 분리</strong></summary>
+
+프로필 이미지는 S3에 저장하고 CloudFront URL로 제공할 수 있도록 구성했습니다.
+
+- 이미지 검증을 통과한 파일만 S3에 업로드
+- UUID 기반 객체 key를 사용해 기존 파일 덮어쓰기 방지
+- 브라우저와 CDN의 캐시 유지 시간을 분리
+- 이미지 교체·회원 탈퇴 시 원본 삭제와 CDN 캐시 무효화 요청
+
+현재 캐시 정책은 다음과 같습니다.
+
+```http
+Cache-Control: public, max-age=3600, s-maxage=31536000
+```
+
+브라우저는 1시간, CDN은 1년 동안 캐시하도록 설정했습니다. 실제 적용 TTL은 CloudFront 캐시 정책에도 영향을 받으며, 운영 캐시 적중률과 응답 시간 개선 폭은 별도 측정 대상입니다.
+
+관련 PR: [BE #44](https://github.com/kimchanhee0309/Moving-BE-Team1/pull/44), [BE #46](https://github.com/kimchanhee0309/Moving-BE-Team1/pull/46)
+
+</details>
 
 ---
 
 ## 11. 트러블 슈팅
 
-### 11.1 배포 서버가 RDS 대신 localhost를 바라보던 문제
+<details>
+<summary><strong>11.1 운영 서버가 RDS 대신 localhost에 연결하던 문제</strong></summary>
 
-#### 문제 상황
+#### 문제
 
-배포 환경에서 회원가입이나 데이터 조회를 시도하면 Prisma `P1001` 오류가 발생했습니다.
+배포 환경에서 회원가입과 데이터 조회 중 Prisma `P1001` 연결 오류가 발생했습니다.
+
+#### 원인
+
+로컬 SSH Tunnel용 데이터베이스 주소가 운영 환경에도 적용되어 있었습니다. EC2에서 `localhost`는 RDS가 아닌 EC2 자신을 가리키기 때문에 연결에 실패했습니다.
+
+#### 해결
+
+- 로컬과 운영의 `DATABASE_URL` 분리
+- 운영에서는 RDS endpoint로 연결
+- RDS 보안 그룹의 5432 포트 인바운드에 EC2 보안 그룹 허용
+- 변경된 환경변수가 PM2 프로세스에 반영되도록 재시작 및 `--update-env` 확인
+
+#### 결과
+
+운영 서버에서 RDS 연결이 복구되어 회원가입·로그인·데이터 조회가 정상 동작했습니다.
+
+#### 배운 점
+
+환경변수 이름이 같더라도 실행 환경에 따라 주소와 네트워크 경로가 달라집니다. 연결 오류는 애플리케이션 설정과 네트워크 접근 조건을 함께 확인해야 합니다.
+
+</details>
+
+<details>
+<summary><strong>11.2 운영 환경에서 SSE 인증·CORS 오류가 발생한 문제</strong></summary>
+
+#### 문제
+
+로컬에서는 동작하던 알림 스트림이 운영에서 CORS 오류와 함께 차단됐습니다.
 
 ```text
-Can't reach database server at localhost:5432
+Frontend: https://moving.it.kr
+Backend:  https://api.moving.it.kr
 ```
 
-#### 원인 분석
+#### 원인
 
-로컬에서는 SSH Tunnel을 사용하기 위해 `localhost:5433`을 데이터베이스 주소로 사용했지만, 해당 환경변수가 EC2 운영 환경에도 적용되어 있었습니다.
+두 주소는 서로 다른 Origin입니다. 서버의 CORS 응답 설정과 브라우저의 인증 쿠키 전달 설정이 맞지 않았고, SSE의 장기 연결을 위한 프록시 설정도 함께 점검해야 했습니다.
 
-EC2 서버에서 `localhost`는 RDS가 아니라 EC2 자기 자신을 의미하므로 데이터베이스에 연결할 수 없었습니다.
+#### 해결
 
-#### 해결 과정
-
-- 로컬과 배포 환경의 `DATABASE_URL`을 분리
-- EC2 환경에서는 RDS Endpoint를 직접 사용
-- EC2 보안 그룹에서 RDS 보안 그룹으로의 5432 포트 접근 허용
-- 환경변수 수정 후 Prisma Client 생성, Migration 적용, PM2 재시작
-- PM2가 최신 환경변수를 읽도록 `--update-env` 적용
+- 허용 Origin에 정확한 Frontend 주소 지정
+- Backend CORS에 `credentials: true` 적용
+- 일반 API 요청에 `credentials: "include"` 적용
+- EventSource에 `withCredentials: true` 적용
+- 운영 Cookie의 Domain·Secure·SameSite 설정을 배포 구성에 맞게 정리
+- Nginx 버퍼링과 Proxy·ALB의 연결 유지 시간 점검
+- SSE 응답에 `X-Accel-Buffering: no` 설정과 20초 주기의 heartbeat 적용
 
 #### 결과
 
-배포 환경에서 Prisma가 RDS PostgreSQL에 정상적으로 연결되었고 회원가입, 로그인 및 데이터 조회 기능이 정상 동작했습니다.
+운영 환경에서 인증 쿠키를 전달한 상태로 SSE 알림 스트림에 연결할 수 있게 됐습니다.
 
 #### 배운 점
 
-동일한 환경변수 이름을 사용하더라도 로컬, CI, 운영 환경에서 값과 네트워크 경로가 완전히 다를 수 있으므로 환경별 설정을 명확히 분리해야 한다는 점을 배웠습니다.
+실시간 연결 문제는 CORS뿐 아니라 Cookie, 클라이언트 자격 증명 옵션, Proxy와 Load Balancer까지 요청 경로 전체를 확인해야 합니다.
 
----
+</details>
 
-### 11.2 로그인 이후 SSE 알림 요청에서 CORS 오류가 발생한 문제
+<details>
+<summary><strong>11.3 Router 구현 이후에도 API가 404를 반환한 문제</strong></summary>
 
-#### 문제 상황
+#### 문제
 
-로그인은 정상적으로 처리되었지만 배포 환경에서 알림 스트림 요청이 차단되었습니다.
+기사님 견적 관련 Router와 Controller를 구현했지만 `/movers/me/quotes` 요청이 404로 반환됐습니다.
 
-```text
-Access to resource at
-https://api.moving.it.kr/notifications/stream
-from origin https://moving.it.kr
-has been blocked by CORS policy
+#### 원인
+
+기능 Router가 최상위 `apiRouter`에 연결되지 않아 Express에 실제 요청 경로가 등록되지 않았습니다.
+
+#### 해결
+
+- 최상위 Router에서 `moverQuoteRouter`를 import
+- `/movers/me` prefix에 기능 Router 연결
+- Swagger 경로와 실제 Router 조합 비교
+- 목록·상세·반려 요청 API의 접근 경로 확인
+
+#### 결과
+
+기사님 견적 관련 API가 의도한 경로에서 호출되도록 수정했습니다.
+
+#### 배운 점
+
+Express 기능 구현에는 Router 파일 작성뿐 아니라 상위 Router 연결과 최종 URL 검증까지 포함되어야 합니다.
+</details>
+
+<details>
+<summary><strong>11.4 반려 견적의 nullable 가격으로 목록 처리가 실패한 문제</strong></summary>
+
+#### 문제
+
+가격이 없는 반려 견적이 포함되면 목록 변환 과정에서 오류가 발생했습니다.
+
+#### 원인
+
+반려 견적은 가격을 제시하지 않아 `price`가 `null`일 수 있지만, 일부 타입과 처리 로직은 숫자가 항상 존재한다고 가정했습니다.
+
+#### 해결
+
+- Prisma Schema의 nullable 정의에 맞춰 Backend DTO와 Frontend 타입 정리
+- API 응답 처리와 카드 UI에서 `number | null` 대응
+- 가격이 없을 때 표시할 안내 문구 추가
+- 상태별 목록·상세 처리 검증
+
+#### 결과
+
+가격이 없는 견적도 전체 목록을 중단시키지 않고 표시할 수 있게 됐습니다.
+
+#### 배운 점
+
+데이터베이스와 API, Frontend 타입, UI가 같은 도메인 규칙을 공유해야 합니다. 선택 값의 부재도 정상 데이터로 처리해야 합니다.
+
+관련 PR: [FE #59](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/59)
+</details>
+
+<details>
+<summary><strong>11.5 요청 처리 중 모달을 다시 열어 중복 제출할 수 있던 문제</strong></summary>
+
+#### 문제
+
+견적 전송·반려 요청 중 제출 버튼은 비활성화됐지만, Esc나 배경 클릭으로 모달을 닫고 다시 열 수 있었습니다.
+
+#### 원인
+
+모달 내부의 Mutation 상태가 모달 Shell의 닫기 정책과 연결되지 않았습니다.
+
+#### 해결
+
+- Mutation의 `isPending` 상태를 모달 닫기 정책에 연결
+- 처리 중 닫기 버튼·Esc·배경 클릭 제한
+- Mutation 성공 후 모달 종료
+- Backend에서도 중복 처리 여부와 요청 상태 검증
+- 성공 후 관련 목록 캐시 갱신
+
+#### 결과
+
+진행 중인 요청을 남긴 채 모달을 다시 열어 제출할 수 있는 경로를 줄였습니다.
+
+#### 배운 점
+
+중복 제출 방지는 버튼 비활성화뿐 아니라 모달 종료 경로와 서버의 동시성 처리까지 포함해야 합니다.
+</details>
+
+<details>
+<summary><strong>11.6 API 요청 전후 모달 포커스가 이동하던 문제</strong></summary>
+
+#### 문제
+
+모달에서 API 요청을 시작하거나 완료할 때 입력하던 위치의 포커스가 닫기 버튼으로 이동했습니다.
+
+#### 원인
+
+포커스 관리 effect가 닫기 callback에 의존하고 있었습니다. 요청 상태에 따라 닫기 정책과 callback이 바뀔 때 effect가 다시 실행되면서 초기 포커스를 재설정했습니다.
+
+#### 해결
+
+- 최신 닫기 callback은 ref로 관리
+- 초기 포커스와 포커스 트랩 effect는 모달 열림 상태를 기준으로 실행
+- Esc·배경 클릭 제한과 모달 종료 후 포커스 복귀 동작 확인
+
+#### 결과
+
+요청 상태가 바뀌어도 사용자의 입력 포커스가 유지되도록 수정했습니다.
+
+#### 배운 점
+
+effect의 의존성에는 실행 시점을 결정하는 상태를 구분해서 넣어야 합니다. 최신 callback 참조와 초기화 동작의 재실행 조건을 분리할 필요가 있습니다.
+
+관련 PR: [FE #88](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/88)
+</details>
+
+<details>
+<summary><strong>11.7 삭제한 프로필 이미지가 CDN 캐시에 남을 수 있던 문제</strong></summary>
+
+#### 문제
+
+프로필 이미지 교체나 회원 탈퇴로 S3 객체를 삭제해도, CloudFront에 캐시된 사본은 기존 주소로 제공될 수 있었습니다.
+
+#### 원인
+
+원본 객체 삭제와 CDN 캐시 무효화가 별개인데 장기 캐시만 설정되어 있었습니다. 브라우저에도 장기간 캐시가 남을 수 있었습니다.
+
+#### 해결
+
+- 공개된 프로필 이미지 삭제 후 CloudFront 캐시 무효화 요청
+- 브라우저 캐시 1시간, CDN 캐시 1년으로 유지 시간 분리
+- 무효화 실패 시 로그 기록과 제한된 재시도 처리
+
+#### 결과와 검증 범위
+
+원본 삭제와 CDN 캐시 정리를 연결하는 코드를 구현했습니다. 실제 운영에서는 IAM 권한과 배포 ID를 설정한 뒤 이전 이미지 URL의 응답을 확인해야 합니다.
+
+CloudFront 무효화는 이미 저장된 브라우저 캐시를 삭제하지 않으므로, 시크릿 창이나 캐시를 사용하지 않는 요청으로 구분해 검증해야 합니다.
+
+#### 배운 점
+
+캐시는 조회 성능뿐 아니라 수정·삭제 이후의 데이터 제공 정책까지 함께 설계해야 합니다.
+
+관련 PR: [BE #46](https://github.com/kimchanhee0309/Moving-BE-Team1/pull/46)
+</details>
+
+<details>
+<summary><strong>11.8 반응형 타이포그래피 클래스가 적용되지 않던 문제</strong></summary>
+
+#### 문제
+
+데스크톱에서 커져야 하는 탭·제목 등의 글자가 모바일 크기로 유지됐습니다.
+
+#### 원인
+
+공통 타이포그래피가 일반 CSS 클래스로 정의되어 있어 Tailwind의 반응형 접두사를 붙인 스타일이 생성되지 않았습니다.
+
+```tsx
+className="text-md-semibold min-[1200px]:text-xl-semibold"
 ```
 
-#### 원인 분석
+클래스 문자열은 존재했지만 빌드된 CSS에 대응하는 반응형 규칙이 없었습니다.
 
-Frontend와 API가 서로 다른 서브도메인을 사용하고 있었지만 SSE 요청에 필요한 CORS 응답 헤더와 인증 쿠키 전달 설정이 일치하지 않았습니다.
+#### 해결
 
-일반 Fetch 요청뿐 아니라 EventSource 연결에서도 쿠키와 CORS 정책을 함께 고려해야 했습니다.
-
-#### 해결 과정
-
-- 백엔드 CORS 허용 Origin에 `https://moving.it.kr` 명시
-- `credentials: true` 설정
-- Frontend SSE 연결에서 인증 정보를 포함하도록 구성
-- ALB, Nginx, Express를 거치는 과정에서 SSE 응답이 버퍼링되지 않도록 설정 확인
-- 운영 환경 Cookie 옵션과 HTTPS 환경을 일치시킴
+- 공통 타이포그래피 정의를 Tailwind `@utility`로 변경
+- 클래스 이름과 디자인 값을 유지하면서 반응형 스타일 생성
+- 여러 화면 크기에서 글자 크기와 레이아웃 변화 확인
 
 #### 결과
 
-배포 환경에서 로그인 상태를 유지한 채 실시간 알림 스트림에 정상 연결할 수 있게 되었습니다.
+공통 정의를 수정해 여러 화면에 작성되어 있던 반응형 타이포그래피가 적용되도록 개선했습니다.
 
 #### 배운 점
 
-SSE는 일반적인 REST 요청보다 연결이 오래 유지되기 때문에 CORS, Cookie, Proxy Buffering을 함께 확인해야 한다는 점을 배웠습니다.
+스타일이 적용되지 않을 때는 클래스 사용처뿐 아니라 빌드 결과에 해당 CSS 규칙이 생성되는지도 확인해야 합니다.
 
----
-
-### 11.3 기사님 API를 구현했지만 모든 요청이 404로 반환된 문제
-
-#### 문제 상황
-
-기사님 견적 관련 Controller와 Router를 구현했지만 `/movers/me/quotes` 요청이 모두 404로 반환되었습니다.
-
-#### 원인 분석
-
-기능 Router 내부에는 API 경로가 선언되어 있었지만 최상위 `apiRouter`에 `moverQuoteRouter`가 Mount되지 않았습니다.
-
-Express는 파일이 존재하는 것만으로 Route를 자동 등록하지 않기 때문에 실제 요청 경로가 생성되지 않았습니다.
-
-#### 해결 과정
-
-- `src/routes/index.ts`에서 기사님 견적 Router를 Import
-- `/movers/me` 경로에 Router Mount
-- Swagger 문서의 경로와 실제 Router Prefix 비교
-- 통합 요청을 통해 Route 등록 여부 확인
-
-#### 결과
-
-기사님 견적 목록, 상세, 반려 요청 API가 정상적으로 호출되었습니다.
-
-#### 배운 점
-
-Express에서는 Controller와 Router 구현뿐 아니라 최상위 Router 연결까지 하나의 기능 구현 범위로 확인해야 한다는 점을 배웠습니다.
-
----
-
-### 11.4 반려 견적의 nullable 가격 때문에 목록 전체가 실패한 문제
-
-#### 문제 상황
-
-반려된 견적이 포함된 목록을 조회하면 서버에서 500 오류가 발생했습니다.
-
-#### 원인 분석
-
-반려 견적은 실제 가격을 제시하지 않으므로 `price`가 `null`일 수 있었지만, DTO 변환 과정에서는 모든 견적 가격이 반드시 존재한다고 가정하고 있었습니다.
-
-하나의 반려 데이터 때문에 전체 목록 변환이 실패했습니다.
-
-#### 해결 과정
-
-- 견적 상태별 데이터 특성 정의
-- `REJECTED` 상태에서 가격이 nullable임을 Prisma Schema, DTO, FE 타입에 반영
-- API 응답 검증 Schema도 nullable 상태와 일치하도록 수정
-- Seed 데이터에 반려 견적 케이스 추가
-- 상태별 목록과 상세 테스트 작성
-
-#### 결과
-
-제안, 확정, 반려 상태가 함께 존재해도 견적 목록과 상세 API가 정상 응답하게 되었습니다.
-
-#### 배운 점
-
-데이터베이스, Backend DTO, API 명세, Frontend Schema가 동일한 도메인 규칙을 공유해야 한다는 점을 배웠습니다.
-
----
-
-### 11.5 요청 처리 중 Modal을 다시 열어 중복 요청할 수 있던 문제
-
-#### 문제 상황
-
-견적 발송 또는 반려 요청 중 Modal의 버튼은 비활성화되었지만 Escape 키나 배경 클릭으로 Modal을 닫을 수 있었습니다.
-
-사용자가 Modal을 다시 열면 첫 Mutation이 끝나기 전에 동일 요청을 다시 보낼 가능성이 있었습니다.
-
-#### 원인 분석
-
-Modal 내부 버튼만 제출 상태를 알고 있었고 Modal Shell은 Mutation 상태를 전달받지 못했습니다.
-
-#### 해결 과정
-
-- Modal Content에서 요청 처리 상태 관리
-- 처리 중 닫기 버튼, Escape, 배경 클릭을 통한 닫기 제한
-- Mutation 성공 이후에만 Modal 닫기
-- Backend에서도 중복 요청 검증
-- 성공 후 관련 목록 Query 무효화
-
-#### 결과
-
-사용자 인터랙션과 서버 상태가 일치하게 되었고 중복 견적 및 중복 반려 가능성을 줄였습니다.
-
-#### 배운 점
-
-중복 제출 방지는 버튼 비활성화만으로 끝나지 않으며 Modal의 모든 종료 경로와 서버 검증을 함께 고려해야 한다는 점을 배웠습니다.
+관련 PR: [FE #104](https://github.com/kimchanhee0309/Moving-FE-Team1/pull/104)
+</details>
 
 ---
 
