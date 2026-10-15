@@ -9,6 +9,7 @@ import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -203,10 +204,12 @@ function ProfileAvatar({
   src,
   alt,
   isDefault,
+  onError,
 }: {
   src: string;
   alt: string;
   isDefault: boolean;
+  onError?: () => void;
 }) {
   return (
     <div className="relative size-[50px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
@@ -223,6 +226,7 @@ function ProfileAvatar({
           sizes={isDefault ? "75px" : "50px"}
           className="object-cover"
           unoptimized={isRemoteAssetUrl(src)}
+          onError={onError}
         />
       </div>
     </div>
@@ -342,8 +346,10 @@ export function ReviewWriteModal({
     rating >= 1 &&
     content.trim().length >= MIN_CONTENT_LENGTH &&
     !isSubmitting;
-  const profileSrc = profileImageUrl ?? DEFAULT_PROFILE_IMAGE;
-  const isDefaultProfile = !profileImageUrl;
+  // 불러오기에 실패한 이미지도 기본 이미지와 같은 크롭 스타일로 보여 줍니다.
+  const profileImage = useLoadableImageSrc(profileImageUrl);
+  const profileSrc = profileImage.loadableSrc ?? DEFAULT_PROFILE_IMAGE;
+  const isDefaultProfile = !profileImage.loadableSrc;
 
   if (!isOpen) return null;
 
@@ -437,6 +443,7 @@ export function ReviewWriteModal({
                 src={profileSrc}
                 alt={formatMoverProfileAlt(moverName)}
                 isDefault={isDefaultProfile}
+                onError={profileImage.loadableSrc ? profileImage.handleError : undefined}
               />
             </div>
 

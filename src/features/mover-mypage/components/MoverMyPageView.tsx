@@ -10,8 +10,12 @@ import { ReviewListCard } from "@/common/components/ReviewListCard";
 import { OriginalTextNotice } from "@/common/components/OriginalTextNotice";
 import { ReviewProgressBar } from "@/common/components/ReviewProgressBar";
 import { ROUTES } from "@/common/constants/routes";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 import type { MoverMyPageData, MoverReviewPage } from "../mover-mypage.types";
+
+// mover-mypage.api.ts에서 빈 주소를 채우는 기본 이미지와 같은 파일입니다.
+const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
 interface MoverMyPageViewProps {
   data: MoverMyPageData;
@@ -42,6 +46,8 @@ export function MoverMyPageView({
   const currentReviews = reviews?.items ?? [];
   const displayedRating = reviews?.summary.averageRating ?? data.rating;
   const displayedReviewCount = reviews?.summary.reviewCount ?? data.reviewCount;
+  const profileImage = useLoadableImageSrc(data.profileImageUrl);
+  const profileSrc = profileImage.loadableSrc ?? DEFAULT_PROFILE_IMAGE;
 
   return (
     <main className="min-h-screen bg-[var(--gray-50)] pb-20">
@@ -80,13 +86,14 @@ export function MoverMyPageView({
             <div className="flex items-start gap-3">
               <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-[var(--black-400)] min-[1200px]:h-[85px] min-[1200px]:w-20 min-[1200px]:rounded-2xl">
                 <Image
-                  src={data.profileImageUrl}
+                  src={profileSrc}
                   alt={t("moverProfileAlt", { name: data.nickname })}
                   fill
                   sizes="(min-width: 1200px) 80px, 64px"
                   priority
                   className="scale-125 object-cover"
-                  unoptimized={/^https?:\/\//.test(data.profileImageUrl)}
+                  unoptimized={/^https?:\/\//.test(profileSrc)}
+                  onError={profileImage.loadableSrc ? profileImage.handleError : undefined}
                 />
               </div>
               <div className="min-w-0 pt-1">

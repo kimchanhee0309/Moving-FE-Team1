@@ -17,8 +17,12 @@ import {
   isWithdrawnMoverName,
   useWithdrawnAccountName,
 } from "@/common/hooks/useWithdrawnAccountName";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
-import type { CustomerQuoteDetail } from "../../_lib/customerQuoteDetail";
+import {
+  DEFAULT_MOVER_PROFILE_IMAGE,
+  type CustomerQuoteDetail,
+} from "../../_lib/customerQuoteDetail";
 
 interface CustomerQuoteDetailViewProps {
   quote: CustomerQuoteDetail;
@@ -148,6 +152,7 @@ export function CustomerQuoteDetailView({
   const priceLabel = t("priceValue", { price: quote.price });
   const displayMessage = quote.message || t("defaultMessage");
   const ratingLabel = quote.rating.toFixed(1);
+  const profileImage = useLoadableImageSrc(quote.profileImageUrl);
 
   const [isCopyToastVisible, setIsCopyToastVisible] = useState(false);
 
@@ -221,12 +226,13 @@ export function CustomerQuoteDetailView({
           <section className="flex min-w-0 flex-1 flex-col gap-5">
             <div className="relative mb-5 size-[134px] shrink-0 overflow-hidden rounded-xl bg-[var(--black-300)]">
               <Image
-                src={quote.profileImageUrl}
+                src={profileImage.loadableSrc ?? DEFAULT_MOVER_PROFILE_IMAGE}
                 alt={formatMoverProfileAlt(quote.moverName)}
                 width={134}
                 height={134}
                 className="size-[134px] object-cover"
-                unoptimized={isRemoteAssetUrl(quote.profileImageUrl)}
+                unoptimized={isRemoteAssetUrl(profileImage.loadableSrc)}
+                onError={profileImage.loadableSrc ? profileImage.handleError : undefined}
               />
             </div>
 

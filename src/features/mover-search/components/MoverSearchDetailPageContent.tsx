@@ -19,6 +19,7 @@ import { ROUTES } from "@/common/constants/routes";
 import { getPathname, useRouter } from "@/i18n/navigation";
 import { authHref } from "@/features/auth/auth.utils";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 import {
   useMoverSearchDesignatedRequest,
@@ -79,6 +80,7 @@ export function MoverSearchDetailPageContent({
     reviewSummary,
     isReviewPending,
   } = useMoverSearchDetail(moverId, reviewPage, initialMover);
+  const profileImage = useLoadableImageSrc(mover?.profileImageUrl);
   const favoritesQuery = useMoverSearchFavorites(
     user?.id,
     isCustomer,
@@ -255,7 +257,7 @@ export function MoverSearchDetailPageContent({
           <div className="relative z-10 mb-[13px] flex size-16 items-center justify-center overflow-hidden rounded-xl bg-[var(--black-300)] p-0.5 min-[744px]:mb-[23px] min-[744px]:size-[100px] min-[744px]:p-1 min-[1200px]:mb-5 min-[1200px]:size-[134px] min-[1200px]:rounded-[12px] min-[1200px]:p-1.5">
             <Image
               src={
-                mover.profileImageUrl ??
+                profileImage.loadableSrc ??
                 "/images/mover-search/profile-placeholder.png"
               }
               alt={quote("moverProfile", { name: mover.moverName })}
@@ -263,7 +265,8 @@ export function MoverSearchDetailPageContent({
               height={134}
               className="size-full object-contain"
               priority
-              unoptimized={isRemoteAssetUrl(mover.profileImageUrl)}
+              unoptimized={isRemoteAssetUrl(profileImage.loadableSrc)}
+              onError={profileImage.loadableSrc ? profileImage.handleError : undefined}
             />
           </div>
 

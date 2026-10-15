@@ -5,6 +5,7 @@ import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS, SERVICE_TYPE } from "@/common/constants/domain";
 import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 const SERVICE_TYPE_ICON: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "/icons/ic-solid-box.svg",
@@ -112,7 +113,8 @@ export function QuoteHistoryCard({
   const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
   const serviceTypeLabel = moveType(serviceType);
   const serviceTypeIcon = SERVICE_TYPE_ICON[serviceType];
-  const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
+  const profileImage = useLoadableImageSrc(moverProfileImageUrl);
+  const profileSrc = profileImage.loadableSrc ?? DEFAULT_PROFILE_IMAGE;
   const priceLabel = t("priceValue", { price });
   const displayMessage = message || t("defaultMessage");
   const ratingLabel = rating.toFixed(1);
@@ -230,6 +232,7 @@ export function QuoteHistoryCard({
                     height={50}
                     className="size-full object-cover"
                     unoptimized={isRemoteAssetUrl(profileSrc)}
+                    onError={profileImage.loadableSrc ? profileImage.handleError : undefined}
                   />
                 </div>
 

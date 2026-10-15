@@ -5,6 +5,7 @@ import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { QuoteStatus, ServiceType } from "@/common/constants/domain";
 import { QUOTE_STATUS } from "@/common/constants/domain";
 import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 const DEFAULT_PROFILE_IMAGE = "/images/mover-profile-placeholder.png";
 
@@ -111,7 +112,8 @@ export function QuoteCard({
   const moveType = useTranslations("MoveType");
   const { formatMoverName, formatMoverProfileAlt } = useWithdrawnAccountName();
   const serviceTypeLabel = moveType(serviceType);
-  const profileSrc = moverProfileImageUrl ?? DEFAULT_PROFILE_IMAGE;
+  const profileImage = useLoadableImageSrc(moverProfileImageUrl);
+  const profileSrc = profileImage.loadableSrc ?? DEFAULT_PROFILE_IMAGE;
   const priceLabel = t("priceValue", { price });
   const displayMessage = message || t("defaultMessage");
   const ratingLabel = rating.toFixed(1);
@@ -205,6 +207,7 @@ export function QuoteCard({
                   height={50}
                   className="size-full object-cover"
                   unoptimized={isRemoteAssetUrl(profileSrc)}
+                  onError={profileImage.loadableSrc ? profileImage.handleError : undefined}
                 />
               </div>
 
