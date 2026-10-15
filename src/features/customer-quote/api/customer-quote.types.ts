@@ -116,5 +116,10 @@ export interface CustomerQuoteHistoryGroupView {
   from: string;
   to: string;
   moveDate: string;
+  /**
+   * 받았던 견적은 확정된 요청만 조회되므로 CONFIRMED(이사 진행 중) 또는 COMPLETED(이사 완료)입니다.
+   * BE가 이사일이 지난 확정 요청을 주기적으로 COMPLETED로 바꿉니다.
+   */
+  moveRequestStatus: ApiMoveRequestStatus;
   quotes: CustomerQuoteListItemView[];
 }

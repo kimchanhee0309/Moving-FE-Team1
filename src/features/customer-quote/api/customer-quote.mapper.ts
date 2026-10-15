@@ -112,6 +112,7 @@ export function groupHistoryQuotes(
       from: stripPostalCodePrefix(item.moveRequest.fromAddress),
       to: stripPostalCodePrefix(item.moveRequest.toAddress),
       moveDate: item.moveRequest.moveDate,
+      moveRequestStatus: item.moveRequest.status,
       quotes: [quote],
     });
   }
