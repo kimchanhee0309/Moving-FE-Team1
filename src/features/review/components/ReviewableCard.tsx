@@ -8,6 +8,7 @@ import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -78,8 +79,9 @@ interface AvatarProps {
 
 function Avatar({ src, moverName, className }: AvatarProps) {
   const { formatMoverProfileAlt } = useWithdrawnAccountName();
-  const isDefaultImage = !src;
-  const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
+  const { loadableSrc, handleError } = useLoadableImageSrc(src);
+  const isDefaultImage = !loadableSrc;
+  const profileSrc = loadableSrc ?? DEFAULT_PROFILE_IMAGE;
 
   return (
     <div
@@ -98,7 +100,8 @@ function Avatar({ src, moverName, className }: AvatarProps) {
           "object-cover",
           isDefaultImage && "translate-y-[11%] scale-150",
         )}
-        unoptimized={isRemoteAssetUrl(src)}
+        unoptimized={isRemoteAssetUrl(loadableSrc)}
+        onError={loadableSrc ? handleError : undefined}
       />
     </div>
   );

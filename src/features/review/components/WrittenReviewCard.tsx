@@ -5,6 +5,7 @@ import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import type { ServiceType } from "@/common/constants/domain";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
 import { useWithdrawnAccountName } from "@/common/hooks/useWithdrawnAccountName";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 import { toDisplayRegionAddress } from "../review.utils";
 
@@ -149,8 +150,9 @@ function MoverProfile({
   size: 50 | 80;
 }) {
   const { formatMoverProfileAlt } = useWithdrawnAccountName();
-  const isDefaultImage = !src;
-  const profileSrc = src ?? DEFAULT_PROFILE_IMAGE;
+  const { loadableSrc, handleError } = useLoadableImageSrc(src);
+  const isDefaultImage = !loadableSrc;
+  const profileSrc = loadableSrc ?? DEFAULT_PROFILE_IMAGE;
   const isLarge = size === 80;
   const croppedImageSize = isLarge ? 120 : 75;
 
@@ -186,7 +188,8 @@ function MoverProfile({
           fill
           sizes={`${size}px`}
           className="object-cover"
-          unoptimized={isRemoteAssetUrl(src)}
+          unoptimized={isRemoteAssetUrl(loadableSrc)}
+          onError={handleError}
         />
       )}
     </div>

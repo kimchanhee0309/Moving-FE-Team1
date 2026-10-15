@@ -6,6 +6,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 import { isRemoteAssetUrl } from "@/common/api/asset-url";
 import { SERVICE_TYPE, type ServiceType } from "@/common/constants/domain";
+import { useLoadableImageSrc } from "@/common/hooks/useLoadableImageSrc";
 
 const SERVICE_TYPE_ICON: Record<ServiceType, string> = {
   [SERVICE_TYPE.SMALL]: "/icons/ic-solid-box.svg",
@@ -155,6 +156,9 @@ function MoverAvatar({
   alt: string;
   className?: string;
 }) {
+  // 주소는 남았는데 파일이 없으면(예: 서버 디스크 이미지 유실) 깨진 그림 대신 기본 이미지를 보여 줍니다.
+  const { loadableSrc, handleError } = useLoadableImageSrc(src);
+
   return (
     <div
       className={[
@@ -165,12 +169,13 @@ function MoverAvatar({
         .join(" ")}
     >
       <Image
-        src={src ?? "/images/mover-search/profile-placeholder.png"}
+        src={loadableSrc ?? "/images/mover-search/profile-placeholder.png"}
         alt={alt}
         fill
         sizes="140px"
         className="object-cover"
-        unoptimized={isRemoteAssetUrl(src)}
+        unoptimized={isRemoteAssetUrl(loadableSrc)}
+        onError={loadableSrc ? handleError : undefined}
       />
     </div>
   );
