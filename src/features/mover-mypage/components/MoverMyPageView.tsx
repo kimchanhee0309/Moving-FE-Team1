@@ -56,10 +56,23 @@ export function MoverMyPageView({
         <h1 className="text-xl-bold text-[var(--black-500)] min-[1200px]:text-2xl-bold">{t("myPage")}</h1>
       </div>
 
-      <div className="relative h-[122px] overflow-hidden bg-[var(--primary-400)] min-[1200px]:h-[180px]" aria-hidden="true">
-        <span className="absolute -left-3 top-5 -rotate-12 text-[76px] font-black italic leading-none text-white/15 min-[1200px]:left-[12%] min-[1200px]:top-8 min-[1200px]:text-[120px]">M</span>
-        <span className="absolute -right-2 bottom-[-20px] -rotate-12 text-[100px] font-black italic leading-none text-white/15 min-[1200px]:right-[25%] min-[1200px]:text-[160px]">M</span>
-      </div>
+      {/*
+        기사님 찾기 상세(mover-search)와 같은 배너 에셋·높이를 사용한다.
+        Figma 배너 높이: 모바일 122, 태블릿 157, 데스크톱 225.
+        데스크톱은 1920×225 에셋을 중앙 고정하고 1920px보다 넓은 화면의 좌우는 배너색으로 채운다.
+      */}
+      <div
+        aria-hidden="true"
+        className="h-[122px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-mobile.png')] min-[744px]:hidden"
+      />
+      <div
+        aria-hidden="true"
+        className="hidden h-[157px] w-full bg-[length:100%_100%] bg-center bg-[url('/images/mover-search/banner-tablet.png')] min-[744px]:block min-[1200px]:hidden"
+      />
+      <div
+        aria-hidden="true"
+        className="hidden h-[225px] w-full bg-[var(--primary-400)] bg-[length:1920px_225px] bg-center bg-no-repeat bg-[url('/images/mover-search/banner-desktop.png')] min-[1200px]:block"
+      />
 
       <div className="mx-auto w-full max-w-[1280px] px-5 min-[744px]:px-10">
         <section className="grid gap-8 border-b border-[var(--line-100)] py-6 min-[1200px]:grid-cols-[minmax(0,820px)_minmax(240px,280px)] min-[1200px]:gap-x-[clamp(40px,5vw,100px)] min-[1200px]:py-10" aria-labelledby="mover-profile-heading">
