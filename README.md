@@ -77,24 +77,7 @@
 
 ---
 
-## 2. 기능 구현 영상
-
-> 아래 영역에 GIF 또는 시연 영상 링크를 추가해 주세요.
-
-| 구분 | 주요 기능 | 시연 자료 |
-| --- | --- | --- |
-| 인증 | 회원가입, 로그인, OAuth 로그인 | GIF 또는 영상 추가 |
-| 일반 고객 | 견적 요청 등록 | GIF 또는 영상 추가 |
-| 일반 고객 | 기사님 검색 및 상세 조회 | GIF 또는 영상 추가 |
-| 일반 고객 | 받은 견적 비교 및 확정 | GIF 또는 영상 추가 |
-| 기사님 | 받은 요청 조회 및 견적 발송 | GIF 또는 영상 추가 |
-| 기사님 | 요청 반려 및 견적 관리 | GIF 또는 영상 추가 |
-| 공통 | 찜, 리뷰, 실시간 알림 | GIF 또는 영상 추가 |
-| 반응형 | Desktop, Tablet, Mobile 대응 | GIF 또는 영상 추가 |
-
----
-
-## 3. 시스템 아키텍처
+## 2. 시스템 아키텍처
 
 ```mermaid
 flowchart LR
@@ -266,11 +249,10 @@ flowchart LR
 
 | 문서 | 링크 |
 | --- | --- |
-| 팀 Notion | [링크 추가](NOTION_URL) |
-| API 명세서 | [링크 추가](API_SPEC_URL) |
-| Task List | [링크 추가](TASK_LIST_URL) |
-| Figma | [링크 추가](FIGMA_URL) |
-| 프로젝트 회고 | [링크 추가](RETROSPECTIVE_URL) |
+| 팀 Notion | [바로가기](https://app.notion.com/p/99e6ff7cc5d882cf92c801fd84248bc2?v=8c26ff7cc5d882f6926008b26023b345) |
+| API 명세서 | [바로가기](https://app.notion.com/p/API-93a6ff7cc5d883d4b3fe0178fe05aaf4) |
+| Task List | [바로가기](https://app.notion.com/p/Task-list-3ca6ff7cc5d880a09255c800254cd337) |
+| Figma | [바로가기](https://www.figma.com/design/fgvdOrZSUPdiBm3OwVPmCm/-%EC%8A%A4%ED%94%84%EB%A6%B0%ED%84%B0-%EA%B3%B5%EC%9C%A0%EC%9A%A9--%EB%AC%B4%EB%B9%99_V2?node-id=1-82&m=dev) |
 | Swagger UI | [바로가기](https://api.moving.it.kr/api-docs) |
 
 ---
