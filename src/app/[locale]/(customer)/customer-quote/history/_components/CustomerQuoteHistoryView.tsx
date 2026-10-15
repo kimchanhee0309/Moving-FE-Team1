@@ -8,7 +8,7 @@ import { EmptyState } from "@/common/components/page-state";
 import { ErrorState } from "@/common/components/page-state";
 import { LoadingState } from "@/common/components/page-state";
 import { Tabs } from "@/common/components/Tabs";
-import { QUOTE_STATUS } from "@/common/constants/domain";
+import { MOVE_REQUEST_STATUS, QUOTE_STATUS } from "@/common/constants/domain";
 import type { QuoteStatus } from "@/common/constants/domain";
 import { ROUTES } from "@/common/constants/routes";
 import { formatDateWithWeekday, SERVICE_TIME_ZONE } from "@/common/utils/date-format";
@@ -96,6 +96,14 @@ function HistoryRequestCard({ group }: { group: CustomerQuoteHistoryGroupView })
             <QuoteInfoRow
               label={quote("useDate")}
               value={formatDateWithWeekday(group.moveDate, locale, SERVICE_TIME_ZONE)}
+            />
+            <QuoteInfoRow
+              label={quote("moveStatus")}
+              value={quote(
+                group.moveRequestStatus === MOVE_REQUEST_STATUS.COMPLETED
+                  ? "moveCompleted"
+                  : "moveInProgress",
+              )}
             />
           </dl>
         </section>
